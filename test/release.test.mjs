@@ -8,14 +8,20 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
+import { resolvePortableCommand } from '../src/adapters/process.mjs';
 import { planExistingRepositoryAdoption } from '../src/core/adoption.mjs';
 
 const execFile = promisify(execFileCallback);
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const FIXTURE = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+const FIXTURE = fileURLToPath(new URL('./fixtures/existing-repository/', import.meta.url));
 
 async function json(path) {
   return JSON.parse(await readFile(path, 'utf8'));
+}
+
+function execNpm(args, options) {
+  const command = resolvePortableCommand('npm', args);
+  return execFile(command.executable, command.args, options);
 }
 
 test('release version is consistent across package and generated metadata', async () => {
@@ -41,13 +47,13 @@ test('packed CLI installs into an isolated prefix and runs version and help', as
   await Promise.all([artifacts, prefix, home, cache].map((path) => mkdir(path, { recursive: true })));
   const env = { ...process.env, HOME: home, npm_config_cache: cache };
 
-  const packed = await execFile('npm', ['pack', '--json', '--pack-destination', artifacts], { cwd: ROOT, env });
+  const packed = await execNpm(['pack', '--json', '--pack-destination', artifacts], { cwd: ROOT, env });
   const manifest = JSON.parse(packed.stdout)[0];
   assert.ok(manifest.files.some((entry) => entry.path === 'bin/contextrail.mjs'));
   assert.equal(manifest.files.some((entry) => entry.path.startsWith('test/')), false);
   const tarball = join(artifacts, manifest.filename);
 
-  await execFile('npm', ['install', '--global', '--prefix', prefix, '--ignore-scripts', tarball], { env });
+  await execNpm(['install', '--global', '--prefix', prefix, '--ignore-scripts', tarball], { env });
   const cliPath = process.platform === 'win32'
     ? join(prefix, 'node_modules/contextrail/bin/contextrail.mjs')
     : join(prefix, 'lib/node_modules/contextrail/bin/contextrail.mjs');

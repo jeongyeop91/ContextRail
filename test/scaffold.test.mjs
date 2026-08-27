@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
@@ -51,7 +52,7 @@ test('rejects template path traversal', async () => {
 
 test('repository template applies and passes project validation', async () => {
   const target = await mkdtemp(join(tmpdir(), 'contextrail-target-'));
-  const templateRoot = new URL('../templates/project/', import.meta.url).pathname;
+  const templateRoot = fileURLToPath(new URL('../templates/project/', import.meta.url));
   const plan = await planScaffold({ mode: 'init', target, templateRoot, fs: nodeFilesystem });
   assert.equal(plan.ok, true);
   await applyScaffold(plan, nodeFilesystem);

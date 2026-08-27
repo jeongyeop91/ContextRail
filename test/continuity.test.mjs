@@ -72,7 +72,7 @@ test('selects only a unique ready item when CURRENT has no active item', async (
 
 test('continues reference state without guessing a backlog item', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-continue-'));
-  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), root, { recursive: true });
   const config = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
 
   const result = await buildContinuation(root, { config });

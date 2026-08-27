@@ -83,7 +83,7 @@ test('accepts a consistent active state', async () => {
 
 test('reference state checks paths without parsing a project-specific backlog', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-state-'));
-  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), root, { recursive: true });
   const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
 
   const result = await validateState(root, existing, nodeFilesystem);

@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
+import { resolvePortableCommand } from '../src/adapters/process.mjs';
 import { assertMatchingCodexEnvironment, managedDataRoot, nodeBinCommand, resolvePackageBin } from '../src/adapters/platform.mjs';
 
 test('selects native ContextRail data roots on macOS, Linux, and Windows', () => {
@@ -34,6 +35,26 @@ test('builds direct Node argv without a shell shim', () => {
     args: ['/package/bin/cli.mjs', 'install'],
   });
   assert.throws(() => nodeBinCommand({ nodePath: 'node', binPath: '/package/bin/cli.mjs' }), /absolute/);
+});
+
+test('runs npm through its JavaScript CLI on Windows', () => {
+  assert.deepEqual(resolvePortableCommand('npm', ['pack', '--json'], {
+    platform: 'win32',
+    nodePath: 'C:\\Program Files\\nodejs\\node.exe',
+    env: { npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js' },
+  }), {
+    executable: 'C:\\Program Files\\nodejs\\node.exe',
+    args: ['C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js', 'pack', '--json'],
+  });
+  assert.deepEqual(resolvePortableCommand('npm', ['pack'], { platform: 'linux', env: {} }), {
+    executable: 'npm',
+    args: ['pack'],
+  });
+  assert.deepEqual(resolvePortableCommand('npm.cmd', ['install'], {
+    platform: 'win32',
+    nodePath: 'C:\\Program Files\\nodejs\\node.exe',
+    env: {},
+  }).args, ['C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js', 'install']);
 });
 
 test('treats WSL as Linux and rejects a mounted Windows-native Codex home', () => {

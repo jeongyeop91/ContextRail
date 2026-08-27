@@ -49,7 +49,7 @@ test('rejects a route target outside the project', async () => {
 
 test('routes existing repository references without parsing its backlog', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-route-'));
-  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), root, { recursive: true });
   const config = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
 
   const route = await buildRoute(root, 'src/service/value.mjs', { config });

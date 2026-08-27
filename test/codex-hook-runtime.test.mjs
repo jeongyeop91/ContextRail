@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import { handleStop, handleUserPromptSubmit } from '../src/integrations/codex-hook-runtime.mjs';
 
-const TEMPLATE = new URL('../templates/project/', import.meta.url).pathname;
+const TEMPLATE = fileURLToPath(new URL('../templates/project/', import.meta.url));
 
 async function project({ enabled = true } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-hook-runtime-'));

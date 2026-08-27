@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
 
@@ -103,7 +103,7 @@ test('failed second rename restores both automation files', async () => {
   const fs = {
     ...nodeFilesystem,
     async rename(from, to) {
-      if (!failed && to.endsWith(VERSION_PATH)) {
+      if (!failed && basename(to) === basename(VERSION_PATH)) {
         failed = true;
         throw new Error('synthetic version rename failure');
       }

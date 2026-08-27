@@ -3,12 +3,13 @@ import { createHash } from 'node:crypto';
 import { cp, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import { applyScaffold } from '../src/core/scaffold.mjs';
 
-const FIXTURE = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+const FIXTURE = fileURLToPath(new URL('./fixtures/existing-repository/', import.meta.url));
 const MANAGED_PATHS = ['.context-rail/.gitignore', '.context-rail/config.json', '.context-rail/version.json'];
 const FORBIDDEN_PATHS = [
   'AGENTS.md',

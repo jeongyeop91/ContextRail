@@ -21,6 +21,11 @@ test('loads immutable Throughline provenance with matching patch and license', a
   assert.match(result.manifest.removalCondition, /upstream/i);
 });
 
+test('keeps hashed patch bytes LF-normalized across Git checkouts', async () => {
+  const attributes = await readFile(resolve(ROOT, '.gitattributes'), 'utf8');
+  assert.match(attributes, /^\*\.patch text eol=lf$/m);
+});
+
 test('rejects mutable, shell-string, hash, and unknown execution inputs', async () => {
   const base = (await loadThroughlineManifest(ROOT, nodeFilesystem)).manifest;
   const invalid = {

@@ -72,7 +72,7 @@ test('accepts a valid routed authority set and relative heading link', async () 
 
 test('recursively validates existing authority roots while honoring file and directory excludes', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-existing-docs-'));
-  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), root, { recursive: true });
   const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
 
   const result = await validateDocuments(root, existing, nodeFilesystem);
@@ -82,7 +82,7 @@ test('recursively validates existing authority roots while honoring file and dir
 
 test('reports authority files reached through overlapping roots', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-duplicate-docs-'));
-  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), root, { recursive: true });
   const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
   existing.authority.roots.push('docs/architecture');
 

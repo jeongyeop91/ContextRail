@@ -62,7 +62,7 @@ test('version and help are successful read-only top-level options', async () => 
 
 test('existing-repository adoption requires its profile and config then remains plan-only', async () => {
   const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-existing-'));
-  const fixture = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+  const fixture = new URL('./fixtures/existing-repository/', import.meta.url);
   await cp(fixture, target, { recursive: true });
   const adoptionConfig = join(target, 'adoption-config.json');
 
@@ -85,7 +85,7 @@ test('existing-repository adoption requires its profile and config then remains 
 
 test('check returns structured reference state after existing-repository apply', async () => {
   const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-existing-check-'));
-  const fixture = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+  const fixture = new URL('./fixtures/existing-repository/', import.meta.url);
   await cp(fixture, target, { recursive: true });
   const adoptionConfig = join(target, 'adoption-config.json');
   const applyStream = capture();

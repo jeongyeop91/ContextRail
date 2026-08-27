@@ -29,3 +29,21 @@ test('npm publication uses OIDC, Node 24, explicit dist-tags, and no registry to
   assert.match(workflow, /--tag "?latest"?|--tag latest/);
   assert.equal(/NPM_TOKEN|NODE_AUTH_TOKEN/.test(workflow), false);
 });
+
+test('test fixtures never treat URL pathname as a native filesystem path', async () => {
+  const files = [
+    'test/adoption.test.mjs',
+    'test/cli.test.mjs',
+    'test/codex-hook-runtime.test.mjs',
+    'test/continuity.test.mjs',
+    'test/documents.test.mjs',
+    'test/release.test.mjs',
+    'test/routing.test.mjs',
+    'test/scaffold.test.mjs',
+    'test/state.test.mjs',
+  ];
+  for (const file of files) {
+    const source = await readFile(file, 'utf8');
+    assert.equal(/new URL\([^\n]+\)\.pathname/.test(source), false, file);
+  }
+});
