@@ -13,6 +13,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node bin/contextrail.mjs check",
-    "verify": "npm test && npm run check && git diff --check"
+    "smoke:template": "node --test --test-name-pattern='repository template applies' test/scaffold.test.mjs",
+    "verify": "npm test && npm run check && npm run smoke:template && git diff --check"
   }
 }

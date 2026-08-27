@@ -34,7 +34,9 @@ test('route and continue emit structured repository context', async () => {
   const streamContinue = capture();
   const continueCode = await run(['continue', '--target', original, '--json'], streamContinue.io);
   assert.equal(continueCode, 0);
-  assert.equal(JSON.parse(streamContinue.output().stdout).currentItem.id, 'CR-001');
+  const continuation = JSON.parse(streamContinue.output().stdout);
+  assert.equal(continuation.status, 'ready');
+  assert.match(continuation.currentItem.id, /^CR-\d+$/);
 });
 
 test('unknown commands return CLI usage exit code', async () => {

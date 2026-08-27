@@ -1,0 +1,30 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  node-22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run deterministic tests
+        run: npm test
+      - name: Validate repository contracts
+        run: node bin/contextrail.mjs check
+      - name: Smoke generated project
+        shell: bash
+        run: |
+          generated_root="$(mktemp -d)"
+          node bin/contextrail.mjs init --target "$generated_root" --apply --json
+          node bin/contextrail.mjs check --target "$generated_root"
+      - name: Check whitespace
+        run: git diff --check

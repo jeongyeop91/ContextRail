@@ -63,6 +63,8 @@ export async function planScaffold({ mode, target, templateRoot, fs }) {
     const currentHash = hash(current);
     if (currentHash === contentHash) {
       operations.push({ action: 'skip', path, content, contentHash, reason: 'already current' });
+    } else if (mode === 'upgrade' && path === '.context-rail/version.json') {
+      operations.push({ action: 'update', path, content, contentHash, reason: 'scaffold ownership manifest' });
     } else if (mode === 'upgrade' && ownedFiles[path] === currentHash) {
       operations.push({ action: 'update', path, content, contentHash, reason: 'matches prior owned hash' });
     } else if (mode === 'adopt') {
@@ -84,6 +86,20 @@ export async function applyScaffold(plan, fs) {
     await fs.mkdir(dirname(destination), { recursive: true });
     await fs.writeText(destination, operation.content);
     applied.push(operation.path);
+  }
+  const versionPath = resolve(plan.target, '.context-rail/version.json');
+  if (await fs.exists(versionPath)) {
+    const version = JSON.parse(await fs.readText(versionPath));
+    const prior = version.ownedFiles ?? {};
+    const ownedFiles = { ...prior };
+    for (const operation of plan.operations) {
+      if (operation.path === '.context-rail/version.json') continue;
+      if (['create', 'update'].includes(operation.action) || (operation.action === 'skip' && operation.reason === 'already current')) {
+        ownedFiles[operation.path] = operation.contentHash;
+      }
+    }
+    version.ownedFiles = Object.fromEntries(Object.entries(ownedFiles).sort(([left], [right]) => left.localeCompare(right)));
+    await fs.writeText(versionPath, `${JSON.stringify(version, null, 2)}\n`);
   }
   return { ok: true, applied };
 }

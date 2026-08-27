@@ -15,6 +15,7 @@ Read this file first, then open only what the task requires.
 
 ## Decisions and supporting material
 
+- [Project README](../README.md)
 - [Architecture decisions](adr/README.md)
 - [Reference material](reference/README.md)
 - [Historical evidence](history/README.md)

@@ -1,25 +1,29 @@
 # Current state
 
-Active item: `CR-001`
+Active item: none
 
 ## Observed
 
-- Architecture is approved and committed.
-- The implementation plan is active in `state/PLAN.md`.
-- ContextRail is being implemented directly on local `main` as authorized.
-- Reference repositories and the user's Throughline installation remain read-only.
+- The local ContextRail MVP is implemented on `main` with no remote configured.
+- Core operation is independent of Throughline and has no production npm dependencies.
+- The compatibility patch is pinned to immutable Throughline source and patch hashes with its MIT notice.
+- The user's Throughline installation was verified read-only as `degraded`: capture, restore, and handoff are ready; Codex hooks are not ready.
+- No real Throughline preparation, installation, rollback, HOME edit, remote creation, or push was performed.
 
 ## Completed evidence
 
-- Architecture commit: `b3859b5`.
-- Plan commit: `4bf5c32`.
+- Architecture: `b3859b5`; execution plan: `4bf5c32`.
+- Foundation: `5ac86bb`; validation: `8a3003d`; workflow: `34625ba`.
+- Measurement: `2f5e932`; Throughline preparation: `2c472c9`; managed integration: `da2ee55`.
+- Deterministic tests: 52 passing after release documentation and upgrade-ownership coverage.
+- Self-check: 8 Active Authority files, 28-line router, 4 consistent backlog items.
 
 ## Next steps
 
-1. Finish the self-hosting foundation and validator.
-2. Implement bootstrap, routing, continuity, and measurements.
-3. Add the reproducible optional Throughline adapter and release checks.
+1. Choose the ContextRail license.
+2. Confirm GitHub owner/name, visibility, and template setting.
+3. Re-run `npm run verify`, create the approved remote, and push only with explicit authorization.
 
 ## Blockers
 
-- None.
+- Publication is intentionally blocked on the maintainer decisions above; local use and review are not blocked.

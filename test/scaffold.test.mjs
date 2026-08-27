@@ -59,3 +59,22 @@ test('repository template applies and passes project validation', async () => {
   assert.equal(result.ok, true, JSON.stringify(result.issues));
   assert.equal((await readFile(join(target, 'AGENTS.md'), 'utf8')).includes('/Users/'), false);
 });
+
+test('records owned hashes so upgrades update only unchanged scaffold files', async () => {
+  const source = await template({
+    'A.md': 'version one\n',
+    '.context-rail/version.json': JSON.stringify({ schema: 1, templateVersion: '1.0.0', ownedFiles: {} }),
+  });
+  const target = await mkdtemp(join(tmpdir(), 'contextrail-target-'));
+  await applyScaffold(await planScaffold({ mode: 'init', target, templateRoot: source, fs: nodeFilesystem }), nodeFilesystem);
+  const ownership = JSON.parse(await readFile(join(target, '.context-rail/version.json'), 'utf8'));
+  assert.match(ownership.ownedFiles['A.md'], /^[a-f\d]{64}$/);
+
+  await writeFile(join(source, 'A.md'), 'version two\n');
+  const upgrade = await planScaffold({ mode: 'upgrade', target, templateRoot: source, fs: nodeFilesystem });
+  assert.equal(upgrade.operations.find((entry) => entry.path === 'A.md').action, 'update');
+
+  await writeFile(join(target, 'A.md'), 'user change\n');
+  const conflict = await planScaffold({ mode: 'upgrade', target, templateRoot: source, fs: nodeFilesystem });
+  assert.equal(conflict.operations.find((entry) => entry.path === 'A.md').action, 'conflict');
+});

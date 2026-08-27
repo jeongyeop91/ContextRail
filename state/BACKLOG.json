@@ -4,7 +4,7 @@
     {
       "id": "CR-001",
       "title": "Build the ContextRail MVP",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "acceptance": [
         "Repository validates its own documents and state",
