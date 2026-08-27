@@ -40,13 +40,14 @@ Active item: `CR-008`
 - The published release asset digest matches the verified local artifact, and both `main` and tag GitHub Actions runs completed successfully.
 - ADR-0003 records the approved full-install default, explicit reduced profiles, release-managed Throughline artifact, and macOS/Windows/Linux setup contract.
 - ADR-0004 adds the approved two-command interactive quickstart while retaining explicit non-interactive dry-run and apply boundaries.
+- ADR-0005 adds the approved public npm distribution sequence: `0.3.0-rc.1` under `next`, then `0.3.0` under `latest` only after the Windows live pilot.
 - Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
 
 ## Next steps
 
-1. Execute `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` test-first.
-2. Publish a GitHub prerelease only after repository and matrix verification pass.
-3. Leave npm registry publication and CR-004 outside the active scope.
+1. Review `docs/superpowers/specs/2026-08-27-npm-registry-distribution-design.md`.
+2. Revise the CR-008 implementation plan to include ADR-0005 before executing it test-first.
+3. Leave CR-004 outside the active scope.
 
 ## Blockers
 

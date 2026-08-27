@@ -1,6 +1,8 @@
 # CR-008 cross-platform full installation
 
-**Goal:** Implement the accepted ADR-0003 and ADR-0004 installation contract without npm registry publication.
+**Goal:** Implement the accepted ADR-0003, ADR-0004, and ADR-0005 installation and distribution contracts.
+
+**Status:** Paused for revision because the linked plan predates ADR-0005 and still excludes npm publication.
 
 Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md`
 
