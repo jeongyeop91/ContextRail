@@ -120,4 +120,3 @@ test('setup returns needs_input and rejects ambiguous or incompatible CLI flags'
     assert.notEqual(stream.output().stderr, '');
   }
 });
-

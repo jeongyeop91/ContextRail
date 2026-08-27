@@ -33,4 +33,3 @@ test('Windows pilot keeps structural, capture, restore, and handoff evidence dis
     assert.ok(pilot.includes(phrase), phrase);
   }
 });
-

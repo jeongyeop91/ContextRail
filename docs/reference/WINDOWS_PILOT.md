@@ -70,4 +70,3 @@ Record only:
 - any stable issue codes.
 
 The stable npm `latest` tag remains blocked until all live items pass and the evidence is added to repository history.
-

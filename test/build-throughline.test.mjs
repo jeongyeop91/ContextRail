@@ -23,4 +23,3 @@ test('copies only the prepared pinned Throughline tarball to the requested outpu
   assert.equal(result.output, output);
   assert.equal(result.evidence.steps.at(-1), 'pack');
 });
-

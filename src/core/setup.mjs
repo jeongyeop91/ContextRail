@@ -66,4 +66,3 @@ export function buildSetupPlan({ options, discovery, components }) {
   };
   return { ...base, id: setupPlanId(base) };
 }
-

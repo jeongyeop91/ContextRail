@@ -47,4 +47,3 @@ jobs:
       - name: Publish stable release under latest
         if: ${{ !contains(steps.release.outputs.version, '-') && vars.WINDOWS_LIVE_VALIDATED == 'true' }}
         run: npm publish "contextrail-${{ steps.release.outputs.version }}.tgz" --access public --tag latest
-

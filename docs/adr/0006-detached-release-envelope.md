@@ -39,4 +39,3 @@ This decision supersedes only the ADR-0003 sentence requiring the package to emb
 ## Consequences
 
 There is no circular digest. The two manifests have distinct responsibilities and a one-way integrity relationship: detached envelope to embedded setup manifest to Throughline artifact. Release tests must prove the envelope and embedded document agree and that the three ContextRail distribution copies are byte-identical.
-

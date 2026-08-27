@@ -27,4 +27,3 @@ test('npm publication uses OIDC, Node 24, explicit dist-tags, and no registry to
   assert.match(workflow, /--tag "?latest"?|--tag latest/);
   assert.equal(/NPM_TOKEN|NODE_AUTH_TOKEN/.test(workflow), false);
 });
-
