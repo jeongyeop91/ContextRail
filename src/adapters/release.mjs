@@ -57,6 +57,7 @@ export async function downloadVerifiedArtifact({ artifact, destination, http = n
   if (!immutableGitHubReleaseUrl(artifact?.url)) throw new Error('Artifact must use an immutable GitHub Release URL');
   if (!/^[a-f\d]{64}$/.test(artifact?.sha256 ?? '')) throw new Error('Artifact SHA-256 is invalid');
   const output = resolve(destination);
+  if (await fs.exists(output)) throw new Error(`Release destination already exists: ${output}`);
   const temporary = `${output}.part-${process.pid}-${Date.now()}`;
   try {
     const response = await openWithRedirects(artifact.url, http);
@@ -78,8 +79,6 @@ export async function downloadVerifiedArtifact({ artifact, destination, http = n
     return { path: output, sha256, bytes };
   } catch (error) {
     await fs.remove(temporary, { force: true });
-    await fs.remove(output, { force: true });
     throw error;
   }
 }
-

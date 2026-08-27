@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -90,6 +90,7 @@ function dependencies(scope) {
     processAdapter: scope.processAdapter,
     downloadArtifact: scope.downloadArtifact,
     tempRoot: scope.root,
+    codexSmoke: { route: 'passed', continue: 'passed', check: 'passed' },
   };
 }
 
@@ -113,6 +114,35 @@ test('existing repositories return needs_input and candidate paths without guess
   assert.equal(scope.downloads(), 0);
 });
 
+test('full setup adopts an explicitly mapped existing repository without changing project-owned files', async () => {
+  const scope = await fixture({ existing: true });
+  await rm(scope.target, { recursive: true, force: true });
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url), scope.target, { recursive: true });
+  const agentsBefore = await readFile(join(scope.target, 'AGENTS.md'), 'utf8');
+  const deps = {
+    ...dependencies(scope),
+    input: { project: 'existing', adoptionConfig: join(scope.target, 'adoption-config.json') },
+  };
+  const planned = await planSetup(deps);
+  assert.equal(planned.plan.status, 'planned');
+  assert.equal(planned.plan.steps.find(({ id }) => id === 'project').action, 'adopt');
+  const result = await applySetup({ planned, approvedPlanId: planned.plan.id, dependencies: deps });
+  assert.equal(result.status, 'installed_live_verification_required');
+  assert.equal(await readFile(join(scope.target, 'AGENTS.md'), 'utf8'), agentsBefore);
+  assert.equal(JSON.parse(await readFile(join(scope.target, '.context-rail/config.json'), 'utf8')).profile, 'existing-repository');
+});
+
+test('explicit project modes cannot silently classify a conflicting target', async () => {
+  const empty = await fixture();
+  const existingMode = await planSetup({ ...dependencies(empty), input: { project: 'existing' } });
+  assert.equal(existingMode.plan.status, 'needs_input');
+
+  const existing = await fixture({ existing: true });
+  const newMode = await planSetup({ ...dependencies(existing), input: { project: 'new' } });
+  assert.equal(newMode.plan.status, 'conflict');
+  assert.equal(newMode.plan.issues[0].code, 'SETUP_PROJECT_MODE_MISMATCH');
+});
+
 test('full apply installs Throughline, initializes the project, appends ContextRail Hooks, enables automation, and records resumable state', async () => {
   const scope = await fixture();
   const planned = await planSetup(dependencies(scope));
@@ -130,6 +160,23 @@ test('full apply installs Throughline, initializes the project, appends ContextR
   const report = await verifySetup({ ...dependencies(scope), liveEvidence: null });
   assert.equal(report.status, 'installed_live_verification_required');
   assert.equal(report.live.throughline, 'unverified');
+});
+
+test('aggregate verification degrades invalid project contracts and missing synthetic Hook evidence', async () => {
+  const scope = await fixture();
+  const deps = dependencies(scope);
+  const planned = await planSetup(deps);
+  await applySetup({ planned, approvedPlanId: planned.plan.id, dependencies: deps });
+  await writeFile(join(scope.target, 'docs/README.md'), `${Array.from({ length: 51 }, (_, index) => `- overflow ${index}`).join('\n')}\n`);
+  const invalid = await verifySetup({ ...deps, codexSmoke: { route: 'passed', continue: 'passed', check: 'passed' } });
+  assert.equal(invalid.status, 'degraded');
+  assert.equal(invalid.project.state, 'not_ready');
+  const invalidCore = await verifySetup({ ...deps, input: { coreOnly: true } });
+  assert.equal(invalidCore.status, 'degraded');
+
+  await writeFile(join(scope.target, 'docs/README.md'), '# Documentation router\n\n- [Project authority](authority/PROJECT.md)\n');
+  const noSmoke = await verifySetup({ ...deps, codexSmoke: { route: 'not_run', continue: 'not_run', check: 'not_run' } });
+  assert.equal(noSmoke.status, 'degraded');
 });
 
 test('core-only apply never downloads or changes HOME', async () => {

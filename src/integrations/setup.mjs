@@ -3,10 +3,12 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
-import { normalizeAdoptionConfig, planExistingRepositoryAdoption } from '../core/adoption.mjs';
+import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
+import { validateDocuments } from '../core/documents.mjs';
 import { buildSetupPlan, classifyProject, normalizeSetupOptions } from '../core/setup.mjs';
 import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
+import { validateState } from '../core/state.mjs';
 import { applyCodexHooksInstall, planCodexHooksInstall, verifyCodexHooks } from './codex-hooks.mjs';
 import { applyManagedInstall, planManagedInstall } from './throughline-install.mjs';
 import { verifyThroughline } from './throughline-verify.mjs';
@@ -99,6 +101,16 @@ export async function planSetup({
   assertMatchingCodexEnvironment({ platform, env, codexHome: resolve(home, '.codex') });
   const discovery = await projectDiscovery(root, fs);
   const options = normalized.options;
+  if (options.project === 'new' && discovery.project.kind !== 'new') {
+    const issues = [{ code: 'SETUP_PROJECT_MODE_MISMATCH', path: 'setup', message: 'The selected target is not a new project', severity: 'error' }];
+    return {
+      plan: { schema: 1, status: 'conflict', id: sha256(issues), profile: options.profile, target: root, platform, project: discovery.project, steps: [], issues, applyRequired: false },
+      execution: null,
+    };
+  }
+  if (options.project === 'existing' && discovery.project.kind === 'new') {
+    discovery.project = { kind: 'existing', candidates: [], configState: 'absent' };
+  }
   let adoptionConfig = null;
   if (options.adoptionConfig) adoptionConfig = await loadAdoptionConfig(options.adoptionConfig, fs);
 
@@ -257,21 +269,32 @@ export async function verifySetup({
   processAdapter,
   existingThroughlineBinary = 'throughline',
   liveEvidence = null,
-  codexSmoke = { route: 'passed', continue: 'passed', check: 'passed' },
+  codexSmoke = { route: 'not_run', continue: 'not_run', check: 'not_run' },
 }) {
   const normalized = normalizeSetupOptions(input);
   if (!normalized.ok) return { status: 'invalid', issues: normalized.issues };
   const profile = normalized.options.profile;
   const configPath = resolve(target, '.context-rail/config.json');
   let config = null;
+  let projectIssues = [];
   try {
     config = JSON.parse(await fs.readText(configPath));
+    if (config.profile === EXISTING_REPOSITORY_PROFILE) {
+      const normalizedConfig = normalizeAdoptionConfig(config);
+      if (!normalizedConfig.ok) projectIssues = normalizedConfig.issues;
+      else config = normalizedConfig.config;
+    }
+    if (projectIssues.length === 0) {
+      const documents = await validateDocuments(target, config, fs);
+      const state = await validateState(target, config, fs);
+      projectIssues = [...documents.issues, ...state.issues];
+    }
   } catch {
     // Reported below as not ready.
   }
-  const project = { state: config ? 'ready' : 'not_ready' };
+  const project = { state: config && projectIssues.length === 0 ? 'ready' : 'not_ready', issues: projectIssues };
   if (profile === 'core_only') {
-    return { status: config ? 'installed' : 'degraded', profile, project, throughline: { state: 'not_selected' }, contextHooks: { state: 'not_selected' }, automation: { enabled: false }, live: { throughline: 'not_selected', context: 'not_selected' } };
+    return { status: project.state === 'ready' ? 'installed' : 'degraded', profile, project, throughline: { state: 'not_selected' }, contextHooks: { state: 'not_selected' }, automation: { enabled: false }, live: { throughline: 'not_selected', context: 'not_selected' } };
   }
 
   let throughline;
@@ -292,10 +315,13 @@ export async function verifySetup({
   let automation = { enabled: false };
   if (['full', 'existing_throughline'].includes(profile)) {
     automation = { ...codexAutomation(config), projectRoot: resolve(target) };
-    contextHooks = await verifyCodexHooks({ home, nodePath: resolve(nodePath), cliPath: resolve(cliPath), projectAutomation: automation, smoke: codexSmoke, fs });
+    const smoke = typeof codexSmoke === 'function' ? await codexSmoke() : codexSmoke;
+    contextHooks = await verifyCodexHooks({ home, nodePath: resolve(nodePath), cliPath: resolve(cliPath), projectAutomation: automation, smoke, fs });
   }
+  const smokeReady = profile === 'memory_without_context_hooks' || Object.values(contextHooks.smoke ?? {}).every((state) => state === 'passed');
   const structural = project.state === 'ready'
     && ['hooks_ready', 'capture_verified'].includes(throughline.state)
+    && smokeReady
     && (profile === 'memory_without_context_hooks' || (contextHooks.state === 'registered' && automation.enabled));
   const live = {
     throughline: liveEvidence?.throughline === true ? 'verified' : 'unverified',

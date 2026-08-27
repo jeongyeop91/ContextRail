@@ -25,10 +25,11 @@ async function fixture() {
   return { root, home, managedRoot, artifact };
 }
 
-function successfulAdapter(home, calls = []) {
+function successfulAdapter(home, calls = [], environments = []) {
   return {
-    async run(executable, args) {
+    async run(executable, args, options = {}) {
       calls.push([executable, ...args]);
+      environments.push(options.env);
       if (executable === 'npm') {
         const prefix = args[args.indexOf('--prefix') + 1];
         const packageRoot = join(prefix, 'node_modules/throughline');
@@ -68,12 +69,14 @@ test('explicit apply preserves unrelated hooks and selects only after verificati
   const scope = await fixture();
   const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.1', manifest });
   const calls = [];
+  const environments = [];
   const nodePath = join(scope.root, 'Node Runtime', 'node.exe');
-  const result = await applyManagedInstall({ plan, apply: true, home: scope.home, nodePath, fs: nodeFilesystem, processAdapter: successfulAdapter(scope.home, calls) });
+  const result = await applyManagedInstall({ plan, apply: true, home: scope.home, nodePath, fs: nodeFilesystem, processAdapter: successfulAdapter(scope.home, calls, environments) });
   assert.equal(result.status, 'installed');
   const binPath = join(plan.releaseDirectory, 'node_modules/throughline/bin/cli.mjs');
   assert.ok(calls.some((call) => call[0] === nodePath && call[1] === binPath && call[2] === '--version'));
   assert.equal(calls.some((call) => call[0].includes('node_modules/.bin') || call[0].endsWith('.cmd')), false);
+  assert.ok(environments.filter(Boolean).every((env) => env.HOME === scope.home && env.USERPROFILE === scope.home));
   const hooks = JSON.parse(await readFile(join(scope.home, '.codex/hooks.json'), 'utf8'));
   assert.ok(hooks.hooks.Stop.some((entry) => entry.command === 'existing-hook'));
   const current = JSON.parse(await readFile(join(scope.managedRoot, 'current.json'), 'utf8'));

@@ -295,6 +295,7 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       downloadArtifact: dependencies.downloadArtifact ?? downloadVerifiedArtifact,
       tempRoot: dependencies.tempRoot ?? tmpdir(),
       existingThroughlineBinary: dependencies.existingThroughlineBinary ?? 'throughline',
+      codexSmoke: dependencies.codexSmoke ?? syntheticCodexHookSmoke,
     };
     const first = await selectedPlanSetup(setupDependencies);
     const explicitApply = args.includes('--apply');

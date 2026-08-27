@@ -84,7 +84,7 @@ export async function applyManagedInstall({ plan, apply, home, nodePath = proces
   if (!inside(plan.managedRoot, plan.releaseDirectory)) throw new Error('Release is outside managed root');
   const previous = await readCurrent(plan, fs);
   const before = await snapshotHome(home, fs);
-  const env = { ...process.env, HOME: home };
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
   try {
     if (await fs.exists(plan.releaseDirectory)) throw new Error('Release directory already exists');
     await fs.mkdir(plan.releaseDirectory, { recursive: true });
@@ -151,7 +151,7 @@ export async function rollbackManagedInstall({ managedRoot, apply, home, nodePat
     if (live[key] !== expected) throw new Error(`Rollback refused because of concurrent change in ${key}`);
   }
   const before = await snapshotHome(home, fs);
-  const env = { ...process.env, HOME: home };
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
   const currentBinary = await resolvePackageBin({ installRoot: currentDirectory, packageName: 'throughline', fs });
   const previousBinary = await resolvePackageBin({ installRoot: previousDirectory, packageName: 'throughline', fs });
   const runThroughline = (binPath, args, options) => {

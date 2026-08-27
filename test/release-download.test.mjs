@@ -41,6 +41,22 @@ test('rejects a bad digest and removes partial output', async () => {
   assert.equal(await nodeFilesystem.exists(destination), false);
 });
 
+test('never deletes a pre-existing destination when a new download cannot be selected', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-release-download-'));
+  const destination = join(root, 'artifact.tgz');
+  await nodeFilesystem.writeBytes(destination, Buffer.from('preserve me'));
+  await assert.rejects(downloadVerifiedArtifact({
+    artifact: {
+      url: 'https://github.com/example/project/releases/download/v1/artifact.tgz',
+      sha256: digest,
+    },
+    destination,
+    http: { open: async () => response() },
+    fs: nodeFilesystem,
+  }), /destination already exists/i);
+  assert.equal((await nodeFilesystem.readBytes(destination)).toString(), 'preserve me');
+});
+
 test('rejects latest URLs and redirects outside approved GitHub hosts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-release-download-'));
   const destination = join(root, 'artifact.tgz');
@@ -63,4 +79,3 @@ test('rejects latest URLs and redirects outside approved GitHub hosts', async ()
     /redirect host/,
   );
 });
-
