@@ -23,6 +23,7 @@ test('loads immutable Throughline provenance with matching patch and license', a
 
 test('keeps hashed patch bytes LF-normalized across Git checkouts', async () => {
   const attributes = await readFile(resolve(ROOT, '.gitattributes'), 'utf8');
+  assert.match(attributes, /^\* text=auto eol=lf$/m);
   assert.match(attributes, /^\*\.patch text eol=lf$/m);
 });
 

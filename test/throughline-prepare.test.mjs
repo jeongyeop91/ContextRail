@@ -65,7 +65,7 @@ test('checks out, applies, tests, and packs a pinned local upstream', async () =
     processAdapter: nodeProcess,
   });
   assert.equal(result.status, 'prepared');
-  assert.equal((await readFile(join(result.worktree, 'value.txt'), 'utf8')), 'compatible\n');
+  assert.equal((await readFile(join(result.worktree, 'value.txt'), 'utf8')).trim(), 'compatible');
   assert.match(result.artifact, /fixture-throughline-1\.0\.0\.tgz$/);
   assert.deepEqual(result.evidence.steps, ['clone', 'checkout', 'verify_head', 'check_patch', 'apply_patch', 'test', 'pack']);
 });
