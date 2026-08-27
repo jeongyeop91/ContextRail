@@ -104,6 +104,7 @@
       "dependsOn": ["CR-005", "CR-007"],
       "acceptance": [
         "A clean macOS, Windows, or Linux computer can follow the README to install the ContextRail CLI and choose a full or explicitly reduced setup profile",
+        "The primary human quickstart uses one stable-name GitHub Release install command followed by interactive contextrail setup, while Codex and CI retain explicit dry-run and apply commands",
         "The default full setup installs or reuses a verified Codex-compatible Throughline, configures ContextRail Hooks, and enables the selected new or existing project through reviewed dry-run and apply boundaries",
         "GitHub Releases publish immutable ContextRail and Throughline artifacts plus a pinned manifest and SHA-256 evidence",
         "Packed-artifact setup and Hook coexistence tests pass on Ubuntu, macOS, and Windows CI",
@@ -116,7 +117,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Review ADR-0003, then create and execute the CR-008 implementation plan"],
+      "nextSteps": ["Review ADR-0003 and ADR-0004, then create and execute the CR-008 implementation plan"],
       "validation": [["npm", "run", "verify"]]
     }
   ]
