@@ -42,3 +42,20 @@ test('unknown commands return CLI usage exit code', async () => {
   assert.equal(await run(['unknown'], stream.io), 2);
   assert.match(stream.output().stderr, /Usage:/);
 });
+
+test('measure record and report keep provenance in local runtime data', async () => {
+  const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-measure-'));
+  const recordStream = capture();
+  const recordCode = await run([
+    'measure', 'record', '--target', target, '--task', 'CR-001', '--session', 'session-a', '--source', 'manual',
+    '--input-tokens', '100', '--output-tokens', '20', '--json',
+  ], recordStream.io);
+  assert.equal(recordCode, 0, recordStream.output().stderr);
+
+  const reportStream = capture();
+  const reportCode = await run(['measure', 'report', '--target', target, '--json'], reportStream.io);
+  assert.equal(reportCode, 0);
+  const report = JSON.parse(reportStream.output().stdout);
+  assert.equal(report.metrics.inputTokens.sources.manual.total, 100);
+  assert.equal(report.metrics.outputTokens.reported.total, 20);
+});
