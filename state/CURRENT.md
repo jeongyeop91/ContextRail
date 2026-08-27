@@ -38,12 +38,14 @@ Active item: none
 - Real-HOME install dry-run and read-only verify left the Hook/config hashes unchanged and did not create a ContextRail receipt.
 - Release commit and annotated tag: `c4b2056` / `v0.2.0`; release asset SHA-256: `767ffc745c62425c0b1d5e8b3ad7ce25ee88238787d031789e121100f30cd2c0`.
 - The published release asset digest matches the verified local artifact, and both `main` and tag GitHub Actions runs completed successfully.
+- ADR-0003 records the approved full-install default, explicit reduced profiles, release-managed Throughline artifact, and macOS/Windows/Linux setup contract.
+- Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
 
 ## Next steps
 
-1. Install or enable Codex automation only through reviewed dry runs and explicit apply commands.
-2. Leave CR-004 proposed until its measurement protocol is deliberately scoped.
-3. Create a new active plan when the next backlog item is selected.
+1. Review ADR-0003 and activate `CR-008` only after the written design is accepted.
+2. Create the `CR-008` implementation plan before changing code or release workflows.
+3. Leave CR-004 proposed until its measurement protocol is deliberately scoped.
 
 ## Blockers
 

@@ -96,6 +96,28 @@
       "sourceHints": ["src/core/automation.mjs", "src/integrations/codex-hook-runtime.mjs", "src/integrations/codex-hooks.mjs", "src/cli/main.mjs", "test/"],
       "nextSteps": ["Use the immutable v0.2.0 release and review dry runs before any user-level or project-level apply"],
       "validation": [["npm", "run", "verify"]]
+    },
+    {
+      "id": "CR-008",
+      "title": "Deliver cross-platform end-to-end installation",
+      "status": "ready",
+      "dependsOn": ["CR-005", "CR-007"],
+      "acceptance": [
+        "A clean macOS, Windows, or Linux computer can follow the README to install the ContextRail CLI and choose a full or explicitly reduced setup profile",
+        "The default full setup installs or reuses a verified Codex-compatible Throughline, configures ContextRail Hooks, and enables the selected new or existing project through reviewed dry-run and apply boundaries",
+        "GitHub Releases publish immutable ContextRail and Throughline artifacts plus a pinned manifest and SHA-256 evidence",
+        "Packed-artifact setup and Hook coexistence tests pass on Ubuntu, macOS, and Windows CI",
+        "Windows live Codex validation remains explicitly pending until the user executes the supplied pilot checklist"
+      ],
+      "authority": [
+        "docs/authority/ARCHITECTURE.md",
+        "docs/authority/OPERATING_MODEL.md",
+        "docs/authority/INTEGRATIONS.md",
+        "docs/authority/VALIDATION.md"
+      ],
+      "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
+      "nextSteps": ["Review ADR-0003, then create and execute the CR-008 implementation plan"],
+      "validation": [["npm", "run", "verify"]]
     }
   ]
 }
