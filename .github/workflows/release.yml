@@ -1,0 +1,41 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: false
+      - name: Verify tag and package version
+        run: node -e "const p=require('./package.json'); if(process.env.GITHUB_REF_NAME !== 'v'+p.version) process.exit(1)"
+      - name: Run repository verification
+        run: npm run verify
+      - name: Build pinned Throughline artifact
+        run: node scripts/build-throughline.mjs --output .release-inputs/throughline-0.10.3-codex.1.tgz
+      - name: Build detached release assets
+        run: node scripts/build-release.mjs --output dist --throughline-artifact .release-inputs/throughline-0.10.3-codex.1.tgz
+      - name: Block stable release without Windows live evidence
+        if: ${{ !contains(github.ref_name, '-') && vars.WINDOWS_LIVE_VALIDATED != 'true' }}
+        run: node -e "throw new Error('WINDOWS_LIVE_VALIDATED must be true for a stable release')"
+      - name: Publish GitHub prerelease
+        if: ${{ contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/* --prerelease --verify-tag --title "${{ github.ref_name }}"
+      - name: Publish stable GitHub release
+        if: ${{ !contains(github.ref_name, '-') && vars.WINDOWS_LIVE_VALIDATED == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/* --verify-tag --title "${{ github.ref_name }}"
+

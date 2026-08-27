@@ -10,21 +10,24 @@ permissions:
 
 jobs:
   node-22:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: false
       - name: Run deterministic tests
         run: npm test
       - name: Validate repository contracts
         run: node bin/contextrail.mjs check
-      - name: Smoke generated project
-        shell: bash
-        run: |
-          generated_root="$(mktemp -d)"
-          node bin/contextrail.mjs init --target "$generated_root" --apply --json
-          node bin/contextrail.mjs check --target "$generated_root"
+      - name: Smoke packed artifact
+        run: node --test test/release.test.mjs
+      - name: Inspect package allowlist
+        run: npm pack --dry-run --json
       - name: Check whitespace
         run: git diff --check

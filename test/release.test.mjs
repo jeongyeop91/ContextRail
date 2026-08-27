@@ -48,9 +48,16 @@ test('packed CLI installs into an isolated prefix and runs version and help', as
   const tarball = join(artifacts, manifest.filename);
 
   await execFile('npm', ['install', '--global', '--prefix', prefix, '--ignore-scripts', tarball], { env });
-  const binary = join(prefix, 'bin/contextrail');
-  const version = await execFile(binary, ['--version'], { env });
+  const cliPath = process.platform === 'win32'
+    ? join(prefix, 'node_modules/contextrail/bin/contextrail.mjs')
+    : join(prefix, 'lib/node_modules/contextrail/bin/contextrail.mjs');
+  const version = await execFile(process.execPath, [cliPath, '--version'], { env });
   assert.equal(version.stdout, '0.3.0-rc.1\n');
-  const help = await execFile(binary, ['--help'], { env });
+  const help = await execFile(process.execPath, [cliPath, '--help'], { env });
   assert.match(help.stdout, /^Usage:/);
+  const target = join(temporary, 'Project With Spaces 한글');
+  const setup = await execFile(process.execPath, [cliPath, 'setup', '--target', target, '--core-only', '--dry-run', '--json'], { env });
+  const plan = JSON.parse(setup.stdout);
+  assert.equal(plan.status, 'planned');
+  assert.equal(plan.profile, 'core_only');
 });

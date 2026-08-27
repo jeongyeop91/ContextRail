@@ -1,0 +1,50 @@
+name: publish-npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing verified GitHub Release tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.tag_name != 'v0.3.0-rc.1' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Select immutable release tag
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: node -e "const tag=process.env.EVENT_NAME==='workflow_dispatch'?process.env.INPUT_TAG:process.env.RELEASE_TAG; if(!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(tag)) process.exit(1); require('fs').appendFileSync(process.env.GITHUB_OUTPUT,'tag='+tag+'\nversion='+tag.slice(1)+'\n')"
+      - name: Download already verified release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "${{ steps.release.outputs.tag }}" --pattern "contextrail-${{ steps.release.outputs.version }}.tgz" --pattern SHA256SUMS.txt --pattern release-manifest.json
+      - name: Verify released tarball checksum
+        run: sha256sum --check --ignore-missing SHA256SUMS.txt
+      - name: Block stable npm promotion without Windows live evidence
+        if: ${{ !contains(steps.release.outputs.version, '-') && vars.WINDOWS_LIVE_VALIDATED != 'true' }}
+        run: node -e "throw new Error('WINDOWS_LIVE_VALIDATED must be true for latest')"
+      - name: Publish prerelease under next
+        if: ${{ contains(steps.release.outputs.version, '-') }}
+        run: npm publish "contextrail-${{ steps.release.outputs.version }}.tgz" --access public --tag next
+      - name: Publish stable release under latest
+        if: ${{ !contains(steps.release.outputs.version, '-') && vars.WINDOWS_LIVE_VALIDATED == 'true' }}
+        run: npm publish "contextrail-${{ steps.release.outputs.version }}.tgz" --access public --tag latest
+

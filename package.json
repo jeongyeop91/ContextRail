@@ -39,6 +39,7 @@
     "access": "public"
   },
   "scripts": {
+    "build:release": "node scripts/build-release.mjs",
     "test": "node --test",
     "check": "node bin/contextrail.mjs check",
     "smoke:template": "node --test --test-name-pattern='repository template applies' test/scaffold.test.mjs",
