@@ -12,10 +12,16 @@ function repositoryPath(root, path) {
   return normalize(relative(root, path)).split(sep).join('/');
 }
 
-async function markdownFiles(fs, directory) {
+async function markdownFiles(fs, directory, recursive = false) {
   if (!(await fs.exists(directory))) return [];
   const entries = await fs.list(directory, { withFileTypes: true });
-  return entries.filter((entry) => entry.isFile() && entry.name.endsWith('.md')).map((entry) => join(directory, entry.name));
+  const files = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.md')).map((entry) => join(directory, entry.name));
+  if (recursive) {
+    for (const entry of entries.filter((candidate) => candidate.isDirectory())) {
+      files.push(...await markdownFiles(fs, join(directory, entry.name), true));
+    }
+  }
+  return files.sort();
 }
 
 async function validateLinks(root, paths, fs, issues) {
@@ -47,14 +53,35 @@ async function validateLinks(root, paths, fs, issues) {
 export async function validateDocuments(root, config, fs) {
   const issues = [];
   const router = resolve(root, config.documentRouter);
-  const authorityRoot = resolve(root, config.authorityDirectory);
-  const authorities = await markdownFiles(fs, authorityRoot);
+  const referenceMode = Array.isArray(config.authority?.roots);
+  const authorityRoots = referenceMode ? config.authority.roots : [config.authorityDirectory];
+  const excluded = referenceMode ? (config.authority.exclude ?? []) : [];
+  const authorities = [];
+  const authorityPaths = new Set();
 
   if (!(await fs.exists(router))) {
     issues.push(issue('MISSING_ROUTER', config.documentRouter, 'Document router does not exist'));
   }
-  if (!(await fs.exists(authorityRoot))) {
-    issues.push(issue('MISSING_AUTHORITY_DIRECTORY', config.authorityDirectory, 'Authority directory does not exist'));
+  for (const authorityRootPath of authorityRoots) {
+    const authorityRoot = resolve(root, authorityRootPath);
+    if (!inside(root, authorityRoot)) {
+      issues.push(issue('PATH_ESCAPES_ROOT', authorityRootPath, 'Authority root escapes repository root'));
+      continue;
+    }
+    if (!(await fs.exists(authorityRoot))) {
+      issues.push(issue(referenceMode ? 'MISSING_AUTHORITY_ROOT' : 'MISSING_AUTHORITY_DIRECTORY', authorityRootPath, 'Authority directory does not exist'));
+      continue;
+    }
+    for (const authority of await markdownFiles(fs, authorityRoot, referenceMode)) {
+      const path = repositoryPath(root, authority);
+      if (excluded.some((entry) => path === entry || path.startsWith(`${entry}/`))) continue;
+      if (authorityPaths.has(path)) {
+        issues.push(issue('DUPLICATE_AUTHORITY_PATH', path, 'Authority document is included by more than one root'));
+        continue;
+      }
+      authorityPaths.add(path);
+      authorities.push(authority);
+    }
   }
 
   let routerText = '';

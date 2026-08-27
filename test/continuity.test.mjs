@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
 
+import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import { buildContinuation } from '../src/core/continuity.mjs';
 
 function item(id, status) {
@@ -67,4 +68,22 @@ test('selects only a unique ready item when CURRENT has no active item', async (
   const many = await buildContinuation(await continuityProject({ active: null, items: [item('CR-1', 'ready'), item('CR-2', 'ready')] }));
   assert.equal(many.status, 'needs_input');
   assert.ok(many.issues.some((entry) => entry.code === 'AMBIGUOUS_READY_ITEMS'));
+});
+
+test('continues reference state without guessing a backlog item', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-continue-'));
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  const config = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
+
+  const result = await buildContinuation(root, { config });
+  assert.equal(result.status, 'ready');
+  assert.equal(result.continuityMode, 'references');
+  assert.deepEqual(result.instructionFiles, ['AGENTS.md']);
+  assert.equal(result.documentRouter, 'docs/README.md');
+  assert.equal(result.current, 'docs/engineering/STATUS.md');
+  assert.equal(result.planDirectory, 'plans');
+  assert.equal(result.backlog, 'backlog/work.yaml');
+  assert.deepEqual(result.validationHints, [['node', '--test']]);
+  assert.match(result.message, /project-specific format/i);
+  assert.equal(result.currentItem, undefined);
 });

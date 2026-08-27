@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -68,4 +68,24 @@ test('accepts a valid routed authority set and relative heading link', async () 
   const result = await validateDocuments(root, config, nodeFilesystem);
   assert.deepEqual(result.issues, []);
   assert.equal(result.ok, true);
+});
+
+test('recursively validates existing authority roots while honoring file and directory excludes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-existing-docs-'));
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
+
+  const result = await validateDocuments(root, existing, nodeFilesystem);
+  assert.equal(result.ok, true, JSON.stringify(result.issues));
+  assert.equal(result.summary.authorityFiles, 3);
+});
+
+test('reports authority files reached through overlapping roots', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-duplicate-docs-'));
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
+  existing.authority.roots.push('docs/architecture');
+
+  const result = await validateDocuments(root, existing, nodeFilesystem);
+  assert.ok(result.issues.some((entry) => entry.code === 'DUPLICATE_AUTHORITY_PATH'));
 });

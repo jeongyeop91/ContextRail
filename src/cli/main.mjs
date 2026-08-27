@@ -77,6 +77,11 @@ async function validateProject(root) {
   } catch (error) {
     return finish([issue('INVALID_CONFIG', '.context-rail/config.json', `Cannot load configuration: ${error.message}`)]);
   }
+  if (config.profile === EXISTING_REPOSITORY_PROFILE) {
+    const normalized = normalizeAdoptionConfig(config);
+    if (!normalized.ok) return normalized;
+    config = normalized.config;
+  }
   const documents = await validateDocuments(root, config, nodeFilesystem);
   const state = await validateState(root, config, nodeFilesystem);
   return finish([...documents.issues, ...state.issues], { documents: documents.summary, state: state.summary });

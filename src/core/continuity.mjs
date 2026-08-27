@@ -12,6 +12,20 @@ function pendingSteps(plan) {
 export async function buildContinuation(root, options = {}) {
   const fs = options.fs ?? nodeFilesystem;
   const config = options.config ?? await loadConfig(root, fs, options.configPath);
+  if (config.state.mode === 'references') {
+    const route = await buildRoute(root, '.', { fs, config });
+    return {
+      status: 'ready',
+      continuityMode: 'references',
+      instructionFiles: route.instructionFiles,
+      documentRouter: config.documentRouter,
+      current: config.state.current,
+      planDirectory: config.state.planDirectory,
+      backlog: config.state.backlog,
+      validationHints: config.validationHints ?? [],
+      message: 'Read the referenced current state and backlog in their project-specific format, then determine the next task without guessing or converting them.',
+    };
+  }
   const currentText = await fs.readText(resolve(root, config.state.current));
   const planText = await fs.readText(resolve(root, config.state.plan));
   const backlog = JSON.parse(await fs.readText(resolve(root, config.state.backlog)));

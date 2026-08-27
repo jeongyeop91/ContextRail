@@ -68,6 +68,23 @@ test('existing-repository adoption requires its profile and config then remains 
   assert.equal(await readFile(join(target, 'AGENTS.md'), 'utf8'), '# Existing repository guide\n\nRead `docs/README.md` and preserve existing project memory.\n');
 });
 
+test('check returns structured reference state after existing-repository apply', async () => {
+  const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-existing-check-'));
+  const fixture = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+  await cp(fixture, target, { recursive: true });
+  const adoptionConfig = join(target, 'adoption-config.json');
+  const applyStream = capture();
+  assert.equal(await run([
+    'adopt', '--target', target, '--profile', 'existing-repository', '--adoption-config', adoptionConfig, '--apply', '--json',
+  ], applyStream.io), 0, applyStream.output().stderr);
+
+  const checkStream = capture();
+  assert.equal(await run(['check', '--target', target, '--json'], checkStream.io), 0, checkStream.output().stderr);
+  const result = JSON.parse(checkStream.output().stdout);
+  assert.equal(result.summary.state.stateMode, 'references');
+  assert.deepEqual(result.summary.state.validationHints, [['node', '--test']]);
+});
+
 test('measure record and report keep provenance in local runtime data', async () => {
   const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-measure-'));
   const recordStream = capture();

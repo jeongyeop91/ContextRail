@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -79,4 +79,30 @@ test('accepts a consistent active state', async () => {
   const result = await validateState(root, config, nodeFilesystem);
   assert.deepEqual(result.issues, []);
   assert.equal(result.ok, true);
+});
+
+test('reference state checks paths without parsing a project-specific backlog', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-state-'));
+  await cp(new URL('./fixtures/existing-repository/', import.meta.url).pathname, root, { recursive: true });
+  const existing = JSON.parse(await nodeFilesystem.readText(join(root, 'adoption-config.json')));
+
+  const result = await validateState(root, existing, nodeFilesystem);
+  assert.equal(result.ok, true, JSON.stringify(result.issues));
+  assert.deepEqual(result.summary, {
+    stateMode: 'references',
+    current: 'docs/engineering/STATUS.md',
+    planDirectory: 'plans',
+    backlog: 'backlog/work.yaml',
+    validationHints: [['node', '--test']],
+  });
+});
+
+test('reference state reports each missing project-owned path', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contextrail-reference-missing-'));
+  const config = {
+    state: { mode: 'references', current: 'missing/current.md', planDirectory: 'missing/plans', backlog: 'missing/backlog.yaml' },
+    validationHints: [],
+  };
+  const result = await validateState(root, config, nodeFilesystem);
+  assert.deepEqual(result.issues.map((entry) => entry.code).sort(), ['MISSING_BACKLOG', 'MISSING_CURRENT', 'MISSING_PLAN_DIRECTORY']);
 });

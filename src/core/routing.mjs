@@ -66,6 +66,23 @@ export async function buildRoute(root, target, options = {}) {
     if (!routerDocuments.includes(path)) routerDocuments.push(path);
   }
 
+  if (config.state.mode === 'references') {
+    return {
+      target: relativePath(root, targetPath),
+      instructionFiles,
+      instructionBytes,
+      documentRouter: config.documentRouter,
+      routerDocuments,
+      referenceState: {
+        mode: 'references',
+        current: config.state.current,
+        planDirectory: config.state.planDirectory,
+        backlog: config.state.backlog,
+      },
+      validationHints: config.validationHints ?? [],
+    };
+  }
+
   const currentText = await fs.readText(resolve(root, config.state.current));
   const backlog = JSON.parse(await fs.readText(resolve(root, config.state.backlog)));
   const activeId = parseCurrentItem(currentText);

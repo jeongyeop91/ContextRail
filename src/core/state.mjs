@@ -38,6 +38,23 @@ export async function readState(root, config, fs) {
 
 export async function validateState(root, config, fs) {
   const issues = [];
+  if (config.state.mode === 'references') {
+    const references = [
+      ['MISSING_CURRENT', config.state.current],
+      ['MISSING_PLAN_DIRECTORY', config.state.planDirectory],
+      ['MISSING_BACKLOG', config.state.backlog],
+    ];
+    for (const [code, path] of references) {
+      if (!(await fs.exists(resolve(root, path)))) issues.push(issue(code, path, 'Referenced project state path does not exist'));
+    }
+    return finish(issues, {
+      stateMode: 'references',
+      current: config.state.current,
+      planDirectory: config.state.planDirectory,
+      backlog: config.state.backlog,
+      validationHints: config.validationHints ?? [],
+    });
+  }
   const { current, plan, backlog: backlogPath } = config.state;
   for (const [code, path] of [['MISSING_CURRENT', current], ['MISSING_BACKLOG', backlogPath]]) {
     if (!(await fs.exists(resolve(root, path)))) issues.push(issue(code, path, 'Required state file does not exist'));
