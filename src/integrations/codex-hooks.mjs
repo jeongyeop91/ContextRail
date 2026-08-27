@@ -25,19 +25,33 @@ async function optionalText(fs, path) {
   return await fs.exists(path) ? fs.readText(path) : null;
 }
 
-function shellQuote(value) {
+function posixQuote(value) {
   return `'${value.replaceAll("'", "'\\''")}'`;
 }
 
+function powerShellQuote(value) {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+export function encodePosixCommand(argv) {
+  return argv.map(posixQuote).join(' ');
+}
+
+export function encodePowerShellCommand(argv) {
+  return `& ${argv.map(powerShellQuote).join(' ')}`;
+}
+
 function desiredEntries(nodePath, cliPath) {
-  const prefix = `${shellQuote(nodePath)} ${shellQuote(cliPath)} hook`;
+  const command = (eventName) => encodePosixCommand([nodePath, cliPath, 'hook', eventName]);
+  const commandWindows = (eventName) => encodePowerShellCommand([nodePath, cliPath, 'hook', eventName]);
   return [
     {
       event: 'UserPromptSubmit',
       group: {
         hooks: [{
           type: 'command',
-          command: `${prefix} user-prompt-submit`,
+          command: command('user-prompt-submit'),
+          commandWindows: commandWindows('user-prompt-submit'),
           timeout: 10,
           statusMessage: 'ContextRail: routing project context',
           additionalContextLimit: 2000,
@@ -49,7 +63,8 @@ function desiredEntries(nodePath, cliPath) {
       group: {
         hooks: [{
           type: 'command',
-          command: `${prefix} stop`,
+          command: command('stop'),
+          commandWindows: commandWindows('stop'),
           timeout: 30,
           statusMessage: 'ContextRail: checking project contracts',
         }],

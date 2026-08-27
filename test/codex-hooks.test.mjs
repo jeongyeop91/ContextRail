@@ -8,12 +8,26 @@ import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import {
   applyCodexHooksInstall,
   applyCodexHooksUninstall,
+  encodePosixCommand,
+  encodePowerShellCommand,
   planCodexHooksInstall,
   planCodexHooksUninstall,
   verifyCodexHooks,
 } from '../src/integrations/codex-hooks.mjs';
 
 const RECEIPT = '.codex/contextrail/hooks-receipt.json';
+
+test('encodes portable Hook argv for POSIX and PowerShell without interpolation', () => {
+  const argv = ["/Applications/Node's Runtime/node", '/프로젝트/CLI & tools/contextrail.mjs', 'hook', 'stop'];
+  assert.equal(
+    encodePosixCommand(argv),
+    "'/Applications/Node'\\''s Runtime/node' '/프로젝트/CLI & tools/contextrail.mjs' 'hook' 'stop'",
+  );
+  assert.equal(
+    encodePowerShellCommand(argv),
+    "& '/Applications/Node''s Runtime/node' '/프로젝트/CLI & tools/contextrail.mjs' 'hook' 'stop'",
+  );
+});
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-codex-hooks-'));
@@ -71,7 +85,10 @@ test('install dry-run plans absolute synchronous hooks and changes no HOME file'
   assert.match(plan.hashes.configAfter, /^[a-f\d]{64}$/);
   for (const entry of plan.entries) {
     const handler = entry.group.hooks[0];
-    assert.match(handler.command, new RegExp(`^'${scope.nodePath.replaceAll("'", "'\\\\''")}' '${scope.cliPath.replaceAll("'", "'\\\\''")}' hook `));
+    const eventName = entry.event === 'UserPromptSubmit' ? 'user-prompt-submit' : 'stop';
+    assert.equal(handler.command, encodePosixCommand([scope.nodePath, scope.cliPath, 'hook', eventName]));
+    assert.match(handler.commandWindows, /^& '/);
+    assert.match(handler.commandWindows, /'hook' '(?:user-prompt-submit|stop)'$/);
     assert.equal(Number.isInteger(handler.timeout), true);
     assert.equal('async' in handler, false);
   }

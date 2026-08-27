@@ -45,6 +45,7 @@ test('hooks install is plan-first, explicitly applies, verifies smoke, and unins
   const plan = JSON.parse(dryRun.output().stdout);
   assert.equal(plan.status, 'planned');
   assert.equal(plan.applyRequired, true);
+  assert.ok(plan.entries.every((entry) => entry.commandWindows.startsWith("& '")));
   assert.equal('before' in plan, false);
   assert.equal('after' in plan, false);
   assert.equal(await readFile(join(scope.home, '.codex/hooks.json'), 'utf8'), before);

@@ -142,6 +142,7 @@ function publicHooksPlan(plan, applied = null) {
     entries: plan.entries?.map((entry) => ({
       event: entry.event,
       command: entry.group.hooks[0].command,
+      commandWindows: entry.group.hooks[0].commandWindows,
       timeout: entry.group.hooks[0].timeout,
     })) ?? [],
     applyRequired: plan.status === 'planned' && applied === null,
