@@ -69,3 +69,31 @@ test('Throughline prepare dry-run returns the pinned plan without external work'
   assert.match(plan.baseCommit, /^[a-f\d]{40}$/);
   assert.equal(plan.steps[0].action, 'clone');
 });
+
+test('Throughline install dry-run plans a managed release without creating it', async () => {
+  const managedRoot = join(await mkdtemp(join(tmpdir(), 'contextrail-cli-managed-parent-')), 'managed');
+  const stream = capture();
+  const code = await run(['throughline', 'install', '--dry-run', '--managed-root', managedRoot, '--json'], stream.io);
+  assert.equal(code, 0, stream.output().stderr);
+  const plan = JSON.parse(stream.output().stdout);
+  assert.equal(plan.status, 'planned');
+  assert.equal(plan.applyRequired, true);
+  assert.equal(plan.releaseDirectory.startsWith(managedRoot), true);
+});
+
+test('Throughline verify reports structured readiness through a read-only adapter', async () => {
+  const stream = capture();
+  const processAdapter = {
+    async run(_binary, args) {
+      if (args[0] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      return {
+        code: 0,
+        stdout: JSON.stringify({ schema: 'throughline.native_factory_diagnostics.v1', overall: { status: 'ready' }, hooks: { status: 'ready' }, readiness: {} }),
+        stderr: '',
+      };
+    },
+  };
+  const code = await run(['throughline', 'verify', '--json'], stream.io, { processAdapter });
+  assert.equal(code, 0);
+  assert.equal(JSON.parse(stream.output().stdout).state, 'hooks_ready');
+});

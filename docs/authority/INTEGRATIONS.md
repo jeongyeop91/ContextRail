@@ -14,6 +14,12 @@ Compatibility uses an immutable upstream commit, a separately hashed patch, the 
 
 Preparation may clone, patch, test, and pack in a temporary root. Installation requires explicit apply and uses a versioned ContextRail-managed prefix. It does not replace unrelated global packages or edit shell startup files. Receipts and hashes guard selection and rollback.
 
+`throughline install --dry-run` is plan-only. Apply requires an explicit prepared artifact. A release is selected only after package installation, version execution, hook installation, and structured factory diagnostics succeed. The receipt records source, patch, artifact, and before/after configuration hashes.
+
+Rollback refuses to run if live configuration differs from the selected release receipt, restores configuration on a failed transition, and selects only a prior ContextRail-managed release. It does not remove unrelated packages or hooks.
+
 ## Readiness
 
 Readiness states are `absent`, `prepared`, `installed`, `hooks_ready`, `capture_verified`, `degraded`, and `incompatible`. Capture verification requires structured evidence of non-empty captured layers; the presence of hook declarations alone is insufficient.
+
+Ordinary verification invokes only the selected binary's version and `factory-diagnostics --json`. Human `doctor --codex` output is an optional read-only passthrough. ContextRail never opens the Throughline database to infer readiness.

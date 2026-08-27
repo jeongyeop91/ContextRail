@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
+import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
+import { nodeProcess } from '../adapters/process.mjs';
 import { buildContinuation } from '../core/continuity.mjs';
 import { validateDocuments } from '../core/documents.mjs';
 import { appendMeasurement, readMeasurements, summarizeMeasurements } from '../core/measurement.mjs';
@@ -11,7 +13,9 @@ import { buildRoute } from '../core/routing.mjs';
 import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
 import { loadThroughlineManifest } from '../integrations/throughline-manifest.mjs';
+import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from '../integrations/throughline-install.mjs';
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
+import { verifyThroughline } from '../integrations/throughline-verify.mjs';
 
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const USAGE = `Usage:
@@ -22,6 +26,10 @@ const USAGE = `Usage:
   contextrail measure record --task ID --source SOURCE [metric options] [--target PATH] [--json]
   contextrail measure report [--target PATH] [--json]
   contextrail throughline prepare --dry-run [--target PATH] [--json]
+  contextrail throughline install --dry-run [--managed-root PATH] [--json]
+  contextrail throughline install --apply --artifact FILE [--managed-root PATH] [--json]
+  contextrail throughline verify [--binary FILE] [--doctor] [--json]
+  contextrail throughline rollback --apply [--managed-root PATH] [--json]
 `;
 
 function optionValue(args, name) {
@@ -31,7 +39,7 @@ function optionValue(args, name) {
 
 function unknownOptions(args, positionalCount, supported) {
   const options = new Set(supported);
-  const flags = new Set(['--json', '--dry-run', '--apply']);
+  const flags = new Set(['--json', '--dry-run', '--apply', '--doctor']);
   let positionals = 0;
   for (let index = 1; index < args.length; index += 1) {
     const value = args[index];
@@ -97,7 +105,7 @@ function publicScaffoldPlan(plan, applied = null) {
   };
 }
 
-export async function run(args = process.argv.slice(2), io = process) {
+export async function run(args = process.argv.slice(2), io = process, dependencies = {}) {
   const command = args[0];
   const targetValue = optionValue(args, '--target');
   if (args.includes('--target') && !targetValue) {
@@ -223,8 +231,89 @@ export async function run(args = process.argv.slice(2), io = process) {
     return 0;
   }
 
+  if (command === 'throughline' && args[1] === 'install') {
+    if (unknownOptions(args, 1, ['--target', '--json', '--dry-run', '--apply', '--managed-root', '--artifact']) || (args.includes('--dry-run') === args.includes('--apply'))) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const loaded = await loadThroughlineManifest(root, nodeFilesystem);
+    if (!loaded.ok) {
+      writeStructured(loaded, json, io);
+      return 1;
+    }
+    const managedRoot = resolve(optionValue(args, '--managed-root') ?? joinHome(dependencies.home ?? homedir(), '.local/share/contextrail/throughline'));
+    const artifact = resolve(optionValue(args, '--artifact') ?? resolve(root, `.context-rail/runtime/throughline/throughline-${loaded.manifest.packageVersion}.tgz`));
+    const plan = planManagedInstall({ managedRoot, artifact, version: loaded.manifest.packageVersion, manifest: loaded.manifest });
+    if (args.includes('--dry-run')) {
+      const { manifest, ...publicPlan } = plan;
+      writeStructured({ ...publicPlan, applyRequired: true, artifactPrepared: await nodeFilesystem.exists(artifact) }, json, io);
+      return 0;
+    }
+    if (!optionValue(args, '--artifact')) {
+      io.stderr.write('throughline install --apply requires --artifact\n');
+      return 2;
+    }
+    try {
+      const result = await applyManagedInstall({
+        plan,
+        apply: true,
+        home: dependencies.home ?? homedir(),
+        fs: nodeFilesystem,
+        processAdapter: dependencies.processAdapter ?? nodeProcess,
+      });
+      writeStructured(result, json, io);
+      return 0;
+    } catch (error) {
+      io.stderr.write(`${error.message}\n`);
+      return 3;
+    }
+  }
+
+  if (command === 'throughline' && args[1] === 'verify') {
+    if (unknownOptions(args, 1, ['--target', '--json', '--binary', '--doctor'])) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const adapter = dependencies.processAdapter ?? nodeProcess;
+    const binary = optionValue(args, '--binary') ?? 'throughline';
+    const result = await verifyThroughline({ binary, processAdapter: adapter });
+    writeStructured(result, json, io);
+    if (args.includes('--doctor') && !json) {
+      const doctor = await adapter.run(binary, ['doctor', '--codex'], { timeoutMs: 30000 });
+      io.stdout.write(doctor.stdout);
+      if (doctor.stderr) io.stderr.write(doctor.stderr);
+    }
+    return ['hooks_ready', 'capture_verified'].includes(result.state) ? 0 : 3;
+  }
+
+  if (command === 'throughline' && args[1] === 'rollback') {
+    if (unknownOptions(args, 1, ['--target', '--json', '--apply', '--managed-root']) || !args.includes('--apply')) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const managedRoot = resolve(optionValue(args, '--managed-root') ?? joinHome(dependencies.home ?? homedir(), '.local/share/contextrail/throughline'));
+    try {
+      const result = await rollbackManagedInstall({
+        managedRoot,
+        apply: true,
+        home: dependencies.home ?? homedir(),
+        fs: nodeFilesystem,
+        processAdapter: dependencies.processAdapter ?? nodeProcess,
+      });
+      writeStructured(result, json, io);
+      return 0;
+    } catch (error) {
+      io.stderr.write(`${error.message}\n`);
+      return 3;
+    }
+  }
+
   io.stderr.write(USAGE);
   return 2;
 }
 
 export { validateProject };
+
+function joinHome(home, suffix) {
+  return resolve(home, ...suffix.split('/'));
+}

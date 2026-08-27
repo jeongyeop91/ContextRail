@@ -3,7 +3,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 import { finish, issue } from '../core/result.mjs';
 
-const KEYS = new Set(['schema', 'repository', 'baseCommit', 'compatibilityCommit', 'patch', 'license', 'tests', 'pack', 'removalCondition']);
+const KEYS = new Set(['schema', 'repository', 'baseCommit', 'compatibilityCommit', 'packageVersion', 'patch', 'license', 'tests', 'pack', 'removalCondition']);
 
 function inside(root, path) {
   const value = relative(root, path);
@@ -25,6 +25,9 @@ export async function validateThroughlineManifest(root, manifest, fs) {
   }
   for (const field of ['baseCommit', 'compatibilityCommit']) {
     if (!/^[a-f\d]{40}$/.test(manifest?.[field] ?? '')) issues.push(issue('INVALID_THROUGHLINE_COMMIT', 'integrations/throughline/source.json', `${field} must be an immutable 40-hex commit`));
+  }
+  if (!/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(manifest?.packageVersion ?? '')) {
+    issues.push(issue('INVALID_THROUGHLINE_PACKAGE_VERSION', 'integrations/throughline/source.json', 'packageVersion must be an immutable semantic version'));
   }
   if (!validArgvList(manifest?.tests)) issues.push(issue('INVALID_THROUGHLINE_TEST_ARGV', 'integrations/throughline/source.json', 'Tests must be node/npm argv arrays'));
   if (!validArgvList(manifest?.pack ? [manifest.pack] : null) || manifest?.pack?.[0] !== 'npm') issues.push(issue('INVALID_THROUGHLINE_PACK_ARGV', 'integrations/throughline/source.json', 'Pack must be an npm argv array'));

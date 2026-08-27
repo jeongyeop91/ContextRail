@@ -1,4 +1,4 @@
-import { access, appendFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { access, appendFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 
 export const nodeFilesystem = {
   async exists(path) {
@@ -11,6 +11,9 @@ export const nodeFilesystem = {
   },
   readText(path) {
     return readFile(path, 'utf8');
+  },
+  readBytes(path) {
+    return readFile(path);
   },
   writeText(path, content) {
     return writeFile(path, content, 'utf8');
@@ -26,5 +29,11 @@ export const nodeFilesystem = {
   },
   stat(path) {
     return stat(path);
+  },
+  rename(from, to) {
+    return rename(from, to);
+  },
+  remove(path, options = {}) {
+    return rm(path, options);
   },
 };
