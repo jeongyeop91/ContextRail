@@ -6,7 +6,7 @@ The latest `0.1.x` release and the latest commit on the default branch are evalu
 
 ## Reporting
 
-Use GitHub private vulnerability reporting after the public repository is created. Until then, contact the repository owner through an agreed private channel. Do not open a public issue containing an exploit, secret, personal path, private repository content, or raw agent transcript.
+Use [GitHub private vulnerability reporting](https://github.com/jeongyeop91/ContextRail/security/advisories/new). Do not open a public issue containing an exploit, secret, personal path, private repository content, or raw agent transcript.
 
 Include a minimal reproduction, affected command and version, impact, and whether the issue requires a write-capable command. Use synthetic fixtures and a temporary HOME whenever possible.
 

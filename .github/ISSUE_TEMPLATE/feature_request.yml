@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a focused, product-neutral ContextRail improvement
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ContextRail keeps core behavior offline, product-neutral, and safe by default. Explain the user problem before proposing an implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What task is difficult or impossible today, and who experiences it?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable success without prescribing internal implementation details.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - scaffolding and adoption
+        - documentation and authority
+        - state and continuity
+        - routing
+        - validation
+        - measurement
+        - optional integrations
+        - packaging and installation
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe workarounds or smaller changes you considered.
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Project boundaries
+      options:
+        - label: The request is product-neutral and does not require copying private project material.
+          required: true
+        - label: The request preserves plan-first writes and explicit apply boundaries.
+          required: true

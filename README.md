@@ -1,92 +1,112 @@
 # ContextRail
 
-ContextRail is a repository-local operating foundation for coding agents. It routes an agent to the smallest relevant instruction and authority set, keeps durable project state in files, validates the contracts offline, and makes a new conversation continuable without treating raw chat history as project memory.
+[![verify](https://github.com/jeongyeop91/ContextRail/actions/workflows/verify.yml/badge.svg)](https://github.com/jeongyeop91/ContextRail/actions/workflows/verify.yml)
+[![GitHub release](https://img.shields.io/github/v/release/jeongyeop91/ContextRail)](https://github.com/jeongyeop91/ContextRail/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js 22.13+](https://img.shields.io/badge/Node.js-22.13%2B-339933)](package.json)
 
-The project is product-neutral. It was informed by read-only analysis of mature project-operating patterns, but contains no Rathon product rules, documents, or source.
+ContextRail is a repository-local operating foundation for coding agents. It helps an agent load only relevant instructions and authority, follow durable project state, validate changes, and continue work in a new conversation without treating chat history as project memory.
 
-## What it provides
+ContextRail is product-neutral, has no production npm dependencies, and works offline for its core commands. Throughline integration is optional.
+
+## Choose your workflow
+
+| Your repository | Start here |
+| --- | --- |
+| New or empty | [Create a neutral project](#create-a-new-project) |
+| Existing, with its own docs and state | [Adopt an existing repository](#adopt-an-existing-repository) |
+| Created from this GitHub template | [Use the template repository](#use-the-template-repository) |
+| Already uses ContextRail | Run `contextrail check`, `route`, or `continue` |
+
+## What ContextRail provides
 
 - Hierarchical root and subtree `AGENTS.md` instructions.
-- A documentation router limited to 50 lines.
-- Indexed Active Authority limited to 500 lines per file.
-- A `search -> locate -> bounded read -> modify -> targeted validation` operating loop.
-- `CURRENT.md`, one active `PLAN.md`, structured `BACKLOG.json`, and ADR-based memory.
-- Safe bootstrap, adoption, and hash-guarded upgrade planning.
-- Deterministic `route` and `continue` projections.
-- Git-ignored local context and continuity measurements with provenance.
-- An optional, reproducible Throughline compatibility bridge.
+- A short documentation router and bounded Active Authority.
+- A `search -> locate -> bounded read -> modify -> targeted validation` loop.
+- Native `CURRENT.md`, `PLAN.md`, `BACKLOG.json`, and ADR-based memory.
+- References mode for repositories that already own their state and backlog formats.
+- Plan-first `init`, `adopt`, and hash-guarded `upgrade` operations.
+- Deterministic `check`, `route`, and `continue` projections.
+- Local, provenance-labelled context measurements.
+- An optional, separately managed Throughline bridge.
 
-ContextRail does not claim a token-reduction percentage. Meaningful claims require comparable tasks, a declared baseline, and measurements whose reported and estimated provenance remains separate.
+ContextRail does not claim a token-reduction percentage. Performance claims require comparable tasks, a declared baseline, and measurements with explicit provenance.
 
 ## Requirements
 
 - Node.js 22.13 or newer.
 - Git for repository workflows and optional Throughline preparation.
-- No production npm dependencies.
+- npm for global installation from the GitHub Release package.
 
-Core checks, routing, continuation, scaffolding, and measurement work offline and do not require Throughline, Codex, a service, or a global npm package.
+ContextRail does not require Codex, Throughline, a hosted service, or a globally installed package for checkout-based use.
 
-## Quick start
+## Install ContextRail
 
-From a ContextRail checkout:
+ContextRail is not published to the npm registry. The recommended global installation source is the verified package attached to the latest GitHub Release.
+
+### Install the v0.1.0 release
 
 ```bash
-npm test
-node bin/contextrail.mjs check
-node bin/contextrail.mjs route src/core/documents.mjs --json
-node bin/contextrail.mjs continue --json
+npm install --global \
+  https://github.com/jeongyeop91/ContextRail/releases/download/v0.1.0/contextrail-0.1.0.tgz
+
+contextrail --version
+contextrail --help
 ```
 
-Print CLI help or the installed release version with `contextrail --help` and `contextrail --version`.
+Expected version:
 
-## Installation
+```text
+0.1.0
+```
 
-ContextRail is not published to the npm registry. Run it directly from a checkout, or install the verified `v0.1.0` GitHub Release artifact:
+### Run from a checkout
 
 ```bash
-# Checkout usage
 git clone https://github.com/jeongyeop91/ContextRail.git
 cd ContextRail
 node bin/contextrail.mjs --version
-
-# Global CLI from the GitHub Release asset
-npm install --global \
-  https://github.com/jeongyeop91/ContextRail/releases/download/v0.1.0/contextrail-0.1.0.tgz
-contextrail --version
+npm test
 ```
 
-The tag source is also installable with `npm install --global https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.1.0.tar.gz`. Remove only this CLI with `npm uninstall --global contextrail`; neither installation nor removal manages Throughline, Codex hooks, skills, configuration, or shell startup files.
+You can also install the immutable tag source:
 
-All write-capable project commands default to a plan or accept an explicit dry run. Apply a generated foundation only after reviewing the plan:
+```bash
+npm install --global \
+  https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.1.0.tar.gz
+```
+
+### Update or remove
+
+Re-run the release installation command to replace an older ContextRail CLI. Remove only ContextRail with:
+
+```bash
+npm uninstall --global contextrail
+```
+
+Installation and removal do not manage Throughline, Codex hooks, skills, configuration, other global npm packages, or shell startup files.
+
+## Create a new project
+
+Write-capable commands are plan-first. Review the dry run before applying it.
 
 ```bash
 project_root="$(mktemp -d)"
-node bin/contextrail.mjs init --target "$project_root" --dry-run --json
-node bin/contextrail.mjs init --target "$project_root" --apply --json
-node bin/contextrail.mjs check --target "$project_root"
+
+contextrail init --target "$project_root" --dry-run --json
+contextrail init --target "$project_root" --apply --json
+contextrail check --target "$project_root" --json
 ```
 
-`init` accepts only an empty target except `.git`. Neutral `adopt` creates missing scaffold files while preserving existing files. `upgrade` changes a scaffold-owned file only when its current SHA-256 matches the previously recorded owned hash; there is no general force-overwrite option.
+`init` accepts an empty target, except that an existing `.git` directory is allowed. The generated neutral project contains hierarchical instructions, a routed authority document, and native file memory.
+
+Next, ask an agent to start with the generated `AGENTS.md`, `docs/README.md`, and `state/CURRENT.md`.
 
 ## Adopt an existing repository
 
-Use the `existing-repository` profile when a mature project already has instructions, documentation, status, plans, and a backlog. Put the mapping in a JSON file outside or inside the target, review a dry run, and then apply the same plan:
+Use `existing-repository` when a mature project already has instructions, documentation, status, plans, and a backlog. ContextRail maps those files instead of creating competing authority or state.
 
-```bash
-node /path/to/ContextRail/bin/contextrail.mjs adopt \
-  --target /path/to/project \
-  --profile existing-repository \
-  --adoption-config /path/to/adoption-config.json \
-  --dry-run --json
-
-node /path/to/ContextRail/bin/contextrail.mjs adopt \
-  --target /path/to/project \
-  --profile existing-repository \
-  --adoption-config /path/to/adoption-config.json \
-  --apply --json
-```
-
-The schema maps, rather than replaces, existing files:
+Create a repository-specific JSON mapping:
 
 ```json
 {
@@ -109,74 +129,182 @@ The schema maps, rather than replaces, existing files:
 }
 ```
 
-All mapped paths are repository-relative. Authority roots are recursive; exclusions may name a file or a directory subtree. Validation hints must be argv arrays and are returned by `check`, `route`, and `continue` but never executed automatically.
-
-Apply creates only `.context-rail/config.json`, `.context-rail/version.json`, and `.context-rail/.gitignore`. The latter ignores only `runtime/`. Existing instructions, router, authority, current state, plans, backlog, and root `.gitignore` remain project-owned and unchanged.
-
-## GitHub Template Repository use
-
-This repository is self-hosting and can be marked as a GitHub Template Repository. A repository created from it includes the ContextRail CLI, tests, project memory, and the neutral project scaffold under `templates/project/`. Replace ContextRail's own state and authority when using the copy as a new control repository, or use its `init` command to create a clean product repository.
-
-For a repository that does not yet have its own authority and state layout, keep a ContextRail checkout available and review neutral adoption before apply:
+Then review and apply:
 
 ```bash
-node /path/to/ContextRail/bin/contextrail.mjs adopt --target /path/to/project --dry-run --json
-node /path/to/ContextRail/bin/contextrail.mjs adopt --target /path/to/project --apply --json
+contextrail adopt \
+  --target /path/to/project \
+  --profile existing-repository \
+  --adoption-config /path/to/adoption-config.json \
+  --dry-run --json
+
+contextrail adopt \
+  --target /path/to/project \
+  --profile existing-repository \
+  --adoption-config /path/to/adoption-config.json \
+  --apply --json
 ```
 
-The generated files remain useful without the CLI, but retaining a ContextRail checkout or packaged release is required to run automated checks and upgrades.
+All mapped paths must be repository-relative. Authority roots are recursive; exclusions can name a file or directory subtree. Validation hints must be argv arrays and are returned as data, never executed automatically.
 
-## Context workflow
+Existing-repository apply creates only:
 
-Start with `docs/README.md`. It routes each task to current authority rather than asking an agent to ingest the entire documentation tree. Then read `state/CURRENT.md` and the matching backlog item.
+- `.context-rail/config.json`
+- `.context-rail/version.json`
+- `.context-rail/.gitignore`, containing only `runtime/`
 
-`route PATH` reports:
+It does not modify existing `AGENTS.md`, the document router, authority, current state, plans, backlog, or root `.gitignore`.
 
-- applicable `AGENTS.md` files in root-to-target order;
-- routed documents and instruction bytes;
-- the active item and its targeted validation argv.
+## Native state and references mode
 
-`continue` performs no model call, mutation, Git operation, or test. It deterministically returns the current work, up to two pending plan steps, authority, source hints, and validation. Blocked or ambiguous state returns stable issues instead of selecting unrelated work.
+| Behavior | Native state | References mode |
+| --- | --- | --- |
+| Intended repository | New or neutral project | Mature existing project |
+| Current state | ContextRail Markdown contract | Existing project file |
+| Plan | One active ContextRail plan | Existing plan directory |
+| Backlog | ContextRail JSON schema | Existing format, including YAML |
+| `continue` | Selects a consistent active or ready item | Returns paths without guessing an item |
+| File ownership | Generated state is scaffold-owned | Mapped state remains project-owned |
 
-## Validation
+## Everyday workflow
+
+Route context before opening broad parts of the repository:
+
+```bash
+contextrail check --target /path/to/project --json
+contextrail route src/example.mjs --target /path/to/project --json
+contextrail continue --target /path/to/project --json
+```
+
+`route` returns applicable `AGENTS.md` files in root-to-target order, the document router and linked documents, state context, and validation hints. `continue` performs no model call, Git operation, test, or mutation.
+
+## Command reference
+
+| Command | Purpose | Writes by default |
+| --- | --- | --- |
+| `contextrail --version` | Print the installed version | No |
+| `contextrail --help` | Print CLI usage | No |
+| `contextrail init` | Plan or create a neutral foundation in an empty target | No |
+| `contextrail adopt` | Plan or add missing neutral scaffold files | No |
+| `contextrail adopt --profile existing-repository` | Map an existing repository without duplicate state | No |
+| `contextrail upgrade` | Update only files matching prior owned hashes | No |
+| `contextrail check` | Validate documentation and state contracts | No |
+| `contextrail route PATH` | Return instructions and routed context for a target | No |
+| `contextrail continue` | Return deterministic continuation context | No |
+| `contextrail measure record` | Append an explicit local measurement | Yes |
+| `contextrail measure report` | Summarize local measurements | No |
+| `contextrail throughline prepare` | Plan reproducible Throughline preparation | No |
+| `contextrail throughline install` | Plan or explicitly apply managed installation | No |
+| `contextrail throughline verify` | Read Throughline version and diagnostics | No |
+| `contextrail throughline rollback` | Explicitly restore managed integration state | No |
+
+Run `contextrail --help` for supported flags. Project commands use exit code `0` for success, `1` for project contract violations, `2` for invalid CLI/configuration input, and `3` for external integration failures.
+
+## Use the template repository
+
+Choose **Use this template** on [the ContextRail repository](https://github.com/jeongyeop91/ContextRail), or open [Create a repository from ContextRail](https://github.com/new?template_name=ContextRail&template_owner=jeongyeop91).
+
+A template copy contains the self-hosting CLI, tests, file memory, and neutral scaffold. Replace ContextRail's project-specific authority and state when the copy becomes a different control repository. To initialize another product repository, use the CLI's `init` command instead.
+
+## Validation and development
+
+From a checkout:
 
 ```bash
 npm test
-node bin/contextrail.mjs check --json
+npm run check
+npm run smoke:template
 npm run verify
+npm pack --dry-run
 ```
 
-`check` validates the bounded router and authority set, relative file and heading links, root confinement, backlog IDs/status/dependencies, CURRENT consistency, and the single-plan contract. Exit codes are `0` success, `1` repository violations, `2` CLI/configuration errors, and `3` external integration failure or incompatibility.
+`check` validates router and authority limits, relative Markdown links and anchors, root confinement, native backlog consistency, or references-mode path existence. The default check is offline and does not fetch external links or run validation hints.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development contract.
 
 ## Local measurement
 
 ```bash
-node bin/contextrail.mjs measure record \
+contextrail measure record \
   --task CR-001 --session local-session --source manual \
   --input-tokens 100 --output-tokens 20
-node bin/contextrail.mjs measure report --json
+contextrail measure report --json
 ```
 
-Records are JSONL under `.context-rail/runtime/`, which Git ignores. Session identifiers are hashed. Only numeric metrics are accepted; prompts, responses, transcripts, secrets, and personal paths are rejected. Sources are `host_reported`, `tool_reported`, `manual`, and `estimated`, and reports never merge estimates into reported aggregates.
+Records are JSONL under `.context-rail/runtime/`, which Git ignores. Session identifiers are hashed. Prompts, responses, transcripts, secrets, and personal paths are rejected. Estimated values remain separate from reported aggregates.
 
 ## Optional Throughline bridge
 
-Throughline and ContextRail have separate responsibilities. ContextRail owns repository routing, authority, file memory, validation hints, and measurements. Throughline owns capture, restore, handoff, hooks, monitoring, and its database.
-
-Preparation is reproducible and plan-first:
+ContextRail owns repository routing, authority, file memory, validation hints, and measurements. Throughline independently owns capture, restore, handoff, hooks, monitoring, and its database.
 
 ```bash
-node bin/contextrail.mjs throughline prepare --dry-run --json
-node bin/contextrail.mjs throughline install --dry-run --json
-node bin/contextrail.mjs throughline verify --json
+contextrail throughline prepare --dry-run --json
+contextrail throughline install --dry-run --json
+contextrail throughline verify --json
 ```
 
-The repository stores only immutable provenance, a hashed compatibility patch, the upstream MIT license, and synthetic tests—not the full Throughline source. Real preparation checks out the pinned base in a temporary directory, verifies HEAD, checks/applies the patch, runs the configured suites, and packs an artifact.
+Real installation requires explicit apply and a prepared artifact. ContextRail core works without Throughline. See [the integration authority](docs/authority/INTEGRATIONS.md) and [integration README](integrations/throughline/README.md) for details.
 
-Installation requires both `--apply` and an explicit prepared tarball. It uses a versioned ContextRail-managed prefix, preserves unrelated hook entries, writes a receipt, and selects the release only after diagnostics. Rollback is also explicit and refuses concurrent configuration changes. Ordinary verification is read-only and does not open the Throughline database.
+## Safety model
 
-## Project status
+- Write-capable project commands expose a plan and require explicit `--apply` to write.
+- Existing files are skipped or reported as conflicts unless ownership hashes prove a safe upgrade.
+- Repository paths are normalized and confined to the selected root.
+- Executable boundaries use argv arrays rather than shell command strings.
+- Core checks do not mutate the repository or user environment.
+- Runtime measurements and generated package archives are Git-ignored.
 
-The MIT-licensed `v0.1.0` release is published at [jeongyeop91/ContextRail](https://github.com/jeongyeop91/ContextRail), which is a public GitHub Template Repository. Its attached package was verified in an isolated prefix before release. ContextRail is not published to the npm registry.
+See [SECURITY.md](SECURITY.md) for supported versions, reporting, and security boundaries.
 
-See [documentation routing](docs/README.md), [architecture](docs/authority/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [third-party notices](THIRD_PARTY_NOTICES.md).
+## Troubleshooting
+
+### `contextrail: command not found`
+
+Confirm the npm global prefix and executable location:
+
+```bash
+npm config get prefix
+npm list --global contextrail --depth=0
+```
+
+Add the prefix's `bin` directory to `PATH` using your operating system or shell documentation. ContextRail does not edit shell startup files.
+
+### Node.js version errors
+
+Run `node --version`. ContextRail requires Node.js 22.13 or newer.
+
+### `init` reports `TARGET_NOT_EMPTY`
+
+Use `init` only for an empty target. Use neutral `adopt` for a partially prepared repository or `existing-repository` for a mature repository with its own authority and state.
+
+### Adoption or upgrade reports a conflict
+
+Do not remove ownership checks or force an overwrite. Review the reported file, preserve user-owned content, and decide whether the repository mapping or file ownership is correct.
+
+### `check` returns issues
+
+Use the stable issue `code`, `path`, and `message` fields in JSON output. Fix the referenced project contract and run the narrowest relevant validation before repeating the full check.
+
+## Project links
+
+- [Latest release](https://github.com/jeongyeop91/ContextRail/releases/latest)
+- [Changelog](CHANGELOG.md)
+- [Documentation router](docs/README.md)
+- [Architecture](docs/authority/ARCHITECTURE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+Use the GitHub issue forms for reproducible bugs and scoped feature requests. Report vulnerabilities privately as described in the security policy.
+
+## License
+
+ContextRail is available under the [MIT License](LICENSE).
+
+## Known limitations
+
+- No npm registry publication; installation uses a GitHub release or tag.
+- Node.js 22.13 or newer is required.
+- Validation hints are returned but never executed automatically.
+- Throughline is optional and independently installed.
+- No GUI, hosted telemetry, vector index, or RAG service is included.

@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a reproducible problem in ContextRail
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove secrets, personal paths, private repository content, and raw agent transcripts before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: ContextRail version
+      description: Run `contextrail --version`.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Run `node --version`.
+      placeholder: v22.13.0
+    validations:
+      required: true
+  - type: dropdown
+    id: command
+    attributes:
+      label: Affected command
+      options:
+        - init
+        - adopt
+        - upgrade
+        - check
+        - route
+        - continue
+        - measure
+        - throughline
+        - installation or packaging
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use a temporary directory and synthetic files where possible.
+      placeholder: List the smallest commands and files needed to reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include sanitized error codes and output. Do not include secrets or private content.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, installation source, and relevant filesystem details.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, personal paths, private repository content, and raw transcripts.
+          required: true
+        - label: This is not a security vulnerability. I will use private vulnerability reporting for security issues.
+          required: true
