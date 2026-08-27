@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "CR-001",
+      "title": "Define and validate the first project objective",
+      "status": "in_progress",
+      "dependsOn": [],
+      "acceptance": ["Project-specific acceptance is recorded and verified"],
+      "authority": ["docs/authority/PROJECT.md"],
+      "sourceHints": ["src/", "test/"],
+      "nextSteps": ["Replace neutral scaffold text with observed project facts"],
+      "validation": [["git", "diff", "--check"]]
+    }
+  ]
+}

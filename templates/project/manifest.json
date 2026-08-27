@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": [
+    "AGENTS.md",
+    "docs/README.md",
+    "docs/authority/PROJECT.md",
+    "state/CURRENT.md",
+    "state/PLAN.md",
+    "state/BACKLOG.json",
+    ".context-rail/config.json",
+    ".context-rail/version.json"
+  ]
+}
