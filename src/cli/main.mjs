@@ -10,6 +10,8 @@ import { finish, issue } from '../core/result.mjs';
 import { buildRoute } from '../core/routing.mjs';
 import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
+import { loadThroughlineManifest } from '../integrations/throughline-manifest.mjs';
+import { planPreparation } from '../integrations/throughline-prepare.mjs';
 
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const USAGE = `Usage:
@@ -19,6 +21,7 @@ const USAGE = `Usage:
   contextrail continue [--target PATH] [--json]
   contextrail measure record --task ID --source SOURCE [metric options] [--target PATH] [--json]
   contextrail measure report [--target PATH] [--json]
+  contextrail throughline prepare --dry-run [--target PATH] [--json]
 `;
 
 function optionValue(args, name) {
@@ -203,6 +206,20 @@ export async function run(args = process.argv.slice(2), io = process) {
       return 2;
     }
     writeStructured(summarizeMeasurements(await readMeasurements(root, nodeFilesystem)), json, io);
+    return 0;
+  }
+
+  if (command === 'throughline' && args[1] === 'prepare') {
+    if (unknownOptions(args, 1, ['--target', '--json', '--dry-run']) || !args.includes('--dry-run')) {
+      io.stderr.write('throughline prepare currently requires --dry-run\n');
+      return 2;
+    }
+    const loaded = await loadThroughlineManifest(root, nodeFilesystem);
+    if (!loaded.ok) {
+      writeStructured(loaded, json, io);
+      return 1;
+    }
+    writeStructured(planPreparation(loaded.manifest), json, io);
     return 0;
   }
 

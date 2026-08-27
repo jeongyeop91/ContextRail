@@ -1,0 +1,393 @@
+From 4d94defd2057df25eb24dc402d7b6c06fa1264d4 Mon Sep 17 00:00:00 2001
+From: Jeongyeop <jylee91@gmail.com>
+Date: Wed, 26 Aug 2026 12:43:44 +0900
+Subject: [PATCH] fix(codex): support current rollout schema
+
+---
+ CHANGELOG.md                   |  9 ++++
+ CLAUDE.md                      | 10 +++-
+ README.ja.md                   | 12 ++++-
+ README.md                      | 10 ++++
+ docs/05_codex_first_roadmap.md |  4 ++
+ package.json                   |  2 +-
+ src/codex-capture.test.mjs     | 99 ++++++++++++++++++++++++++++++++++
+ src/codex-rollout-memory.mjs   | 58 +++++++++++++++-----
+ 8 files changed, 186 insertions(+), 18 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..1eb26804a294ec47102e5451c8a37753363ee63b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,6 +10,15 @@ shipped to npm but were not individually tagged on GitHub.
+ 
+ ## [Unreleased]
+ 
++### Fixed
++
++- Codex rollout capture now accepts both the legacy `event_msg` conversation /
++  `function_call` tool records and the current Codex App `response_item.message` /
++  `custom_tool_call` records. Host-injected user context such as the Codex
++  `recommended_plugins` and `AGENTS.md` envelopes is excluded from L2. A focused
++  regression fixture and a read-only smoke against a Codex Desktop
++  `0.149.0-alpha.4.1` rollout cover the current shape.
++
+ ## [0.10.3] — 2026-08-24
+ 
+ ### Added
+diff --git a/CLAUDE.md b/CLAUDE.md
+index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366707b55a7 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -20,6 +20,12 @@ GitHub Release、このMacのregistry由来global install（`throughline --versi
+ `~/.cursor/hooks.json` に sessionStart / beforeSubmitPrompt / stop の絶対パスを確認し、
+ 工場 `cursor-*-hook` は残っている。新規 Cursor session の capture 受入は別 H。
+ 
++**Unreleased Codex compatibility update（2026-08-26）**: Codex rollout parserは旧
++`event_msg` / `function_call` に加え、Desktop `0.149.0-alpha.4.1` の
++`response_item.message` / `custom_tool_call` / `custom_tool_call_output` をL2/L3へ保存する。
++Codex host注入の `recommended_plugins` / `AGENTS.md` user envelopeはL2から除外する。
++Claude / Grok / Cursor adapter契約は変更しない。
++
+ **v0.10.1（2026-08-23公開）**: 挙動変更なしの内部リファクタ。ベンダー (hook host) 依存を
+ `src/hosts/` へ一元化（`hosts/identity.mjs` が `codex:`/`grok:` prefix の唯一の正本、
+ hook 入口3本は `hosts/{claude,codex,grok}.mjs` の adapter 経由に。`hook-envelope.mjs` は
+@@ -235,7 +241,7 @@ hard failure、`projection_pending`契約は変更していない。focused 16/1
+ | [src/transcript-reader.mjs](src/transcript-reader.mjs) | transcript JSONL パーサー |
+ | [src/transcript-usage.mjs](src/transcript-usage.mjs) | 最新 assistant の `message.usage` から実測トークン数を抽出、1M context 検出 |
+ | [src/codex-capture.mjs](src/codex-capture.mjs) | Codex rollout JSONL の active turns を Throughline DB の `bodies` に保存する capture adapter。`thread_rolled_back` 適用後の active thread だけを `codex:<thread_id>` session として再構成する |
+-| [src/codex-rollout-memory.mjs](src/codex-rollout-memory.mjs) | Codex rollout JSONL から active turns / restore-safety diagnostics / trim source を構築する。trim source では現在進行中の in-flight turn と latest rollback 後の未完了 assistant continuation を rollback 候補から除外する。実 rollback 直前に app-server `thread/read` / `thread/resume` が同じ turn count を返し、rollout count と差がある場合は app-server 側の差分で rollback 数を補正する |
++| [src/codex-rollout-memory.mjs](src/codex-rollout-memory.mjs) | Codex rollout JSONL から active turns / restore-safety diagnostics / trim source を構築する。旧 `event_msg` / `function_call` と現行 `response_item.message` / `custom_tool_call` の両shapeを扱う。trim source では現在進行中の in-flight turn と latest rollback 後の未完了 assistant continuation を rollback 候補から除外する。実 rollback 直前に app-server `thread/read` / `thread/resume` が同じ turn count を返し、rollout count と差がある場合は app-server 側の差分で rollback 数を補正する |
+ | [src/codex-usage.mjs](src/codex-usage.mjs) | Codex rollout の `event_msg` / `token_count` verified shape から monitor 用 usage sample を抽出する。open turn 中は `input_tokens + output_tokens` を live footprint として返し、`task_complete` 後は verified `input_tokens` のみに戻す。`token_count` が無い rollout では active rollout text の `chars / 4` estimate を `estimated: true` として返す |
+ | [src/codex-auto-refresh.mjs](src/codex-auto-refresh.mjs) | Codex automatic refresh helper。current-thread rollback / inject の判定と backoff ロジックは残すが、helper 自体も default disabled で、現行 Codex hooks はこの helper を呼ばず、常に `codex_auto_refresh_disabled` で quiet にする。明示 `trim --execute --host codex` は診断用 current-thread path として残す |
+ | [src/codex-handoff.mjs](src/codex-handoff.mjs) | `HandoffRecord` から Codex-facing `throughline_handoff` v1 JSON block と Codex developer-message 用 active-work context を生成。`source='throughline'` / `trust='local'` / `kind='throughline_handoff'` を固定 |
+@@ -346,7 +352,7 @@ hard failure、`projection_pending`契約は変更していない。focused 16/1
+ |---|---|
+ | [src/baton.test.mjs](src/baton.test.mjs) | `writeBaton` / `consumeBaton` / TTL 動作 (v8 で memo_text 関連 test 削除) |
+ | [src/prompt-submit.test.mjs](src/prompt-submit.test.mjs) | `isBatonCommand` / `isClearCommand` の slash command 判定 (`/tl`, `/clear` の単独・引数つき・前後空白・prefix 偽陽性拒否) |
+-| [src/codex-capture.test.mjs](src/codex-capture.test.mjs) | Codex `codex:<thread_id>` session identity、rollout active turns の L2 capture、`function_call` / `function_call_output` の L3 details capture、rollback tail 再構成、Codex-origin handoff |
++| [src/codex-capture.test.mjs](src/codex-capture.test.mjs) | Codex `codex:<thread_id>` session identity、旧 `event_msg` と現行 `response_item.message` の L2 capture、`function_call` / `custom_tool_call` 系の L3 details capture、host context除外、rollback tail 再構成、Codex-origin handoff |
+ | [src/codex-usage.test.mjs](src/codex-usage.test.mjs) | Codex rollout `token_count` usage 抽出、`token_count` 不在時の明示 estimate、空 rollout の null |
+ | [src/codex-auto-refresh.test.mjs](src/codex-auto-refresh.test.mjs) | Dormant helper の default disabled、75% 閾値、estimate usage の非実行、明示 enabled 時に threshold reached で rollback/inject を呼ぶこと、DB memory が無い場合の skip |
+ | [src/codex-handoff.test.mjs](src/codex-handoff.test.mjs) | `toThroughlineHandoffBlock` の `throughline_handoff` v1 JSON shape と Codex active-work context renderer |
+diff --git a/README.ja.md b/README.ja.md
+index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2eadba5c99b7 100644
+--- a/README.ja.md
++++ b/README.ja.md
+@@ -94,6 +94,13 @@ current-thread rollback
+ 診断が要る時だけ明示的に `trim --execute --host codex` を使う。既存の
+ 非 Throughline Codex hook は保持される。
+ 
++Codex rollout の互換性は schema に依存する。この build は旧
++`event_msg` / `function_call` と、Codex App の現行
++`response_item.message` / `custom_tool_call` を扱う。後者は2026-08-26に
++Desktop `0.149.0-alpha.4.1` の rollout で検証した。Codex 更新後は
++`throughline doctor --codex` に加え、capture の body 行が0でないことを確認する。
++hook が registered であることだけでは rollout 本文の互換性を証明しない。
++
+ </details>
+ 
+ ## 他の手段との比較
+@@ -413,10 +420,13 @@ latest session推測・`sessions.merged_into`変更・L1/L2/L3 rowの所属変
+ 
+ ## 動作要件
+ 
+-- **Node.js 22.5 以上** (組み込み `node:sqlite` モジュール使用、ネイティブビルド不要)
++- **Node.js 22.13 以上** (組み込み `node:sqlite` モジュール使用、ネイティブビルド不要)
+ - **Claude Code** (`SessionStart`, `Stop`, `UserPromptSubmit` hooks 対応版)
+ - **Codex CLI ログイン**（既定の L1 要約 backend、`gpt-5.6-luna`）または
+   **Claude Max サブスクリプション**（`claude -p` 経由の Haiku fallback）— どちらも API キー不要
++- Codex capture は旧 `event_msg` / `function_call` schema と、Codex Desktop
++  `0.149.0-alpha.4.1` の `response_item.message` / `custom_tool_call` schemaを検証済み。
++  Codex更新後はcapture本文が0件でないことを再確認する
+ - 対応 OS: **Windows / macOS / Linux**
+ 
+ ランタイム依存 **ゼロ**。npm パッケージは純 `.mjs` ファイルのみで構成されています。
+diff --git a/README.md b/README.md
+index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fce418cf14 100644
+--- a/README.md
++++ b/README.md
+@@ -69,6 +69,13 @@ DB handoff memory as a developer item, and opens that thread in the selected
+ host; ask explicitly for current-thread rollback diagnostics when you want the
+ guarded `trim --execute --host codex` surface.
+ 
++Codex rollout compatibility is schema-sensitive. This build accepts the legacy
++`event_msg` / `function_call` records and the current Codex App
++`response_item.message` / `custom_tool_call` records, verified against a
++`0.149.0-alpha.4.1` Desktop rollout on 2026-08-26. After a Codex update, use
++`throughline doctor --codex` and confirm that capture reports non-zero body rows;
++a registered hook by itself does not prove rollout-body compatibility.
++
+ </details>
+ 
+ <details>
+@@ -981,6 +988,9 @@ throughline auditor-context --session claude-session-id --project "$PWD" \
+ - **Codex CLI login** (default L1 summarization backend, `gpt-5.6-luna`) or a
+   **Claude Max subscription** (Haiku fallback via `claude -p`) — no API key
+   either way
++- Codex capture is verified for the legacy `event_msg` / `function_call` rollout
++  shape and Codex Desktop `0.149.0-alpha.4.1`'s `response_item.message` /
++  `custom_tool_call` shape. Re-verify non-zero capture after Codex upgrades.
+ - Works on **Windows, macOS, Linux**
+ 
+ Throughline has **zero runtime dependencies**. The published tarball is just
+diff --git a/docs/05_codex_first_roadmap.md b/docs/05_codex_first_roadmap.md
+index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e852f762f 100644
+--- a/docs/05_codex_first_roadmap.md
++++ b/docs/05_codex_first_roadmap.md
+@@ -188,6 +188,10 @@ Phase 1 implementation result (2026-05-06):
+ - [x] Codex rollout の L3 details mapping を追加した。`response_item` の `function_call` / `function_call_output` を `details.kind = tool_input / tool_output` として保存する。
+   - 実 session 再 capture: `capturedTurns = 41`, `capturedRows = 75`, `capturedDetails = 2424`
+   - parser stats: `toolInputs = 1940`, `toolOutputs = 1937`
++- [x] 2026-08-26 compatibility update: Codex Desktop `0.149.0-alpha.4.1` の
++  `response_item.message` と `custom_tool_call` / `custom_tool_call_output` を
++  L2 / L3へ保存する。旧 `event_msg` と `function_call` 系も維持し、Codex hostが
++  user roleで注入する `recommended_plugins` / `AGENTS.md` context envelopeはL2から除外する。
+ - [x] `npm test` で Claude hook entrypoint / transcript capture を含む 355 tests pass。
+ 
+ ## Phase 2: Codex CLI L2 -> L1 Backend
+diff --git a/package.json b/package.json
+index 3c66b8a7ff0d6898e98902d5342427a6d3820864..9b2ebe116e21f819f80ba1d80a12c0c193225712 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "throughline",
+-    "version": "0.10.3",
++    "version": "0.10.3-codex.1",
+     "type": "module",
+     "description": "Persistent memory hooks for Claude Code, Codex, Grok, and Cursor (/clear-safe context compression)",
+     "keywords": [
+diff --git a/src/codex-capture.test.mjs b/src/codex-capture.test.mjs
+index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331200c650e 100644
+--- a/src/codex-capture.test.mjs
++++ b/src/codex-capture.test.mjs
+@@ -248,6 +248,105 @@ test('captureCodexRolloutToDb: rebuilds namespaced Codex session from active rol
+   }
+ });
+ 
++test('captureCodexRolloutToDb: captures current Codex response messages and custom tools', () => {
++  const db = makeDb();
++  const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
++  const project = mkdtempSync(join(tmpdir(), 'tl-codex-project-'));
++  const threadId = '01a03b32-3b8b-72d0-a284-b466acd6d9a9';
++  try {
++    writeRollout(home, {
++      id: threadId,
++      cwd: project,
++      events: [
++        responseItem({
++          type: 'message',
++          role: 'user',
++          content: [{ type: 'input_text', text: '<recommended_plugins>host context</recommended_plugins>' }],
++        }),
++        responseItem({
++          type: 'message',
++          role: 'user',
++          content: [{ type: 'input_text', text: 'current request' }],
++        }),
++        event('task_started'),
++        responseItem({
++          type: 'message',
++          role: 'assistant',
++          content: [{ type: 'output_text', text: 'working update' }],
++        }),
++        responseItem({
++          type: 'custom_tool_call',
++          name: 'exec',
++          input: '{"cmd":"pwd"}',
++          call_id: 'call_current',
++        }),
++        responseItem({
++          type: 'custom_tool_call_output',
++          call_id: 'call_current',
++          output: [{ type: 'input_text', text: 'Command completed\n/tmp/project\n' }],
++        }),
++        responseItem({
++          type: 'message',
++          role: 'assistant',
++          content: [{ type: 'output_text', text: 'current answer' }],
++        }),
++        event('task_complete'),
++      ],
++    });
++
++    const result = captureCodexRolloutToDb(db, {
++      threadId,
++      codexHome: home,
++      projectPath: project,
++      now: 1234,
++    });
++
++    assert.equal(result.status, 'captured');
++    assert.equal(result.capturedTurns, 1);
++    assert.equal(result.capturedRows, 2);
++    assert.equal(result.capturedDetails, 2);
++
++    const bodies = db.prepare('SELECT turn_number, role, text FROM bodies ORDER BY id').all();
++    assert.deepEqual(
++      bodies.map((row) => [row.turn_number, row.role, row.text]),
++      [
++        [1, 'user', 'current request'],
++        [1, 'assistant', 'working update\n\ncurrent answer'],
++      ],
++    );
++
++    const details = db
++      .prepare(
++        'SELECT turn_number, kind, tool_name, source_id, input_text, output_text FROM details ORDER BY id',
++      )
++      .all();
++    assert.deepEqual(
++      details.map((row) => [
++        row.turn_number,
++        row.kind,
++        row.tool_name,
++        row.source_id,
++        row.input_text,
++        row.output_text,
++      ]),
++      [
++        [1, 'tool_input', 'exec', 'call_current', '{"cmd":"pwd"}', null],
++        [
++          1,
++          'tool_output',
++          'exec',
++          'call_current:output',
++          null,
++          '[{"type":"input_text","text":"Command completed\\n/tmp/project\\n"}]',
++        ],
++      ],
++    );
++  } finally {
++    rmSync(home, { recursive: true, force: true });
++    rmSync(project, { recursive: true, force: true });
++  }
++});
++
+ test('captureCodexRolloutToDb: second capture removes stale rows from previous active tail', () => {
+   const db = makeDb();
+   const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
+diff --git a/src/codex-rollout-memory.mjs b/src/codex-rollout-memory.mjs
+index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05f1c63c3c 100644
+--- a/src/codex-rollout-memory.mjs
++++ b/src/codex-rollout-memory.mjs
+@@ -106,19 +106,39 @@ export function parseCodexRolloutFile(
+     }
+ 
+     if (row?.type === 'response_item') {
+-      const responseUserMessage = responseItemToUserMessage(payload, row.timestamp);
+-      if (responseUserMessage) {
++      const responseMessage = responseItemToConversationMessage(payload, row.timestamp);
++      if (responseMessage?.role === 'user') {
+         if (stats.rollbackEvents > 0) {
+           stats.userMessagesAfterRollback++;
+         }
+         notePotentialResurrectedUserMessage({
+-          message: responseUserMessage,
++          message: responseMessage,
+           compactedReplacementUserTexts,
+           rolledBackUserTexts,
+           resurrectedUserTexts,
+           stats,
+         });
+       }
++      if (responseMessage) {
++        if (openTurn) {
++          openTurn.messages.push(responseMessage);
++        } else if (afterRollback && responseMessage.role === 'assistant') {
++          if (!postRollbackTurn) {
++            postRollbackTurn = {
++              number: `rollout-${stats.parsedRows}`,
++              messages: [],
++              details: [],
++              completedAt: null,
++            };
++            activeTurns.push(postRollbackTurn);
++          }
++          postRollbackTurn.messages.push(responseMessage);
++        } else {
++          pendingMessages.push(responseMessage);
++        }
++      } else if (payload?.type === 'message' && ['user', 'assistant'].includes(payload.role)) {
++        stats.skippedMessages++;
++      }
+       const injectedMessage = responseItemToMemoryMessage(payload, row.timestamp);
+       if (injectedMessage) {
+         stats.injectedDeveloperMessages++;
+@@ -372,30 +392,35 @@ function compactedPayloadToUserMessages(payload, timestamp) {
+ }
+ 
+ function responseItemToDetail(payload, timestamp, toolNameByCallId) {
+-  if (payload?.type === 'function_call') {
++  if (payload?.type === 'function_call' || payload?.type === 'custom_tool_call') {
+     const callId = typeof payload.call_id === 'string' ? payload.call_id : null;
+     const toolName = [payload.namespace, payload.name].filter((v) => typeof v === 'string' && v).join('.');
+-    const name = toolName || 'function_call';
++    const fallbackName = payload.type === 'custom_tool_call' ? 'custom_tool_call' : 'function_call';
++    const name = toolName || fallbackName;
+     if (callId) toolNameByCallId.set(callId, name);
+     return {
+       time: timestamp ?? null,
+       kind: 'tool_input',
+       tool_name: name,
+       source_id: callId,
+-      input_text: stringifyToolArguments(payload.arguments),
++      input_text: stringifyToolArguments(
++        payload.type === 'custom_tool_call' ? payload.input : payload.arguments,
++      ),
+       output_text: null,
+     };
+   }
+ 
+-  if (payload?.type === 'function_call_output') {
++  if (payload?.type === 'function_call_output' || payload?.type === 'custom_tool_call_output') {
+     const callId = typeof payload.call_id === 'string' ? payload.call_id : null;
++    const fallbackName =
++      payload.type === 'custom_tool_call_output' ? 'custom_tool_call' : 'function_call';
+     return {
+       time: timestamp ?? null,
+       kind: 'tool_output',
+-      tool_name: callId ? (toolNameByCallId.get(callId) ?? 'function_call') : 'function_call',
++      tool_name: callId ? (toolNameByCallId.get(callId) ?? fallbackName) : fallbackName,
+       source_id: callId ? `${callId}:output` : null,
+       input_text: null,
+-      output_text: typeof payload.output === 'string' ? payload.output : JSON.stringify(payload.output ?? null),
++      output_text: stringifyToolArguments(payload.output),
+     };
+   }
+ 
+@@ -502,13 +527,13 @@ function responseItemToMemoryMessage(payload, timestamp) {
+   };
+ }
+ 
+-function responseItemToUserMessage(payload, timestamp) {
+-  if (payload?.type !== 'message' || payload.role !== 'user') return null;
++function responseItemToConversationMessage(payload, timestamp) {
++  if (payload?.type !== 'message' || !['user', 'assistant'].includes(payload.role)) return null;
+   const text = normalizeMessageText(messageContentToText(payload.content));
+-  if (!text || shouldSkipUserMessage(text)) return null;
++  if (!text || (payload.role === 'user' && shouldSkipUserMessage(text))) return null;
+   return {
+     time: timestamp ?? null,
+-    role: 'user',
++    role: payload.role,
+     text,
+   };
+ }
+@@ -531,7 +556,12 @@ function messageContentToText(content) {
+ }
+ 
+ function shouldSkipUserMessage(text) {
+-  return text.startsWith('# AGENTS.md instructions') || text.startsWith('<hook_prompt');
++  return (
++    text.startsWith('# AGENTS.md instructions') ||
++    text.startsWith('<recommended_plugins>') ||
++    text.startsWith('<environment_context>') ||
++    text.startsWith('<hook_prompt')
++  );
+ }
+ 
+ function normalizeMessageText(value) {
+-- 
+2.50.1 (Apple Git-155)
+

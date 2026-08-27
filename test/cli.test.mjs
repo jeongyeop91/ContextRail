@@ -59,3 +59,13 @@ test('measure record and report keep provenance in local runtime data', async ()
   assert.equal(report.metrics.inputTokens.sources.manual.total, 100);
   assert.equal(report.metrics.outputTokens.reported.total, 20);
 });
+
+test('Throughline prepare dry-run returns the pinned plan without external work', async () => {
+  const stream = capture();
+  const code = await run(['throughline', 'prepare', '--dry-run', '--json'], stream.io);
+  assert.equal(code, 0, stream.output().stderr);
+  const plan = JSON.parse(stream.output().stdout);
+  assert.equal(plan.status, 'planned');
+  assert.match(plan.baseCommit, /^[a-f\d]{40}$/);
+  assert.equal(plan.steps[0].action, 'clone');
+});

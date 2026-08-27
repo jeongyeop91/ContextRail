@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/kitepon/Throughline.git",
+  "baseCommit": "4bf84f548eeb7173a3b46be33b9b0c54723ab21f",
+  "compatibilityCommit": "4d94defd2057df25eb24dc402d7b6c06fa1264d4",
+  "patch": {
+    "path": "integrations/throughline/patches/0001-support-current-codex-rollout.patch",
+    "sha256": "866ba2c07863e59defa44adf83f313db7596ca16b1775d4be0a00c6b2a58f3d8"
+  },
+  "license": {
+    "spdx": "MIT",
+    "path": "integrations/throughline/LICENSE"
+  },
+  "tests": [
+    ["node", "--import", "./src/test-env.mjs", "--test", "src/codex-capture.test.mjs", "src/codex-rollout-memory.test.mjs"],
+    ["npm", "test"]
+  ],
+  "pack": ["npm", "pack", "--json"],
+  "removalCondition": "Remove the compatibility patch only after an immutable upstream release contains equivalent current Codex rollout support and passes the same capture verification."
+}
