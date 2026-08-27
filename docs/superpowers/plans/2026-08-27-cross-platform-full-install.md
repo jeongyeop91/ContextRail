@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22.13+ standard library, `node:test`, GitHub Actions, npm package tarballs, GitHub Releases.
 
-**Spec:** `docs/adr/0003-cross-platform-full-install.md`, `docs/adr/0004-interactive-quickstart.md`, `docs/adr/0005-npm-registry-distribution.md`, `docs/superpowers/specs/2026-08-27-npm-registry-distribution-design.md`
+**Spec:** `docs/adr/0003-cross-platform-full-install.md`, `docs/adr/0004-interactive-quickstart.md`, `docs/adr/0005-npm-registry-distribution.md`, `docs/adr/0006-detached-release-envelope.md`, `docs/superpowers/specs/2026-08-27-npm-registry-distribution-design.md`
 
 ## Global Constraints
 
@@ -31,7 +31,8 @@
 - `src/core/setup.mjs`: pure project classification, option validation, component ordering, plan identity, and resumable state decisions.
 - `src/adapters/platform.mjs`: native managed-data roots, WSL/native-host checks, and JavaScript package-bin resolution.
 - `src/adapters/release.mjs`: HTTPS download to a temporary directory and streaming SHA-256 verification.
-- `src/integrations/release-manifest.mjs`: embedded release-manifest validation and selection.
+- `src/integrations/setup-manifest.mjs`: embedded Throughline selection-manifest validation.
+- `src/integrations/release-manifest.mjs`: detached release-envelope validation and artifact verification.
 - `src/integrations/setup.mjs`: effectful discovery, component plan composition, apply/resume orchestration, and aggregate verification.
 - `src/integrations/codex-hooks.mjs`: portable `command` plus `commandWindows` Hook entries.
 - `src/integrations/throughline-install.mjs`: direct Node invocation of the installed Throughline JavaScript bin.
@@ -46,20 +47,23 @@
 ### Task 1: Release manifest and verified artifact download
 
 **Files:**
+- Create: `src/integrations/setup-manifest.mjs`
 - Create: `src/integrations/release-manifest.mjs`
 - Create: `src/adapters/release.mjs`
-- Create: `integrations/release-manifest.json`
+- Create: `integrations/setup-manifest.json`
+- Create: `test/setup-manifest.test.mjs`
 - Create: `test/release-manifest.test.mjs`
 - Create: `test/release-download.test.mjs`
 - Modify: `package.json`
 
 **Interfaces:**
-- Produces: `validateReleaseManifest(value) -> { ok, issues, manifest? }`
-- Produces: `loadReleaseManifest({ root, fs }) -> Promise<{ ok, issues, manifest? }>`
-- Produces: `selectReleaseArtifact(manifest, name) -> { name, url, sha256 }`
+- Produces: `validateSetupManifest(value) -> { ok, issues, manifest? }`
+- Produces: `loadSetupManifest({ root, fs }) -> Promise<{ ok, issues, manifest? }>`
+- Produces: `selectThroughlineArtifact(manifest) -> { name, url, sha256 }`
+- Produces: `validateReleaseManifest(value) -> { ok, issues, manifest? }` for the detached envelope
 - Produces: `downloadVerifiedArtifact({ artifact, destination, http, fs }) -> Promise<{ path, sha256, bytes }>`
 
-- [ ] **Step 1: Write manifest tests that reject mutable URLs, unknown platforms, malformed digests, and mismatched package/runtime metadata.**
+- [ ] **Step 1: Write embedded setup-manifest tests that reject mutable URLs, unknown platforms, malformed digests, and mismatched package/runtime metadata.**
 
 ```js
 const result = validateReleaseManifest({ ...validManifest, artifacts: [{ name: 'throughline', url: 'https://example.invalid/latest/x.tgz', sha256: 'bad' }] });
@@ -67,21 +71,20 @@ assert.equal(result.ok, false);
 assert.deepEqual(result.issues.map(({ code }) => code), ['MUTABLE_RELEASE_ARTIFACT_URL', 'INVALID_RELEASE_ARTIFACT_SHA256']);
 ```
 
-- [ ] **Step 2: Run `node --test test/release-manifest.test.mjs` and confirm the missing module failure.**
-- [ ] **Step 3: Implement strict schema validation and embed a development manifest whose immutable asset metadata matches the release build inputs.**
+- [ ] **Step 2: Run `node --test test/setup-manifest.test.mjs` and confirm the missing module failure.**
+- [ ] **Step 3: Implement strict setup-manifest validation and embed only the immutable Throughline selection and provenance; do not include a ContextRail self-digest.**
 
 ```js
-export function selectReleaseArtifact(manifest, name) {
-  const artifact = manifest.artifacts.find((entry) => entry.name === name);
-  if (!artifact) throw new Error(`Release artifact is not declared: ${name}`);
-  return structuredClone(artifact);
+export function selectThroughlineArtifact(manifest) {
+  return structuredClone(manifest.throughline.artifact);
 }
 ```
 
-- [ ] **Step 4: Write download tests with an injected HTTPS adapter, including digest rejection and cleanup of the partial file.**
-- [ ] **Step 5: Implement streamed download and SHA-256 verification without following a redirect outside `github.com` or `objects.githubusercontent.com`.**
-- [ ] **Step 6: Run `node --test test/release-manifest.test.mjs test/release-download.test.mjs` and confirm all tests pass.**
-- [ ] **Step 7: Commit `feat: add verified release artifacts`.**
+- [ ] **Step 4: Write detached-envelope tests that bind the ContextRail tarball digest, embedded setup-manifest digest, Throughline digest, and checksum identity without self-reference.**
+- [ ] **Step 5: Write download tests with an injected HTTPS adapter, including digest rejection and cleanup of the partial file.**
+- [ ] **Step 6: Implement streamed download and SHA-256 verification without following a redirect outside `github.com` or `objects.githubusercontent.com`.**
+- [ ] **Step 7: Run `node --test test/setup-manifest.test.mjs test/release-manifest.test.mjs test/release-download.test.mjs` and confirm all tests pass.**
+- [ ] **Step 8: Commit `feat: add verified release artifacts`.**
 
 ### Task 2: Native paths and direct JavaScript package-bin execution
 
@@ -227,7 +230,7 @@ const handler = {
 
 - [ ] **Step 1: Write release-asset tests for required names, stable/versioned byte identity, manifest digest agreement, and checksum ordering.**
 - [ ] **Step 2: Run `node --test test/release-assets.test.mjs` and confirm the script is absent.**
-- [ ] **Step 3: Implement the release builder with argv process execution, explicit input artifact, temporary staging, and atomic output replacement.**
+- [ ] **Step 3: Implement the release builder with argv process execution, explicit input artifact, temporary staging, atomic output replacement, and detached-envelope generation only after the ContextRail tarball is final.**
 - [ ] **Step 4: Add `npm run build:release`, remove `private: true`, and set `publishConfig.access` to `public` without a permanent dist-tag.**
 - [ ] **Step 5: Expand verification to an Ubuntu/macOS/Windows matrix that runs `npm test`, packs the source, installs into an isolated prefix, and executes packed CLI setup dry-run with paths containing spaces and Unicode.**
 - [ ] **Step 6: Add a tag-triggered GitHub release workflow that builds the pinned Throughline patch, runs the matrix-equivalent checks, and publishes only verified assets with `contents: write`.**
