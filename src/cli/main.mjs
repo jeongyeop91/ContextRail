@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
-import { homedir } from 'node:os';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
+import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
 import { buildContinuation } from '../core/continuity.mjs';
 import { validateDocuments } from '../core/documents.mjs';
 import { appendMeasurement, readMeasurements, summarizeMeasurements } from '../core/measurement.mjs';
@@ -13,6 +15,14 @@ import { finish, issue } from '../core/result.mjs';
 import { buildRoute } from '../core/routing.mjs';
 import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
+import { findContextRailRoot, handleStop, handleUserPromptSubmit } from '../integrations/codex-hook-runtime.mjs';
+import {
+  applyCodexHooksInstall,
+  applyCodexHooksUninstall,
+  planCodexHooksInstall,
+  planCodexHooksUninstall,
+  verifyCodexHooks,
+} from '../integrations/codex-hooks.mjs';
 import { loadThroughlineManifest } from '../integrations/throughline-manifest.mjs';
 import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from '../integrations/throughline-install.mjs';
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
@@ -33,6 +43,10 @@ const USAGE = `Usage:
   contextrail throughline install --apply --artifact FILE [--managed-root PATH] [--json]
   contextrail throughline verify [--binary FILE] [--doctor] [--json]
   contextrail throughline rollback --apply [--managed-root PATH] [--json]
+  contextrail hooks install --host codex (--dry-run|--apply) [--json]
+  contextrail hooks verify --host codex [--target PATH] [--json]
+  contextrail hooks uninstall --host codex (--dry-run|--apply) [--json]
+  contextrail automation enable|disable --host codex [--target PATH] (--dry-run|--apply) [--json]
 `;
 
 function optionValue(args, name) {
@@ -113,6 +127,94 @@ function publicScaffoldPlan(plan, applied = null) {
   };
 }
 
+function explicitWriteBoundary(args) {
+  return args.includes('--dry-run') !== args.includes('--apply');
+}
+
+function publicHooksPlan(plan, applied = null) {
+  return {
+    ok: plan.ok,
+    status: applied?.status ?? plan.status,
+    issues: plan.issues,
+    summary: plan.summary,
+    files: plan.files,
+    entries: plan.entries?.map((entry) => ({
+      event: entry.event,
+      command: entry.group.hooks[0].command,
+      timeout: entry.group.hooks[0].timeout,
+    })) ?? [],
+    applyRequired: plan.status === 'planned' && applied === null,
+  };
+}
+
+function publicAutomationPlan(plan, applied = null) {
+  return {
+    ok: plan.ok,
+    mode: plan.mode,
+    target: plan.target,
+    issues: plan.issues,
+    summary: plan.summary,
+    operations: plan.operations.map(({ action, path, contentHash }) => ({ action, path, contentHash })),
+    applied,
+  };
+}
+
+async function readHookPayload(io, dependencies) {
+  if (dependencies.hookInput !== undefined) {
+    return typeof dependencies.hookInput === 'string' ? JSON.parse(dependencies.hookInput) : dependencies.hookInput;
+  }
+  let value = '';
+  for await (const chunk of (io.stdin ?? process.stdin)) value += chunk;
+  return JSON.parse(value);
+}
+
+function failOpenHookOutput(io) {
+  io.stdout.write(`${JSON.stringify({
+    systemMessage: 'ContextRail Hook input unavailable (CONTEXT_RAIL_HOOK_ERROR); continuing without blocking Codex.',
+  })}\n`);
+}
+
+async function syntheticCodexHookSmoke() {
+  const target = await mkdtemp(resolve(tmpdir(), 'contextrail-hook-smoke-'));
+  try {
+    const scaffold = await planScaffold({ mode: 'init', target, templateRoot: PROJECT_TEMPLATE, fs: nodeFilesystem });
+    if (!scaffold.ok) throw new Error('Synthetic ContextRail scaffold planning failed');
+    await applyScaffold(scaffold, nodeFilesystem);
+    const automation = await planProjectAutomation({ target, enabled: true, fs: nodeFilesystem });
+    if (!automation.ok) throw new Error('Synthetic ContextRail automation planning failed');
+    await applyProjectAutomation(automation, nodeFilesystem);
+
+    const routed = await handleUserPromptSubmit({ cwd: target, prompt: 'inspect the current project' });
+    const continued = await handleUserPromptSubmit({ cwd: target, prompt: 'continue' });
+    const passing = await handleStop({ cwd: target, stop_hook_active: false });
+    await nodeFilesystem.writeText(
+      resolve(target, 'docs/README.md'),
+      `${Array.from({ length: 51 }, (_, index) => `- overflow ${index + 1}`).join('\n')}\n`,
+    );
+    const failing = await handleStop({ cwd: target, stop_hook_active: false });
+    return {
+      route: routed.mode === 'route' && routed.output.includes('additionalContext') ? 'passed' : 'failed',
+      continue: continued.mode === 'continue' && continued.output.includes('additionalContext') ? 'passed' : 'failed',
+      check: passing.status === 'passed' && failing.status === 'violations' ? 'passed' : 'failed',
+    };
+  } catch {
+    return { route: 'failed', continue: 'failed', check: 'failed' };
+  } finally {
+    await rm(target, { recursive: true, force: true });
+  }
+}
+
+async function selectedProjectAutomation(root) {
+  try {
+    const projectRoot = await findContextRailRoot(root);
+    if (!projectRoot) return { enabled: false, projectRoot: null };
+    const config = JSON.parse(await nodeFilesystem.readText(resolve(projectRoot, '.context-rail/config.json')));
+    return { ...codexAutomation(config), projectRoot };
+  } catch {
+    return { enabled: false, projectRoot: null, state: 'unavailable' };
+  }
+}
+
 export async function run(args = process.argv.slice(2), io = process, dependencies = {}) {
   const command = args[0];
   if (command === '--version' || command === '-v') {
@@ -130,6 +232,92 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
   }
   const root = resolve(targetValue ?? process.cwd());
   const json = args.includes('--json');
+
+  if (command === 'hook' && ['user-prompt-submit', 'stop'].includes(args[1])) {
+    if (unknownOptions(args, 1, [])) {
+      failOpenHookOutput(io);
+      return 0;
+    }
+    try {
+      const payload = await readHookPayload(io, dependencies);
+      const result = args[1] === 'user-prompt-submit'
+        ? await handleUserPromptSubmit(payload)
+        : await handleStop(payload);
+      io.stdout.write(result.output);
+    } catch {
+      failOpenHookOutput(io);
+    }
+    return 0;
+  }
+
+  if (command === 'hooks' && ['install', 'uninstall'].includes(args[1])) {
+    if (unknownOptions(args, 1, ['--host', '--json', '--dry-run', '--apply'])
+      || optionValue(args, '--host') !== 'codex'
+      || !explicitWriteBoundary(args)) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const home = resolve(dependencies.home ?? homedir());
+    const nodePath = resolve(dependencies.nodePath ?? process.execPath);
+    const cliPath = resolve(dependencies.cliPath ?? process.argv[1]);
+    const installing = args[1] === 'install';
+    const plan = installing
+      ? await planCodexHooksInstall({ home, nodePath, cliPath, fs: nodeFilesystem })
+      : await planCodexHooksUninstall({ home, fs: nodeFilesystem });
+    if (!plan.ok || args.includes('--dry-run')) {
+      writeStructured(publicHooksPlan(plan), json, io);
+      return plan.ok ? 0 : 1;
+    }
+    try {
+      const applied = installing
+        ? await applyCodexHooksInstall(plan, { fs: nodeFilesystem })
+        : await applyCodexHooksUninstall(plan, { fs: nodeFilesystem });
+      writeStructured(publicHooksPlan(plan, applied), json, io);
+      return 0;
+    } catch (error) {
+      io.stderr.write(`${error.message}\n`);
+      return 3;
+    }
+  }
+
+  if (command === 'hooks' && args[1] === 'verify') {
+    if (unknownOptions(args, 1, ['--host', '--target', '--json']) || optionValue(args, '--host') !== 'codex') {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const report = await verifyCodexHooks({
+      home: resolve(dependencies.home ?? homedir()),
+      nodePath: resolve(dependencies.nodePath ?? process.execPath),
+      cliPath: resolve(dependencies.cliPath ?? process.argv[1]),
+      projectAutomation: await selectedProjectAutomation(root),
+      smoke: await syntheticCodexHookSmoke(),
+      fs: nodeFilesystem,
+    });
+    writeStructured(report, json, io);
+    return report.state === 'registered' && Object.values(report.smoke).every((state) => state === 'passed') ? 0 : 3;
+  }
+
+  if (command === 'automation' && ['enable', 'disable'].includes(args[1])) {
+    if (unknownOptions(args, 1, ['--host', '--target', '--json', '--dry-run', '--apply'])
+      || optionValue(args, '--host') !== 'codex'
+      || !explicitWriteBoundary(args)) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const plan = await planProjectAutomation({ target: root, enabled: args[1] === 'enable', fs: nodeFilesystem });
+    if (!plan.ok || args.includes('--dry-run')) {
+      writeStructured(publicAutomationPlan(plan), json, io);
+      return plan.ok ? 0 : 1;
+    }
+    try {
+      const applied = await applyProjectAutomation(plan, nodeFilesystem);
+      writeStructured(publicAutomationPlan(plan, applied), json, io);
+      return 0;
+    } catch (error) {
+      io.stderr.write(`${error.message}\n`);
+      return 3;
+    }
+  }
 
   if (command === 'check') {
     if (unknownOptions(args, 0, ['--target', '--json'])) {

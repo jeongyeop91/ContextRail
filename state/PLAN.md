@@ -71,12 +71,12 @@
 
 **Interfaces:** Add the approved `hooks`, `automation`, and internal `hook` command families, with injected HOME, Node path, CLI path, stdin payload, filesystem, and smoke dependencies.
 
-- [ ] Write failing CLI tests for argument validation, plan-first defaults, explicit apply, and internal Hook stdin dispatch.
-- [ ] Run `node --test test/codex-hooks-cli.test.mjs test/cli.test.mjs` and observe the new commands fail with usage code 2.
-- [ ] Add CLI parsing and structured output without changing existing command behavior.
-- [ ] Implement verify smoke in a temporary project: create neutral scaffold, enable automation, run route, continuation, passing Stop, and failing Stop payloads, then remove the fixture.
-- [ ] Ensure internal Hook errors return exit 0 with concise non-blocking JSON and never echo the original prompt.
-- [ ] Run `node --test test/codex-hooks-cli.test.mjs test/cli.test.mjs` and observe all pass.
+- [x] Write failing CLI tests for argument validation, plan-first defaults, explicit apply, and internal Hook stdin dispatch.
+- [x] Run `node --test test/codex-hooks-cli.test.mjs test/cli.test.mjs` and observe the new commands fail with usage code 2.
+- [x] Add CLI parsing and structured output without changing existing command behavior.
+- [x] Implement verify smoke in a temporary project: create neutral scaffold, enable automation, run route, continuation, passing Stop, and failing Stop payloads, then remove the fixture.
+- [x] Ensure internal Hook errors return exit 0 with concise non-blocking JSON and never echo the original prompt.
+- [x] Run `node --test test/codex-hooks-cli.test.mjs test/cli.test.mjs` and observe all pass.
 
 ### Task 5: Documentation, version, package, and release
 
