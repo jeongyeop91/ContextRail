@@ -9,14 +9,49 @@ ContextRail is a repository-local operating foundation for coding agents. It hel
 
 ContextRail is product-neutral, has no production npm dependencies, and works offline for its core commands. Throughline integration is optional.
 
-## Choose your workflow
+## Install and set up
 
-| Your repository | Start here |
-| --- | --- |
-| New or empty | [Create a neutral project](#create-a-new-project) |
-| Existing, with its own docs and state | [Adopt an existing repository](#adopt-an-existing-repository) |
-| Created from this GitHub template | [Use the template repository](#use-the-template-repository) |
-| Already uses ContextRail | Run `contextrail check`, `route`, or `continue` |
+The current release candidate supports macOS, Linux, and native Windows. Install it from the npm public registry, open a terminal in the project directory, and run setup:
+
+```text
+npm install --global contextrail@next
+contextrail setup
+```
+
+`contextrail setup` defaults to the current directory and the full profile. It discovers the project without writing, displays every component and affected path, and asks `Apply? [y/N]` only in an interactive terminal. The full profile initializes or adopts ContextRail, installs the pinned Codex-compatible Throughline, appends ContextRail Codex Hooks, enables the selected project, and verifies the result.
+
+Windows live validation is still pending. Use `@next` until the [native Windows pilot](docs/reference/WINDOWS_PILOT.md) passes; afterward the stable command becomes `npm install --global contextrail`. The npm tag is `latest`, not `last`.
+
+### Choose a setup profile
+
+| Profile | Command | Installs |
+| --- | --- | --- |
+| Full default | `contextrail setup` | Core, managed Throughline, both Hook sets, project automation |
+| Core only | `contextrail setup --core-only` | Repository-local ContextRail only; no HOME or network integration writes |
+| Memory without ContextRail Hooks | `contextrail setup --no-context-hooks` | Core and managed Throughline; no ContextRail context Hooks or automation |
+| Existing Throughline | `contextrail setup --use-existing-throughline` | Core and ContextRail Hooks after verifying the unmanaged Throughline |
+
+For Codex, CI, or any non-interactive terminal, review and apply through explicit machine-readable boundaries:
+
+```text
+contextrail setup --dry-run --json
+contextrail setup --apply --json
+```
+
+A flagless non-interactive `contextrail setup` prints a plan and never waits or writes. `--apply` is the only non-interactive write authorization.
+
+A newly configured host normally reports `installed_live_verification_required`: structural installation and synthetic checks passed, while a trusted Codex session must still prove live ContextRail consumption and Throughline capture, restore, and handoff.
+
+### Audited GitHub fallback
+
+The npm tarball and versioned GitHub asset are byte-identical. Install the immutable release-candidate asset if npm is unavailable:
+
+```text
+npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.1/contextrail-0.3.0-rc.1.tgz
+contextrail setup
+```
+
+Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.1`.
 
 ## What ContextRail provides
 
@@ -37,29 +72,11 @@ ContextRail does not claim a token-reduction percentage. Performance claims requ
 
 - Node.js 22.13 or newer.
 - Git for repository workflows and optional Throughline preparation.
-- npm for global installation from the GitHub Release package.
+- npm for global installation from the registry or verified GitHub Release package.
 
 ContextRail does not require Codex, Throughline, a hosted service, or a globally installed package for checkout-based use.
 
-## Install ContextRail
-
-ContextRail is not published to the npm registry. The recommended global installation source is the verified package attached to the latest GitHub Release.
-
-### Install the v0.2.0 release
-
-```bash
-npm install --global \
-  https://github.com/jeongyeop91/ContextRail/releases/download/v0.2.0/contextrail-0.2.0.tgz
-
-contextrail --version
-contextrail --help
-```
-
-Expected version:
-
-```text
-0.2.0
-```
+## Installation details
 
 ### Run from a checkout
 
@@ -70,34 +87,19 @@ node bin/contextrail.mjs --version
 npm test
 ```
 
-You can also install the immutable tag source:
-
-```bash
-npm install --global \
-  https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.2.0.tar.gz
-```
-
 ### Update or remove
 
-Re-run the release installation command to replace an older ContextRail CLI. Remove only ContextRail with:
+Update the candidate with `npm install --global contextrail@next`. Remove only the ContextRail CLI with:
 
 ```bash
 npm uninstall --global contextrail
 ```
 
-Package installation and removal do not manage Throughline, Codex Hooks, skills, configuration, other global npm packages, or shell startup files. Hook changes occur only through the explicit `hooks ... --apply` commands below.
+Removing the npm package does not remove managed Throughline or Hook receipts. Use the lower-level receipt-guarded uninstall and rollback commands when you deliberately want to remove those components. ContextRail never edits shell startup files.
 
 ## Create a new project
 
-Write-capable commands are plan-first. Review the dry run before applying it.
-
-```bash
-project_root="$(mktemp -d)"
-
-contextrail init --target "$project_root" --dry-run --json
-contextrail init --target "$project_root" --apply --json
-contextrail check --target "$project_root" --json
-```
+Open a terminal in an empty directory, optionally containing `.git`, and run `contextrail setup`. Use `contextrail setup --dry-run --json` followed by `contextrail setup --apply --json` from Codex or automation.
 
 `init` accepts an empty target, except that an existing `.git` directory is allowed. The generated neutral project contains hierarchical instructions, a routed authority document, and native file memory.
 
@@ -106,6 +108,12 @@ Next, ask an agent to start with the generated `AGENTS.md`, `docs/README.md`, an
 ## Adopt an existing repository
 
 Use `existing-repository` when a mature project already has instructions, documentation, status, plans, and a backlog. ContextRail maps those files instead of creating competing authority or state.
+
+Running `contextrail setup` in a non-empty unconfigured repository returns `needs_input` and candidate paths. It never guesses which files are authority, current state, plans, or backlog. You can ask Codex to prepare the reviewed mapping with this prompt:
+
+```text
+Inspect this repository read-only. Read AGENTS.md and the documentation router first. Identify the existing instruction file, document router, authority roots and exclusions, current-state file, plan directory, backlog file, and argv-based validation hints. Create a temporary existing-repository adoption JSON outside the repository. Run `contextrail setup --project existing --adoption-config <temporary-file> --dry-run --json`. Show me the complete plan and stop before `--apply`.
+```
 
 Create a repository-specific JSON mapping:
 
@@ -221,6 +229,7 @@ Uninstall restores only the feature edit recorded by ContextRail and refuses to 
 | --- | --- | --- |
 | `contextrail --version` | Print the installed version | No |
 | `contextrail --help` | Print CLI usage | No |
+| `contextrail setup` | Plan or interactively apply the selected end-to-end profile | No |
 | `contextrail init` | Plan or create a neutral foundation in an empty target | No |
 | `contextrail adopt` | Plan or add missing neutral scaffold files | No |
 | `contextrail adopt --profile existing-repository` | Map an existing repository without duplicate state | No |
@@ -284,7 +293,7 @@ contextrail throughline install --dry-run --json
 contextrail throughline verify --json
 ```
 
-Real installation requires explicit apply and a prepared artifact. ContextRail core works without Throughline. See [the integration authority](docs/authority/INTEGRATIONS.md) and [integration README](integrations/throughline/README.md) for details.
+The primary setup command selects and SHA-256 verifies the pinned GitHub Release artifact automatically. Advanced lower-level installation can still accept a locally prepared artifact. ContextRail Core works without Throughline. See [the integration authority](docs/authority/INTEGRATIONS.md) and [integration README](integrations/throughline/README.md) for details.
 
 ## Safety model
 
@@ -346,9 +355,9 @@ ContextRail is available under the [MIT License](LICENSE).
 
 ## Known limitations
 
-- No npm registry publication; installation uses a GitHub release or tag.
+- `0.3.0-rc.1` is published under npm `next`; `latest` remains gated on the Windows live pilot.
 - Node.js 22.13 or newer is required.
 - Validation hints are returned but never executed automatically.
-- Throughline is optional and independently installed.
+- Throughline is optional in reduced profiles and automatically installed or verified by the full setup profile.
 - Live Codex context injection needs a trusted session and cannot be proven by configuration inspection alone.
 - No GUI, hosted telemetry, vector index, or RAG service is included.

@@ -61,6 +61,9 @@ The MVP command surface is:
 
 ```text
 contextrail --version|--help
+contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE]
+                  [--core-only|--no-context-hooks|--use-existing-throughline]
+                  [--dry-run|--apply] [--json]
 contextrail init [--target PATH] [--dry-run]
 contextrail adopt [--target PATH] [--dry-run]
 contextrail adopt --profile existing-repository --adoption-config FILE [--dry-run|--apply]
@@ -82,6 +85,8 @@ contextrail automation enable|disable --host codex --target PATH --dry-run|--app
 ```
 
 Commands that may write default to a plan-only dry run where the command contract specifies it. Existing files are never overwritten silently. Paths are normalized and confined to the selected target. Writes use a sibling temporary file followed by atomic rename.
+
+`setup` composes the lower-level ownership boundaries. A TTY invocation displays the full hash-identified plan and asks for confirmation; a flagless non-TTY invocation is plan-only, and non-interactive writes require `--apply`. The full profile installs or verifies Throughline, initializes or adopts the project, appends ContextRail Hooks, enables only that project, and aggregates structural versus live readiness. Reduced profiles keep Core independent and explicit.
 
 ## Project Memory
 

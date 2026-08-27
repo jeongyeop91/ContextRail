@@ -22,9 +22,15 @@ Compatibility uses an immutable upstream commit, a separately hashed patch, the 
 
 Preparation may clone, patch, test, and pack in a temporary root. Installation requires explicit apply and uses a versioned ContextRail-managed prefix. It does not replace unrelated global packages or edit shell startup files. Receipts and hashes guard selection and rollback.
 
+The full `setup` profile reads the embedded `integrations/setup-manifest.json`, downloads only its immutable GitHub Release Throughline asset, verifies SHA-256, and then uses this managed installation boundary. The detached `release-manifest.json` binds the final ContextRail tarball, embedded setup-manifest bytes, checksum file, and Throughline asset without placing a self-digest inside the ContextRail tarball.
+
+Managed data follows native conventions: Application Support on macOS, XDG data on Linux, and LocalAppData on Windows. Installed Throughline JavaScript is invoked through the selected absolute Node executable and resolved package `bin` entry. ContextRail does not depend on POSIX `.bin` shims or Windows `.cmd` wrappers. WSL is Linux and cannot silently configure a mounted Windows-native Codex home.
+
 `throughline install --dry-run` is plan-only. Apply requires an explicit prepared artifact. A release is selected only after package installation, version execution, hook installation, and structured factory diagnostics succeed. The receipt records source, patch, artifact, and before/after configuration hashes.
 
 Rollback refuses to run if live configuration differs from the selected release receipt, restores configuration on a failed transition, and selects only a prior ContextRail-managed release. It does not remove unrelated packages or hooks.
+
+Setup records component completion after each owned boundary. A failure distinguishes completed, failed, and pending components. Repeated apply verifies a selected managed release and exact ContextRail receipts before resuming; it never replaces an unmanaged Throughline installation.
 
 ## Readiness
 
