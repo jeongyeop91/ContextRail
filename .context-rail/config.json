@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "documentRouter": "docs/README.md",
+  "authorityDirectory": "docs/authority",
+  "state": {
+    "current": "state/CURRENT.md",
+    "plan": "state/PLAN.md",
+    "backlog": "state/BACKLOG.json"
+  },
+  "limits": {
+    "routerLines": 50,
+    "authorityLines": 500
+  },
+  "instructionsFile": "AGENTS.md"
+}

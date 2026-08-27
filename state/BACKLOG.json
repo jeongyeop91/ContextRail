@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "CR-001",
+      "title": "Build the ContextRail MVP",
+      "status": "in_progress",
+      "dependsOn": [],
+      "acceptance": [
+        "Repository validates its own documents and state",
+        "Bootstrap, routing, continuation, and measurement commands pass tests",
+        "Optional Throughline preparation and verification are reproducible and safe"
+      ],
+      "authority": ["docs/authority/ARCHITECTURE.md"],
+      "sourceHints": ["src/", "templates/", "integrations/throughline/"],
+      "nextSteps": ["Execute state/PLAN.md in tested batches"],
+      "validation": [["npm", "run", "verify"]]
+    },
+    {
+      "id": "CR-002",
+      "title": "Choose the ContextRail open-source license",
+      "status": "ready",
+      "dependsOn": ["CR-001"],
+      "acceptance": ["LICENSE matches the maintainer's publication intent"],
+      "authority": ["docs/authority/PROJECT.md"],
+      "sourceHints": ["LICENSE"],
+      "nextSteps": ["Ask the maintainer before publication"],
+      "validation": [["git", "status", "--short"]]
+    },
+    {
+      "id": "CR-003",
+      "title": "Create and configure the GitHub Template Repository",
+      "status": "proposed",
+      "dependsOn": ["CR-001", "CR-002"],
+      "acceptance": ["Remote ownership, visibility, name, and template setting are confirmed"],
+      "authority": ["docs/authority/PROJECT.md"],
+      "sourceHints": ["README.md"],
+      "nextSteps": ["Create the remote only after explicit approval"],
+      "validation": [["git", "remote", "-v"]]
+    },
+    {
+      "id": "CR-004",
+      "title": "Establish a measured ContextRail baseline",
+      "status": "proposed",
+      "dependsOn": ["CR-001"],
+      "acceptance": ["Comparable task protocol and provenance are documented", "No unsupported performance claim is made"],
+      "authority": ["docs/authority/MEASUREMENT.md"],
+      "sourceHints": [".context-rail/runtime/measurements.jsonl"],
+      "nextSteps": ["Collect local records after the CLI is in use"],
+      "validation": [["node", "bin/contextrail.mjs", "measure", "report", "--json"]]
+    }
+  ]
+}
