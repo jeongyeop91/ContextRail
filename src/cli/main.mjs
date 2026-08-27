@@ -2,11 +2,13 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
+import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
 import { managedDataRoot } from '../adapters/platform.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
+import { downloadVerifiedArtifact } from '../adapters/release.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
 import { buildContinuation } from '../core/continuity.mjs';
@@ -16,6 +18,7 @@ import { finish, issue } from '../core/result.mjs';
 import { buildRoute } from '../core/routing.mjs';
 import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
+import { normalizeSetupOptions } from '../core/setup.mjs';
 import { findContextRailRoot, handleStop, handleUserPromptSubmit } from '../integrations/codex-hook-runtime.mjs';
 import {
   applyCodexHooksInstall,
@@ -28,10 +31,14 @@ import { loadThroughlineManifest } from '../integrations/throughline-manifest.mj
 import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from '../integrations/throughline-install.mjs';
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
 import { verifyThroughline } from '../integrations/throughline-verify.mjs';
+import { loadSetupManifest } from '../integrations/setup-manifest.mjs';
+import { applySetup, planSetup } from '../integrations/setup.mjs';
 import { VERSION } from '../version.mjs';
 
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
+const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const USAGE = `Usage:
+  contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE] [--core-only|--no-context-hooks|--use-existing-throughline] [--dry-run|--apply] [--json]
   contextrail init|adopt|upgrade [--target PATH] [--dry-run|--apply] [--json]
   contextrail adopt --profile existing-repository --adoption-config FILE [--target PATH] [--dry-run|--apply] [--json]
   contextrail check [--target PATH] [--json]
@@ -57,7 +64,7 @@ function optionValue(args, name) {
 
 function unknownOptions(args, positionalCount, supported) {
   const options = new Set(supported);
-  const flags = new Set(['--json', '--dry-run', '--apply', '--doctor']);
+  const flags = new Set(['--json', '--dry-run', '--apply', '--doctor', '--core-only', '--no-context-hooks', '--use-existing-throughline']);
   let positionals = 0;
   for (let index = 1; index < args.length; index += 1) {
     const value = args[index];
@@ -234,6 +241,109 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
   }
   const root = resolve(targetValue ?? process.cwd());
   const json = args.includes('--json');
+
+  if (command === 'setup') {
+    const supported = ['--target', '--project', '--adoption-config', '--core-only', '--no-context-hooks', '--use-existing-throughline', '--dry-run', '--apply', '--json'];
+    const project = optionValue(args, '--project');
+    const adoptionConfig = optionValue(args, '--adoption-config');
+    const input = {
+      project: project ?? 'auto',
+      adoptionConfig,
+      coreOnly: args.includes('--core-only'),
+      noContextHooks: args.includes('--no-context-hooks'),
+      useExistingThroughline: args.includes('--use-existing-throughline'),
+    };
+    const normalized = normalizeSetupOptions(input);
+    if (unknownOptions(args, 0, supported)
+      || (args.includes('--dry-run') && args.includes('--apply'))
+      || (args.includes('--project') && !project)
+      || (args.includes('--adoption-config') && !adoptionConfig)
+      || !normalized.ok) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+
+    const selectedPlanSetup = dependencies.planSetup ?? planSetup;
+    const selectedApplySetup = dependencies.applySetup ?? applySetup;
+    let setupManifest = dependencies.setupManifest;
+    if (!dependencies.planSetup && !setupManifest) {
+      const loaded = await loadSetupManifest({ root: PACKAGE_ROOT, fs: nodeFilesystem, expectedVersion: VERSION });
+      if (!loaded.ok) {
+        writeStructured(loaded, json, io);
+        return 1;
+      }
+      setupManifest = loaded.manifest;
+    }
+    const home = resolve(dependencies.home ?? homedir());
+    const platform = dependencies.platform ?? process.platform;
+    const environment = dependencies.env ?? process.env;
+    const managedRoot = dependencies.managedRoot
+      ?? resolve(managedDataRoot({ platform, home, env: environment }), 'throughline');
+    const setupDependencies = {
+      target: root,
+      input,
+      home,
+      managedRoot,
+      platform,
+      env: environment,
+      nodePath: resolve(dependencies.nodePath ?? process.execPath),
+      cliPath: resolve(dependencies.cliPath ?? process.argv[1]),
+      templateRoot: PROJECT_TEMPLATE,
+      setupManifest,
+      fs: nodeFilesystem,
+      processAdapter: dependencies.processAdapter ?? nodeProcess,
+      downloadArtifact: dependencies.downloadArtifact ?? downloadVerifiedArtifact,
+      tempRoot: dependencies.tempRoot ?? tmpdir(),
+      existingThroughlineBinary: dependencies.existingThroughlineBinary ?? 'throughline',
+    };
+    const first = await selectedPlanSetup(setupDependencies);
+    const explicitApply = args.includes('--apply');
+    if (first.plan.status !== 'planned') {
+      writeStructured(first.plan, json, io);
+      return first.plan.status === 'needs_input' ? 1 : 3;
+    }
+    if (args.includes('--dry-run')) {
+      writeStructured(first.plan, json, io);
+      return 0;
+    }
+
+    const interactive = dependencies.stdinIsTTY ?? io.stdin?.isTTY ?? process.stdin.isTTY;
+    if (!explicitApply) writeStructured(first.plan, json, io);
+    if (!explicitApply && !interactive) return 0;
+    let approved = explicitApply;
+    if (!explicitApply) {
+      let answer;
+      if (dependencies.confirm) answer = await dependencies.confirm('Apply? [y/N] ');
+      else {
+        const terminal = createInterface({ input: io.stdin ?? process.stdin, output: io.stdout ?? process.stdout });
+        try {
+          answer = await terminal.question('Apply? [y/N] ');
+        } finally {
+          terminal.close();
+        }
+      }
+      approved = answer === true || ['y', 'yes'].includes(String(answer).trim().toLowerCase());
+    }
+    if (!approved) return 0;
+
+    let selected = first;
+    if (!explicitApply) {
+      selected = await selectedPlanSetup(setupDependencies);
+      if (selected.plan.id !== first.plan.id) {
+        io.stderr.write('Setup plan changed after confirmation; review the new plan before applying.\n');
+        return 3;
+      }
+    }
+    try {
+      const result = await selectedApplySetup({ planned: selected, approvedPlanId: first.plan.id, dependencies: setupDependencies });
+      writeStructured(result, json, io);
+      return 0;
+    } catch (error) {
+      if (json && error.setup) writeStructured(error.setup, true, io);
+      io.stderr.write(`${error.message}\n`);
+      return 3;
+    }
+  }
 
   if (command === 'hook' && ['user-prompt-submit', 'stop'].includes(args[1])) {
     if (unknownOptions(args, 1, [])) {
