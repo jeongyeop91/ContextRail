@@ -83,7 +83,7 @@
     {
       "id": "CR-007",
       "title": "Add opt-in Codex context automation hooks",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["CR-006"],
       "acceptance": [
         "UserPromptSubmit injects bounded route or continuation context only for enabled projects",
@@ -94,7 +94,7 @@
       ],
       "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/OPERATING_MODEL.md", "docs/authority/INTEGRATIONS.md", "docs/authority/VALIDATION.md"],
       "sourceHints": ["src/core/automation.mjs", "src/integrations/codex-hook-runtime.mjs", "src/integrations/codex-hooks.mjs", "src/cli/main.mjs", "test/"],
-      "nextSteps": ["Execute the checked steps in state/PLAN.md without changing the real user HOME"],
+      "nextSteps": ["Use the immutable v0.2.0 release and review dry runs before any user-level or project-level apply"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

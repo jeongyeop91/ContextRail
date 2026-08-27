@@ -1,6 +1,6 @@
 # Current state
 
-Active item: `CR-007`
+Active item: none
 
 ## Observed
 
@@ -36,12 +36,14 @@ Active item: `CR-007`
 - Codex Hook design and implementation commits: `c51efbc`, `4a1b29a`, `6ffaf18`, `daedd7b`, `806c458`, and `3befa6c`.
 - The v0.2.0 release candidate passed 91 tests, self-check with 8 Active Authority files, neutral template smoke, package dry-run, isolated package version/help smoke, and `git diff --check`.
 - Real-HOME install dry-run and read-only verify left the Hook/config hashes unchanged and did not create a ContextRail receipt.
+- Release commit and annotated tag: `c4b2056` / `v0.2.0`; release asset SHA-256: `767ffc745c62425c0b1d5e8b3ad7ce25ee88238787d031789e121100f30cd2c0`.
+- The published release asset digest matches the verified local artifact, and both `main` and tag GitHub Actions runs completed successfully.
 
 ## Next steps
 
-1. Commit the verified v0.2.0 version and state metadata.
-2. Create and verify the final package artifact from the clean release commit.
-3. Tag, push, publish the GitHub Release, and confirm its workflow and asset digest.
+1. Install or enable Codex automation only through reviewed dry runs and explicit apply commands.
+2. Leave CR-004 proposed until its measurement protocol is deliberately scoped.
+3. Create a new active plan when the next backlog item is selected.
 
 ## Blockers
 
