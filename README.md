@@ -27,6 +27,7 @@ ContextRail is product-neutral, has no production npm dependencies, and works of
 - References mode for repositories that already own their state and backlog formats.
 - Plan-first `init`, `adopt`, and hash-guarded `upgrade` operations.
 - Deterministic `check`, `route`, and `continue` projections.
+- Optional Codex Hooks that inject bounded route/continuation context and run a non-blocking Stop check for opted-in projects.
 - Local, provenance-labelled context measurements.
 - An optional, separately managed Throughline bridge.
 
@@ -44,11 +45,11 @@ ContextRail does not require Codex, Throughline, a hosted service, or a globally
 
 ContextRail is not published to the npm registry. The recommended global installation source is the verified package attached to the latest GitHub Release.
 
-### Install the v0.1.0 release
+### Install the v0.2.0 release
 
 ```bash
 npm install --global \
-  https://github.com/jeongyeop91/ContextRail/releases/download/v0.1.0/contextrail-0.1.0.tgz
+  https://github.com/jeongyeop91/ContextRail/releases/download/v0.2.0/contextrail-0.2.0.tgz
 
 contextrail --version
 contextrail --help
@@ -57,7 +58,7 @@ contextrail --help
 Expected version:
 
 ```text
-0.1.0
+0.2.0
 ```
 
 ### Run from a checkout
@@ -73,7 +74,7 @@ You can also install the immutable tag source:
 
 ```bash
 npm install --global \
-  https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.1.0.tar.gz
+  https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.2.0.tar.gz
 ```
 
 ### Update or remove
@@ -84,7 +85,7 @@ Re-run the release installation command to replace an older ContextRail CLI. Rem
 npm uninstall --global contextrail
 ```
 
-Installation and removal do not manage Throughline, Codex hooks, skills, configuration, other global npm packages, or shell startup files.
+Package installation and removal do not manage Throughline, Codex Hooks, skills, configuration, other global npm packages, or shell startup files. Hook changes occur only through the explicit `hooks ... --apply` commands below.
 
 ## Create a new project
 
@@ -178,6 +179,42 @@ contextrail continue --target /path/to/project --json
 
 `route` returns applicable `AGENTS.md` files in root-to-target order, the document router and linked documents, state context, and validation hints. `continue` performs no model call, Git operation, test, or mutation.
 
+## Optional Codex automatic context
+
+Codex automation has two separate gates: install the user-level Hook handlers once, then opt in each ContextRail project. New and adopted projects default to disabled.
+
+Review the user-level plan, then explicitly apply it:
+
+```bash
+contextrail hooks install --host codex --dry-run --json
+contextrail hooks install --host codex --apply --json
+```
+
+The installer appends one synchronous `UserPromptSubmit` handler and one synchronous `Stop` handler to `~/.codex/hooks.json`. It preserves existing Throughline and unrelated groups, enables the canonical Codex `hooks` feature only when needed, and records a hash-guarded receipt under `~/.codex/contextrail/`. Concurrent edits or duplicate ContextRail handlers are conflicts, not overwrite candidates.
+
+Enable automation for a selected project only after reviewing its plan:
+
+```bash
+contextrail automation enable --host codex --target /path/to/project --dry-run --json
+contextrail automation enable --host codex --target /path/to/project --apply --json
+contextrail hooks verify --host codex --target /path/to/project --json
+```
+
+`UserPromptSubmit` supplies bounded paths, state references, and validation hints as additional context; it never echoes the raw prompt. A prompt consisting of `continue`, `계속해`, `계속`, or `이어서` selects continuation context. `Stop` runs the read-only ContextRail document/state check and reports violations without returning a Codex block decision or executing validation hints.
+
+`hooks verify` checks exact commands, executable paths, duplicate entries, feature and receipt state, preservation of non-owned Hooks, selected-project opt-in, and isolated synthetic Hook behavior. It reports live Codex context injection as `unverified`; confirm that only by starting or restarting a trusted Codex session and observing the next prompt. Codex may require repository trust before project configuration takes effect.
+
+Disable a project without removing the user-level handlers, or uninstall only ContextRail-owned handlers:
+
+```bash
+contextrail automation disable --host codex --target /path/to/project --dry-run --json
+contextrail automation disable --host codex --target /path/to/project --apply --json
+contextrail hooks uninstall --host codex --dry-run --json
+contextrail hooks uninstall --host codex --apply --json
+```
+
+Uninstall restores only the feature edit recorded by ContextRail and refuses to proceed if live Hook/config hashes changed. It never removes Throughline or user-owned handlers.
+
 ## Command reference
 
 | Command | Purpose | Writes by default |
@@ -197,6 +234,10 @@ contextrail continue --target /path/to/project --json
 | `contextrail throughline install` | Plan or explicitly apply managed installation | No |
 | `contextrail throughline verify` | Read Throughline version and diagnostics | No |
 | `contextrail throughline rollback` | Explicitly restore managed integration state | No |
+| `contextrail hooks install` | Plan or explicitly register user-level Codex handlers | No |
+| `contextrail hooks verify` | Inspect registration and run isolated synthetic smoke | No |
+| `contextrail hooks uninstall` | Plan or explicitly remove owned Codex handlers | No |
+| `contextrail automation enable\|disable` | Plan or explicitly change one project's Codex opt-in | No |
 
 Run `contextrail --help` for supported flags. Project commands use exit code `0` for success, `1` for project contract violations, `2` for invalid CLI/configuration input, and `3` for external integration failures.
 
@@ -252,6 +293,8 @@ Real installation requires explicit apply and a prepared artifact. ContextRail c
 - Repository paths are normalized and confined to the selected root.
 - Executable boundaries use argv arrays rather than shell command strings.
 - Core checks do not mutate the repository or user environment.
+- Codex automation is project opt-in, bounded, fail-open, and never executes routed validation hints.
+- User-level Hook changes preserve non-owned groups and use receipt/hash guards for install and uninstall.
 - Runtime measurements and generated package archives are Git-ignored.
 
 See [SECURITY.md](SECURITY.md) for supported versions, reporting, and security boundaries.
@@ -307,4 +350,5 @@ ContextRail is available under the [MIT License](LICENSE).
 - Node.js 22.13 or newer is required.
 - Validation hints are returned but never executed automatically.
 - Throughline is optional and independently installed.
+- Live Codex context injection needs a trusted session and cannot be proven by configuration inspection alone.
 - No GUI, hosted telemetry, vector index, or RAG service is included.

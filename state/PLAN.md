@@ -84,8 +84,8 @@
 
 **Interfaces:** Publish version `0.2.0` consistently across package, runtime, template, changelog, tag, and release.
 
-- [ ] Document install, project enable/disable, verify, uninstall, trust review, bounded output, manual validation hints, and Throughline responsibility separation.
-- [ ] Keep `docs/README.md` at or below 50 lines and every Active Authority file at or below 500 lines.
+- [x] Document install, project enable/disable, verify, uninstall, trust review, bounded output, manual validation hints, and Throughline responsibility separation.
+- [x] Keep `docs/README.md` at or below 50 lines and every Active Authority file at or below 500 lines.
 - [ ] Update durable state only with observed test and release evidence.
 - [ ] Run Hook focused tests, automation tests, existing CLI regressions, `npm test`, `npm run check`, `npm run smoke:template`, `npm run verify`, `npm pack --dry-run`, isolated package install/version/help smoke, real-HOME install dry-run, read-only Hook verify, and `git diff --check`.
 - [ ] Commit logical green slices, create annotated `v0.2.0`, push `main` and the tag, and create the GitHub Release without changing remote visibility or publishing to npm.

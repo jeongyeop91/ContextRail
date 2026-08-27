@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The latest `0.1.x` release and the latest commit on the default branch are evaluated for security fixes.
+The latest `0.2.x` release and the latest commit on the default branch are evaluated for security fixes.
 
 ## Reporting
 
@@ -18,3 +18,7 @@ Include a minimal reproduction, affected command and version, impact, and whethe
 - Paths are normalized and confined to the selected project or managed root.
 - ContextRail does not store raw prompts, responses, transcripts, or secrets as measurements.
 - Throughline verification uses its public CLI and never reads its database directly.
+- Codex automation is disabled per project by default and emits bounded context without copying the raw prompt.
+- The Stop Hook is read-only and fail-open; it never issues a blocking decision or executes validation hints.
+- Hook install/uninstall preserves non-owned groups, writes a receipt last, and refuses concurrent hash changes.
+- Real HOME mutation is excluded from automated tests; Hook lifecycle tests use temporary HOME fixtures.

@@ -30,3 +30,5 @@ Write-capable operations expose a plan or dry run. Existing user files are skipp
 Existing-repository adoption preserves the project's authority model. It maps existing instructions, router, authority roots, current state, plan directory, and backlog; it never creates parallel state or neutral authority and never changes the root `.gitignore`. ContextRail owns only its three `.context-rail` metadata files.
 
 Repository validation hints are untrusted guidance. They must be non-empty executable/argument arrays, are returned as structured data, and are never run merely because a config declares them. The user or agent executes an appropriate hint separately after reviewing repository instructions and the intended change.
+
+Codex automation uses a user-level registration gate and a separate project opt-in gate. Review `hooks install` and `automation enable` dry runs before applying them. Automatic prompt routing may add only bounded ContextRail references; automatic Stop checks are read-only and non-blocking. Hook failures fail open, while installation conflicts fail closed without changing live configuration.

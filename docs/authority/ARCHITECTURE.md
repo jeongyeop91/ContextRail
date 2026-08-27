@@ -35,7 +35,7 @@ ContextRail does not own:
 - an agent runtime, model router, transcript store, vector database, or RAG service;
 - source-code indexing beyond filesystem and text-search guidance;
 - automatic branch, worktree, or subagent orchestration;
-- Throughline databases, hooks, migrations, capture contracts, or handoff semantics;
+- Throughline databases, capture hooks, migrations, capture contracts, or handoff semantics;
 - global host configuration unless the user explicitly executes an integration install command.
 
 ## Architecture
@@ -75,6 +75,10 @@ contextrail throughline verify [--live]
 contextrail throughline install --dry-run
 contextrail throughline install --apply
 contextrail throughline rollback
+contextrail hooks install --host codex --dry-run|--apply
+contextrail hooks verify --host codex
+contextrail hooks uninstall --host codex --dry-run|--apply
+contextrail automation enable|disable --host codex --target PATH --dry-run|--apply
 ```
 
 Commands that may write default to a plan-only dry run where the command contract specifies it. Existing files are never overwritten silently. Paths are normalized and confined to the selected target. Writes use a sibling temporary file followed by atomic rename.
@@ -113,6 +117,18 @@ The validator checks:
 - unresolved template markers, representative secret patterns, and absolute personal paths.
 
 External links are not fetched by the default offline validator.
+
+## Codex Context Automation
+
+Codex automation separates global registration from project activation. `hooks install` merges two synchronous command handlers into the user Hook file and writes its ownership receipt last. It preserves group order and non-owned handlers, changes the canonical feature flag only when required, and refuses unreceipted lookalikes, duplicates, or concurrent hash changes. Apply writes through sibling temporary files and restores the captured precondition state on failure.
+
+Every scaffold carries an explicit disabled `automation.codex` object. `automation enable` may update only a config matching the ownership hash recorded in `.context-rail/version.json`; the config and new ownership hash are one guarded transition. Disable retains the route/check preferences while setting the activation gate false.
+
+`UserPromptSubmit` walks upward from the Hook `cwd` to locate an enabled ContextRail project. It selects ordinary route context or exact continuation intent, emits only bounded project-relative paths, state references, and argv validation hints through `additionalContext`, and does not echo the prompt. Outside an enabled project it emits nothing.
+
+`Stop` validates documents and state without executing hints. Passing and disabled cases emit an empty JSON object. Violations emit a bounded `systemMessage`, never a blocking decision. Handler failures also return a concise fail-open message with exit code zero.
+
+Verification distinguishes exact registration, duplicate/mismatched entries, executable paths, feature state, receipt currency, non-owned Hook preservation, project opt-in, and isolated route/continue/check smoke. It never claims that a live Codex conversation consumed injected context; that remains `unverified` until observed in a trusted host session.
 
 ## Instruction Routing
 
@@ -177,6 +193,7 @@ Integration readiness states are `prepared`, `installed`, `hooks_ready`, `captur
 - Patch mismatch and test failure stop installation without fallback.
 - Real-home tests are forbidden; fixtures use temporary HOME.
 - Existing non-owned files and settings are preserved.
+- ContextRail Codex Hook install/uninstall owns only its exact receipt-recorded entries and feature edit; it never removes Throughline or unrelated groups.
 - Rollback restores only ContextRail-managed releases and configuration entries, and refuses an unsafe restore if current hashes show concurrent external changes.
 - No secrets, tokens, raw transcripts, or personal absolute paths enter committed fixtures or reports.
 

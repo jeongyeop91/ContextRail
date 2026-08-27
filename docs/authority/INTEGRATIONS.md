@@ -2,9 +2,17 @@
 
 ## Boundary
 
-ContextRail owns repository instructions, document routing, state contracts, validation hints, measurements, and reproducible integration planning. Throughline owns its capture pipeline, restore behavior, handoff memory, hooks, monitor, database, and diagnostics.
+ContextRail owns repository instructions, document routing, state contracts, validation hints, measurements, its bounded Codex context handlers, and reproducible integration planning. Throughline owns its capture pipeline, restore behavior, handoff memory, capture hooks, monitor, database, and diagnostics.
 
 Core commands remain usable when Throughline is absent. ContextRail never reads or writes the Throughline database directly and never treats injected model context as project authority.
+
+ContextRail and Throughline may both register Codex Hooks. ContextRail appends only its exact `UserPromptSubmit` and `Stop` groups, preserves existing ordering and non-owned groups, and uses a separate receipt. It does not call, edit, verify, or uninstall Throughline handlers. ContextRail route/continue context is ephemeral guidance; Throughline capture and handoff remain independent memory concerns.
+
+## Codex Hook registration
+
+Global handler registration is inert for repositories whose `automation.codex.enabled` is not true. Install, feature-flag editing, project opt-in, and uninstall are separate plan/apply operations. User-level apply writes its receipt last and uses before/after hashes; project apply updates only ContextRail-owned metadata. Any concurrent change produces a conflict.
+
+Verification may prove registration and isolated handler behavior, but not consumption by a live Codex conversation. Trust approval, host reload, and live context observation remain manual host-level evidence.
 
 ## Throughline provenance
 
