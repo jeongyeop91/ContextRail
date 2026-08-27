@@ -41,6 +41,7 @@ Active item: `CR-008`
 - ADR-0003 records the approved full-install default, explicit reduced profiles, release-managed Throughline artifact, and macOS/Windows/Linux setup contract.
 - ADR-0004 adds the approved two-command interactive quickstart while retaining explicit non-interactive dry-run and apply boundaries.
 - ADR-0005 adds the approved public npm distribution sequence: `0.3.0-rc.1` under `next`, then `0.3.0` under `latest` only after the Windows live pilot.
+- ADR-0006 separates the embedded setup manifest from the detached release envelope so the ContextRail tarball never contains its own digest.
 - Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
 
 ## Next steps
