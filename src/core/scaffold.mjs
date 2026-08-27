@@ -80,13 +80,21 @@ export async function planScaffold({ mode, target, templateRoot, fs }) {
 export async function applyScaffold(plan, fs) {
   if (!plan.ok) throw new Error('Cannot apply an invalid scaffold plan');
   const applied = [];
-  for (const operation of plan.operations) {
+  for (const [index, operation] of plan.operations.entries()) {
     if (!['create', 'update'].includes(operation.action)) continue;
     const destination = resolve(plan.target, operation.path);
     await fs.mkdir(dirname(destination), { recursive: true });
-    await fs.writeText(destination, operation.content);
+    const temporary = resolve(dirname(destination), `.${operation.path.split(/[\\/]/).at(-1)}.tmp-${process.pid}-${index}`);
+    try {
+      await fs.writeText(temporary, operation.content);
+      await fs.rename(temporary, destination);
+    } catch (error) {
+      if (await fs.exists(temporary)) await fs.remove(temporary);
+      throw error;
+    }
     applied.push(operation.path);
   }
+  if (plan.ownershipMode === 'precomputed') return { ok: true, applied };
   const versionPath = resolve(plan.target, '.context-rail/version.json');
   if (await fs.exists(versionPath)) {
     const version = JSON.parse(await fs.readText(versionPath));

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { cp, mkdtemp, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -43,6 +43,29 @@ test('unknown commands return CLI usage exit code', async () => {
   const stream = capture();
   assert.equal(await run(['unknown'], stream.io), 2);
   assert.match(stream.output().stderr, /Usage:/);
+});
+
+test('existing-repository adoption requires its profile and config then remains plan-only', async () => {
+  const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-existing-'));
+  const fixture = new URL('./fixtures/existing-repository/', import.meta.url).pathname;
+  await cp(fixture, target, { recursive: true });
+  const adoptionConfig = join(target, 'adoption-config.json');
+
+  const missing = capture();
+  assert.equal(await run(['adopt', '--target', target, '--profile', 'existing-repository', '--dry-run', '--json'], missing.io), 2);
+
+  const stream = capture();
+  const code = await run([
+    'adopt', '--target', target, '--profile', 'existing-repository', '--adoption-config', adoptionConfig, '--dry-run', '--json',
+  ], stream.io);
+  assert.equal(code, 0, stream.output().stderr);
+  const plan = JSON.parse(stream.output().stdout);
+  assert.deepEqual(plan.operations.map((entry) => entry.path).sort(), [
+    '.context-rail/.gitignore',
+    '.context-rail/config.json',
+    '.context-rail/version.json',
+  ]);
+  assert.equal(await readFile(join(target, 'AGENTS.md'), 'utf8'), '# Existing repository guide\n\nRead `docs/README.md` and preserve existing project memory.\n');
 });
 
 test('measure record and report keep provenance in local runtime data', async () => {

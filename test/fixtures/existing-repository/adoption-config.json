@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "profile": "existing-repository",
+  "documentRouter": "docs/README.md",
+  "authority": {
+    "roots": ["docs/product", "docs/architecture", "docs/engineering"],
+    "exclude": ["docs/architecture/decisions", "docs/engineering/STATUS.md"]
+  },
+  "state": {
+    "mode": "references",
+    "current": "docs/engineering/STATUS.md",
+    "planDirectory": "plans",
+    "backlog": "backlog/work.yaml"
+  },
+  "limits": {
+    "routerLines": 50,
+    "authorityLines": 500
+  },
+  "instructionsFile": "AGENTS.md",
+  "validationHints": [["node", "--test"]]
+}

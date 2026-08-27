@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
+import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
 import { buildContinuation } from '../core/continuity.mjs';
 import { validateDocuments } from '../core/documents.mjs';
 import { appendMeasurement, readMeasurements, summarizeMeasurements } from '../core/measurement.mjs';
@@ -20,6 +21,7 @@ import { verifyThroughline } from '../integrations/throughline-verify.mjs';
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const USAGE = `Usage:
   contextrail init|adopt|upgrade [--target PATH] [--dry-run|--apply] [--json]
+  contextrail adopt --profile existing-repository --adoption-config FILE [--target PATH] [--dry-run|--apply] [--json]
   contextrail check [--target PATH] [--json]
   contextrail route PATH [--target PATH] [--json]
   contextrail continue [--target PATH] [--json]
@@ -126,11 +128,57 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
   }
 
   if (['init', 'adopt', 'upgrade'].includes(command)) {
-    if (unknownOptions(args, 0, ['--target', '--json', '--dry-run', '--apply']) || (args.includes('--apply') && args.includes('--dry-run'))) {
+    if (unknownOptions(args, 0, ['--target', '--json', '--dry-run', '--apply', '--profile', '--adoption-config']) || (args.includes('--apply') && args.includes('--dry-run'))) {
       io.stderr.write(USAGE);
       return 2;
     }
-    const plan = await planScaffold({ mode: command, target: root, templateRoot: PROJECT_TEMPLATE, fs: nodeFilesystem });
+    const profile = optionValue(args, '--profile');
+    const adoptionConfigPath = optionValue(args, '--adoption-config');
+    if ((args.includes('--profile') && !profile) || (args.includes('--adoption-config') && !adoptionConfigPath)) {
+      io.stderr.write('--profile and --adoption-config require values\n');
+      return 2;
+    }
+    if (command === 'adopt' && (profile || adoptionConfigPath)) {
+      if (profile !== EXISTING_REPOSITORY_PROFILE || !adoptionConfigPath) {
+        io.stderr.write('existing-repository adoption requires --profile existing-repository and --adoption-config FILE\n');
+        return 2;
+      }
+      let input;
+      try {
+        input = JSON.parse(await nodeFilesystem.readText(resolve(adoptionConfigPath)));
+      } catch (error) {
+        io.stderr.write(`Cannot load adoption config: ${error.message}\n`);
+        return 2;
+      }
+      const normalized = normalizeAdoptionConfig(input);
+      if (!normalized.ok) {
+        writeStructured(normalized, json, io);
+        return 2;
+      }
+      const plan = await planExistingRepositoryAdoption({ target: root, config: normalized.config, fs: nodeFilesystem });
+      let applied = null;
+      if (plan.ok && args.includes('--apply')) applied = await applyScaffold(plan, nodeFilesystem);
+      writeStructured(publicScaffoldPlan(plan, applied), json, io);
+      return plan.ok ? 0 : 1;
+    }
+    if ((profile || adoptionConfigPath) && command !== 'adopt') {
+      io.stderr.write('--profile and --adoption-config are supported only by adopt\n');
+      return 2;
+    }
+    let plan;
+    if (command === 'upgrade') {
+      let storedProfile = null;
+      try {
+        storedProfile = JSON.parse(await nodeFilesystem.readText(resolve(root, '.context-rail/config.json'))).profile;
+      } catch {
+        // The native scaffold planner reports missing or malformed metadata as before.
+      }
+      plan = storedProfile === EXISTING_REPOSITORY_PROFILE
+        ? await planExistingRepositoryUpgrade({ target: root, fs: nodeFilesystem })
+        : await planScaffold({ mode: command, target: root, templateRoot: PROJECT_TEMPLATE, fs: nodeFilesystem });
+    } else {
+      plan = await planScaffold({ mode: command, target: root, templateRoot: PROJECT_TEMPLATE, fs: nodeFilesystem });
+    }
     let applied = null;
     if (plan.ok && args.includes('--apply')) applied = await applyScaffold(plan, nodeFilesystem);
     writeStructured(publicScaffoldPlan(plan, applied), json, io);
