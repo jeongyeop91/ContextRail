@@ -42,13 +42,13 @@
 
 **Interfaces:** `findContextRailRoot(cwd,fs)` returns a root or null. `handleUserPromptSubmit(payload,{fs})` and `handleStop(payload,{fs})` return output, status, and project root. UserPrompt no-op output is empty; other output is one Codex-compatible JSON line.
 
-- [ ] Write failing tests for non-project and disabled-project no-op behavior.
-- [ ] Write failing tests for route, English continuation, Korean `계속해`, and bounded output without raw prompt content.
-- [ ] Run `node --test test/codex-hook-runtime.test.mjs` and confirm failures are caused by the absent runtime.
-- [ ] Implement upward config discovery, validated opt-in checks, continuation intent classification, route/continue projection, and bounded JSON context.
-- [ ] Write failing Stop tests for inactive no-op, passing check, and concise violation output.
-- [ ] Implement Stop with the existing read-only validator, `{}` on success/no-op, and `systemMessage` containing only stable code, path, and count on failure.
-- [ ] Run `node --test test/codex-hook-runtime.test.mjs test/routing.test.mjs test/continuity.test.mjs test/documents.test.mjs test/state.test.mjs` and observe all pass.
+- [x] Write failing tests for non-project and disabled-project no-op behavior.
+- [x] Write failing tests for route, English continuation, Korean `계속해`, and bounded output without raw prompt content.
+- [x] Run `node --test test/codex-hook-runtime.test.mjs` and confirm failures are caused by the absent runtime.
+- [x] Implement upward config discovery, validated opt-in checks, continuation intent classification, route/continue projection, and bounded JSON context.
+- [x] Write failing Stop tests for inactive no-op, passing check, and concise violation output.
+- [x] Implement Stop with the existing read-only validator, `{}` on success/no-op, and `systemMessage` containing only stable code, path, and count on failure.
+- [x] Run `node --test test/codex-hook-runtime.test.mjs test/routing.test.mjs test/continuity.test.mjs test/documents.test.mjs test/state.test.mjs` and observe all pass.
 
 ### Task 3: Codex Hook installation lifecycle
 
