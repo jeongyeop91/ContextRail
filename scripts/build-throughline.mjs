@@ -3,6 +3,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { normalizeGzipBytes } from './archive.mjs';
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import { nodeProcess } from '../src/adapters/process.mjs';
 import { loadThroughlineManifest } from '../src/integrations/throughline-manifest.mjs';
@@ -32,7 +33,7 @@ export async function buildThroughlineArtifact({
   if (await fs.exists(destination)) throw new Error(`Throughline output already exists: ${destination}`);
   const result = await prepare({ root, fs, processAdapter });
   if (basename(result.artifact) !== basename(destination)) throw new Error('Prepared Throughline filename differs from requested output');
-  const bytes = await fs.readBytes(result.artifact);
+  const bytes = normalizeGzipBytes(await fs.readBytes(result.artifact));
   await fs.mkdir(dirname(destination), { recursive: true });
   await fs.writeBytes(destination, bytes);
   return { output: destination, sha256: sha256(bytes), evidence: result.evidence };

@@ -40,14 +40,15 @@ Active item: `CR-008`
 - The published release asset digest matches the verified local artifact, and both `main` and tag GitHub Actions runs completed successfully.
 - ADR-0003 records the approved full-install default, explicit reduced profiles, release-managed Throughline artifact, and macOS/Windows/Linux setup contract.
 - ADR-0004 adds the approved two-command interactive quickstart while retaining explicit non-interactive dry-run and apply boundaries.
-- ADR-0005 adds the approved public npm distribution sequence: `0.3.0-rc.1` under `next`, then `0.3.0` under `latest` only after the Windows live pilot.
+- ADR-0005 approved an npm release candidate under `next`, then `0.3.0` under `latest` only after the Windows live pilot. The public `v0.3.0-rc.1` tag is retained as failed release evidence after platform-specific gzip headers caused the detached asset build to reject the Throughline digest; `0.3.0-rc.2` is the replacement candidate.
+- Main and tag verification for `v0.3.0-rc.1` passed on Ubuntu, macOS, and Windows before the separate release job exposed the cross-platform gzip-byte mismatch.
 - ADR-0006 separates the embedded setup manifest from the detached release envelope so the ContextRail tarball never contains its own digest.
 - Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
 
 ## Next steps
 
 1. Execute the revised `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` test-first.
-2. Publish `0.3.0-rc.1` under npm `next` only after packed-artifact and GitHub Release verification.
+2. Publish `0.3.0-rc.2` under npm `next` only after canonical archive, packed-artifact, and GitHub Release verification.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers

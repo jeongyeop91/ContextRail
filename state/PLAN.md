@@ -10,5 +10,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [ ] Add cross-platform Codex Hook registration.
 - [ ] Implement plan-first, resumable `contextrail setup` with TTY confirmation.
 - [ ] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
-- [ ] Publish the verified `0.3.0-rc.1` tarball to npm under `next` and configure Trusted Publishing.
+- [ ] Publish the verified `0.3.0-rc.2` tarball to npm under `next` and configure Trusted Publishing.
 - [ ] Publish the two-command README and Windows live pilot checklist.

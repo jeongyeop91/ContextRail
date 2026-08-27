@@ -20,7 +20,7 @@
 - Existing repositories require an explicit adoption config; setup never guesses semantic mappings.
 - Unmanaged Throughline installations are preserved and never overwritten.
 - Windows live Codex evidence remains pending until the user completes the supplied pilot checklist.
-- npm publication starts with `0.3.0-rc.1` under `next`; `0.3.0` receives `latest` only after recorded Windows live evidence.
+- The retained `v0.3.0-rc.1` tag failed before release publication because platform-specific gzip headers changed the Throughline artifact digest. Publication continues with canonically normalized `0.3.0-rc.2` under `next`; `0.3.0` receives `latest` only after recorded Windows live evidence.
 - npm and GitHub Release ContextRail tarballs are byte-identical, while Throughline remains a separate verified GitHub asset.
 - Automated npm publication uses GitHub Actions OIDC Trusted Publishing and no long-lived registry token.
 
@@ -278,17 +278,17 @@ permissions:
 - Modify: `package.json`
 - Modify: `README.md`
 - Modify: `docs/reference/README.md`
-- Create: `docs/history/releases/2026-08-27-v0.3.0-rc.1.md`
+- Create: `docs/history/releases/2026-08-27-v0.3.0-rc.2.md`
 
 **Interfaces:**
-- Manual bootstrap: `npm publish contextrail-0.3.0-rc.1.tgz --access public --tag next`
-- Registry checks: `npm view contextrail@0.3.0-rc.1 version dist.tarball dist.integrity dist-tags --json`
+- Manual bootstrap: `npm publish contextrail-0.3.0-rc.2.tgz --access public --tag next`
+- Registry checks: `npm view contextrail@0.3.0-rc.2 version dist.tarball dist.integrity dist-tags --json`
 - Candidate install: `npm install --global contextrail@next`
 
-- [ ] **Step 1: Set the package and CLI version to `0.3.0-rc.1`, then run the focused release-version test and confirm it initially fails before updating generated metadata.**
+- [ ] **Step 1: Set the package and CLI version to `0.3.0-rc.2`, then run the focused release-version test and confirm it initially fails before updating generated metadata.**
 - [ ] **Step 2: Build the patched Throughline and complete release assets once; verify the ContextRail versioned asset, stable-name asset, and npm input tarball have the same SHA-256.**
 - [ ] **Step 3: Run `npm test`, `npm run verify`, `npm pack --dry-run --json`, `npm publish --dry-run --access public --tag next`, and isolated tarball version/help/init/setup smoke.**
-- [ ] **Step 4: Publish the GitHub `v0.3.0-rc.1` prerelease with manifest, checksum, ContextRail, and Throughline assets, then re-download and verify every digest.**
+- [ ] **Step 4: Publish the GitHub `v0.3.0-rc.2` prerelease with manifest, checksum, ContextRail, and Throughline assets, then re-download and verify every digest.**
 - [ ] **Step 5: Confirm `npm view contextrail` still returns not-found, then perform the one-time 2FA publication of the exact verified tarball using `--tag next`; never place an OTP in a file, command history, log, or project state.**
 - [ ] **Step 6: Verify public owners, version, `next` dist-tag, registry integrity, unpacked allowlist, and a clean global install from `contextrail@next`; confirm `latest` is absent.**
 - [ ] **Step 7: Configure the npm Trusted Publisher for the public repository, workflow filename `publish.yml`, and allowed `npm publish`; verify OIDC on the next real prerelease rather than publishing a throwaway version.**

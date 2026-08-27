@@ -107,7 +107,7 @@
         "The primary human quickstart uses one stable-name GitHub Release install command followed by interactive contextrail setup, while Codex and CI retain explicit dry-run and apply commands",
         "The default full setup installs or reuses a verified Codex-compatible Throughline, configures ContextRail Hooks, and enables the selected new or existing project through reviewed dry-run and apply boundaries",
         "GitHub Releases publish immutable ContextRail and Throughline artifacts plus a pinned manifest and SHA-256 evidence",
-        "The byte-identical ContextRail release-candidate tarball is published publicly as contextrail@0.3.0-rc.1 under next, with later releases using OIDC Trusted Publishing and no long-lived npm token",
+        "The byte-identical ContextRail release-candidate tarball is published publicly as contextrail@0.3.0-rc.2 under next, with later releases using OIDC Trusted Publishing and no long-lived npm token",
         "Packed-artifact setup and Hook coexistence tests pass on Ubuntu, macOS, and Windows CI",
         "Windows live Codex validation remains explicitly pending until the user executes the supplied pilot checklist"
       ],
@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Execute docs/superpowers/plans/2026-08-27-cross-platform-full-install.md test-first, publish 0.3.0-rc.1 under next, and retain the Windows live gate for latest"],
+      "nextSteps": ["Publish the canonically normalized 0.3.0-rc.2 artifacts under next, configure Trusted Publishing, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

@@ -2,7 +2,7 @@
 
 Windows live validation: pending
 
-Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.1` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
+Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.2` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
 
 ## Preconditions
 
@@ -20,7 +20,7 @@ contextrail --version
 contextrail setup --dry-run --json
 ```
 
-Confirm the version is `0.3.0-rc.1`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+Confirm the version is `0.3.0-rc.2`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
 
 For a mature existing repository, follow the README Codex prompt to create a temporary adoption mapping, repeat the dry run with `--project existing --adoption-config <temporary-file>`, and stop if any semantic mapping is uncertain.
 

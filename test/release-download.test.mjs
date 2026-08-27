@@ -19,7 +19,7 @@ test('downloads an immutable GitHub release asset and verifies its digest before
   const root = await mkdtemp(join(tmpdir(), 'contextrail-release-download-'));
   const destination = join(root, 'artifact with spaces.tgz');
   const artifact = {
-    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.1/artifact.tgz',
+    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.2/artifact.tgz',
     sha256: digest,
   };
   const result = await downloadVerifiedArtifact({ artifact, destination, http: { open: async () => response() }, fs: nodeFilesystem });
@@ -31,7 +31,7 @@ test('rejects a bad digest and removes partial output', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-release-download-'));
   const destination = join(root, 'artifact.tgz');
   const artifact = {
-    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.1/artifact.tgz',
+    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.2/artifact.tgz',
     sha256: '0'.repeat(64),
   };
   await assert.rejects(

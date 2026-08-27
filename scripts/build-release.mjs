@@ -4,6 +4,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { normalizeGzipBytes } from './archive.mjs';
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
 import { nodeProcess } from '../src/adapters/process.mjs';
 
@@ -12,10 +13,6 @@ const ROOT = resolve(dirname(SCRIPT_PATH), '..');
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
-}
-
-async function copyBytes(from, to, fs) {
-  await fs.writeBytes(to, await fs.readBytes(from));
 }
 
 export async function assembleReleaseAssets({
@@ -34,7 +31,7 @@ export async function assembleReleaseAssets({
   const throughlineSha256 = sha256(throughlineBytes);
   if (throughlineSha256 !== setupManifest.throughline?.artifact?.sha256) throw new Error('Throughline artifact digest mismatch with embedded setup manifest');
   if (basename(throughlineArtifact) !== setupManifest.throughline.artifact.name) throw new Error('Throughline artifact name differs from embedded setup manifest');
-  const packageBytes = await fs.readBytes(packageTarball);
+  const packageBytes = normalizeGzipBytes(await fs.readBytes(packageTarball));
   const packageSha256 = sha256(packageBytes);
   const destination = resolve(output);
   if (await fs.exists(destination)) throw new Error(`Release output already exists: ${destination}`);
@@ -44,9 +41,9 @@ export async function assembleReleaseAssets({
   const throughlineName = setupManifest.throughline.artifact.name;
   try {
     await fs.mkdir(temporary, { recursive: true });
-    await copyBytes(packageTarball, resolve(temporary, versionedAsset), fs);
-    await copyBytes(packageTarball, resolve(temporary, stableAsset), fs);
-    await copyBytes(throughlineArtifact, resolve(temporary, throughlineName), fs);
+    await fs.writeBytes(resolve(temporary, versionedAsset), packageBytes);
+    await fs.writeBytes(resolve(temporary, stableAsset), packageBytes);
+    await fs.writeBytes(resolve(temporary, throughlineName), throughlineBytes);
     const checksums = [
       [packageSha256, stableAsset],
       [packageSha256, versionedAsset],
