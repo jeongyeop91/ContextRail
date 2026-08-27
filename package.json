@@ -22,6 +22,7 @@
     "bin/",
     "src/",
     "templates/",
+    "integrations/setup-manifest.json",
     "integrations/throughline/",
     "README.md",
     "LICENSE",

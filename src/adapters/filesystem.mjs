@@ -18,6 +18,9 @@ export const nodeFilesystem = {
   writeText(path, content) {
     return writeFile(path, content, 'utf8');
   },
+  writeBytes(path, content) {
+    return writeFile(path, content);
+  },
   appendText(path, content) {
     return appendFile(path, content, 'utf8');
   },
