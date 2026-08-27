@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { isAbsolute, resolve } from 'node:path';
 
 import { finish, issue } from './result.mjs';
+import { VERSION } from '../version.mjs';
 
 const PROFILE = 'existing-repository';
-const TEMPLATE_VERSION = '0.1.0-dev';
 const CONFIG_PATH = '.context-rail/config.json';
 const GITIGNORE_PATH = '.context-rail/.gitignore';
 const VERSION_PATH = '.context-rail/version.json';
@@ -111,7 +111,7 @@ async function operationForAdoption(target, path, content, fs) {
 function versionContent(ownedFiles) {
   return `${JSON.stringify({
     schema: 1,
-    templateVersion: TEMPLATE_VERSION,
+    templateVersion: VERSION,
     profile: PROFILE,
     ownedFiles: Object.fromEntries(Object.entries(ownedFiles).sort(([left], [right]) => left.localeCompare(right))),
   }, null, 2)}\n`;

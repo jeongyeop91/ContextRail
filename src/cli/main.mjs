@@ -17,6 +17,7 @@ import { loadThroughlineManifest } from '../integrations/throughline-manifest.mj
 import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from '../integrations/throughline-install.mjs';
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
 import { verifyThroughline } from '../integrations/throughline-verify.mjs';
+import { VERSION } from '../version.mjs';
 
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const USAGE = `Usage:
@@ -114,6 +115,14 @@ function publicScaffoldPlan(plan, applied = null) {
 
 export async function run(args = process.argv.slice(2), io = process, dependencies = {}) {
   const command = args[0];
+  if (command === '--version' || command === '-v') {
+    io.stdout.write(`${VERSION}\n`);
+    return 0;
+  }
+  if (command === '--help' || command === '-h' || command === 'help') {
+    io.stdout.write(USAGE);
+    return 0;
+  }
   const targetValue = optionValue(args, '--target');
   if (args.includes('--target') && !targetValue) {
     io.stderr.write('--target requires a path\n');

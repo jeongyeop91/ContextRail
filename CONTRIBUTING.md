@@ -1,6 +1,6 @@
 # Contributing
 
-ContextRail is currently preparing its first public release. The project license must be selected before external contributions are accepted.
+ContextRail is available under the MIT License. Once the approved public GitHub repository is available, contributions are accepted after reviewing the development contract below.
 
 ## Development contract
 

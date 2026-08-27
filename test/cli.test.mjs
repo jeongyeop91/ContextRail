@@ -45,6 +45,18 @@ test('unknown commands return CLI usage exit code', async () => {
   assert.match(stream.output().stderr, /Usage:/);
 });
 
+test('version and help are successful read-only top-level options', async () => {
+  const version = capture();
+  assert.equal(await run(['--version'], version.io), 0);
+  assert.equal(version.output().stdout, '0.1.0\n');
+  assert.equal(version.output().stderr, '');
+
+  const help = capture();
+  assert.equal(await run(['--help'], help.io), 0);
+  assert.match(help.output().stdout, /^Usage:/);
+  assert.equal(help.output().stderr, '');
+});
+
 test('existing-repository adoption requires its profile and config then remains plan-only', async () => {
   const target = await mkdtemp(join(tmpdir(), 'contextrail-cli-existing-'));
   const fixture = new URL('./fixtures/existing-repository/', import.meta.url).pathname;

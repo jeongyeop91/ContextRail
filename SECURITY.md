@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Before the first public release, only the latest commit on the default branch is evaluated for security fixes.
+The latest `0.1.x` release and the latest commit on the default branch are evaluated for security fixes.
 
 ## Reporting
 

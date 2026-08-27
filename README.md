@@ -37,6 +37,26 @@ node bin/contextrail.mjs route src/core/documents.mjs --json
 node bin/contextrail.mjs continue --json
 ```
 
+Print CLI help or the installed release version with `contextrail --help` and `contextrail --version`.
+
+## Installation
+
+ContextRail is not published to the npm registry. Run it directly from a checkout, or install the verified `v0.1.0` GitHub Release artifact:
+
+```bash
+# Checkout usage
+git clone https://github.com/jeongyeop91/ContextRail.git
+cd ContextRail
+node bin/contextrail.mjs --version
+
+# Global CLI from the GitHub Release asset
+npm install --global \
+  https://github.com/jeongyeop91/ContextRail/releases/download/v0.1.0/contextrail-0.1.0.tgz
+contextrail --version
+```
+
+The tag source is also installable with `npm install --global https://github.com/jeongyeop91/ContextRail/archive/refs/tags/v0.1.0.tar.gz`. Remove only this CLI with `npm uninstall --global contextrail`; neither installation nor removal manages Throughline, Codex hooks, skills, configuration, or shell startup files.
+
 All write-capable project commands default to a plan or accept an explicit dry run. Apply a generated foundation only after reviewing the plan:
 
 ```bash
@@ -157,6 +177,6 @@ Installation requires both `--apply` and an explicit prepared tarball. It uses a
 
 ## Project status
 
-The local MVP is implemented and tested. Publication is intentionally pending the maintainer's choices for the ContextRail open-source license, GitHub owner/name, visibility, and template setting. No remote is created and nothing is pushed by this repository setup.
+The MIT-licensed `v0.1.0` release candidate is locally verified, including an isolated tarball installation. GitHub publication, Template Repository activation, release creation, and installation from the immutable release artifact remain pending until the release commit is created.
 
 See [documentation routing](docs/README.md), [architecture](docs/authority/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [third-party notices](THIRD_PARTY_NOTICES.md).

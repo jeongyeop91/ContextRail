@@ -1,8 +1,33 @@
 {
   "name": "contextrail",
-  "version": "0.1.0-dev",
+  "version": "0.1.0",
   "private": true,
   "description": "Repository-local context routing and continuity for coding agents",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeongyeop91/ContextRail.git"
+  },
+  "homepage": "https://github.com/jeongyeop91/ContextRail#readme",
+  "bugs": {
+    "url": "https://github.com/jeongyeop91/ContextRail/issues"
+  },
+  "keywords": [
+    "coding-agent",
+    "context-management",
+    "developer-tools",
+    "repository-template"
+  ],
+  "files": [
+    "bin/",
+    "src/",
+    "templates/",
+    "integrations/throughline/",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22.13"

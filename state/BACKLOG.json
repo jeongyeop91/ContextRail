@@ -19,7 +19,7 @@
     {
       "id": "CR-002",
       "title": "Choose the ContextRail open-source license",
-      "status": "ready",
+      "status": "done",
       "dependsOn": ["CR-001"],
       "acceptance": ["LICENSE matches the maintainer's publication intent"],
       "authority": ["docs/authority/PROJECT.md"],
@@ -30,7 +30,7 @@
     {
       "id": "CR-003",
       "title": "Create and configure the GitHub Template Repository",
-      "status": "proposed",
+      "status": "ready",
       "dependsOn": ["CR-001", "CR-002"],
       "acceptance": ["Remote ownership, visibility, name, and template setting are confirmed"],
       "authority": ["docs/authority/PROJECT.md"],
@@ -62,6 +62,22 @@
       "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/OPERATING_MODEL.md"],
       "sourceHints": ["src/core/adoption.mjs", "src/core/scaffold.mjs", "src/core/documents.mjs", "src/core/state.mjs"],
       "nextSteps": ["Use the documented apply command after reviewing a repository-specific adoption config"],
+      "validation": [["npm", "run", "verify"]]
+    },
+    {
+      "id": "CR-006",
+      "title": "Publish and install ContextRail v0.1.0",
+      "status": "in_progress",
+      "dependsOn": ["CR-001", "CR-002"],
+      "acceptance": [
+        "The installable 0.1.0 package passes isolated smoke tests",
+        "The public GitHub Template Repository and v0.1.0 release exist",
+        "The global CLI is installed from the verified release artifact",
+        "Security check, route, and continue remain read-only and pass"
+      ],
+      "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/VALIDATION.md"],
+      "sourceHints": ["package.json", "src/version.mjs", "src/cli/main.mjs", "test/release.test.mjs"],
+      "nextSteps": ["Commit the verified release candidate, then publish and validate the approved GitHub release"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

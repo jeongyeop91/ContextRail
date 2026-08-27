@@ -60,6 +60,7 @@ The CLI uses these exit codes:
 The MVP command surface is:
 
 ```text
+contextrail --version|--help
 contextrail init [--target PATH] [--dry-run]
 contextrail adopt [--target PATH] [--dry-run]
 contextrail adopt --profile existing-repository --adoption-config FILE [--dry-run|--apply]
