@@ -100,7 +100,7 @@
     {
       "id": "CR-008",
       "title": "Deliver cross-platform end-to-end installation",
-      "status": "ready",
+      "status": "in_progress",
       "dependsOn": ["CR-005", "CR-007"],
       "acceptance": [
         "A clean macOS, Windows, or Linux computer can follow the README to install the ContextRail CLI and choose a full or explicitly reduced setup profile",
@@ -117,7 +117,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Review ADR-0003 and ADR-0004, then create and execute the CR-008 implementation plan"],
+      "nextSteps": ["Execute docs/superpowers/plans/2026-08-27-cross-platform-full-install.md test-first and retain the Windows live gate"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

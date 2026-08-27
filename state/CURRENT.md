@@ -1,6 +1,6 @@
 # Current state
 
-Active item: none
+Active item: `CR-008`
 
 ## Observed
 
@@ -44,9 +44,9 @@ Active item: none
 
 ## Next steps
 
-1. Review ADR-0003 and ADR-0004 and activate `CR-008` only after the written design is accepted.
-2. Create the `CR-008` implementation plan before changing code or release workflows.
-3. Leave CR-004 proposed until its measurement protocol is deliberately scoped.
+1. Execute `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` test-first.
+2. Publish a GitHub prerelease only after repository and matrix verification pass.
+3. Leave npm registry publication and CR-004 outside the active scope.
 
 ## Blockers
 
