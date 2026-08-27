@@ -8,6 +8,7 @@ test('verification runs packed-artifact checks on Ubuntu, macOS, and Windows', a
   assert.match(workflow, /npm test/);
   assert.match(workflow, /npm pack --dry-run --json/);
   assert.match(workflow, /test\/release\.test\.mjs/);
+  assert.equal(/cache:\s*false/.test(workflow), false);
 });
 
 test('release workflow builds both artifacts and gates stable publication on Windows live evidence', async () => {
@@ -16,6 +17,7 @@ test('release workflow builds both artifacts and gates stable publication on Win
   assert.match(workflow, /scripts\/build-release\.mjs/);
   assert.match(workflow, /WINDOWS_LIVE_VALIDATED/);
   assert.match(workflow, /gh release create/);
+  assert.equal(/cache:\s*false/.test(workflow), false);
 });
 
 test('npm publication uses OIDC, Node 24, explicit dist-tags, and no registry token', async () => {
