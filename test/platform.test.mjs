@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import test from 'node:test';
 
 import { nodeFilesystem } from '../src/adapters/filesystem.mjs';
-import { managedDataRoot, nodeBinCommand, resolvePackageBin } from '../src/adapters/platform.mjs';
+import { assertMatchingCodexEnvironment, managedDataRoot, nodeBinCommand, resolvePackageBin } from '../src/adapters/platform.mjs';
 
 test('selects native ContextRail data roots on macOS, Linux, and Windows', () => {
   assert.equal(managedDataRoot({ platform: 'darwin', home: '/Users/example', env: {} }), '/Users/example/Library/Application Support/ContextRail');
@@ -34,4 +34,17 @@ test('builds direct Node argv without a shell shim', () => {
     args: ['/package/bin/cli.mjs', 'install'],
   });
   assert.throws(() => nodeBinCommand({ nodePath: 'node', binPath: '/package/bin/cli.mjs' }), /absolute/);
+});
+
+test('treats WSL as Linux and rejects a mounted Windows-native Codex home', () => {
+  assert.throws(() => assertMatchingCodexEnvironment({
+    platform: 'linux',
+    env: { WSL_DISTRO_NAME: 'Ubuntu' },
+    codexHome: '/mnt/c/Users/Example/.codex',
+  }), /Windows-native Codex home/);
+  assert.doesNotThrow(() => assertMatchingCodexEnvironment({
+    platform: 'linux',
+    env: { WSL_DISTRO_NAME: 'Ubuntu' },
+    codexHome: '/home/example/.codex',
+  }));
 });

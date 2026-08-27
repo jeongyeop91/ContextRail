@@ -12,6 +12,13 @@ export function managedDataRoot({ platform = process.platform, home, env = proce
   throw new Error(`Unsupported platform: ${platform}`);
 }
 
+export function assertMatchingCodexEnvironment({ platform = process.platform, env = process.env, codexHome }) {
+  const wsl = platform === 'linux' && Boolean(env.WSL_DISTRO_NAME || env.WSL_INTEROP);
+  if (wsl && /^\/mnt\/[a-z]\//i.test(codexHome)) {
+    throw new Error('WSL setup cannot configure a mounted Windows-native Codex home; run setup in native Windows or use the WSL Codex home');
+  }
+}
+
 function inside(root, path) {
   const value = relative(root, path);
   return value === '' || (value !== '..' && !value.startsWith(`..${sep}`) && !isAbsolute(value));
@@ -34,4 +41,3 @@ export function nodeBinCommand({ nodePath, binPath, args = [] }) {
   if (!isAbsolute(nodePath) || !isAbsolute(binPath)) throw new Error('Node and package bin paths must be absolute');
   return { executable: nodePath, args: [binPath, ...args] };
 }
-
