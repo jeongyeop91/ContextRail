@@ -177,6 +177,6 @@ Installation requires both `--apply` and an explicit prepared tarball. It uses a
 
 ## Project status
 
-The MIT-licensed `v0.1.0` release candidate is locally verified, including an isolated tarball installation. GitHub publication, Template Repository activation, release creation, and installation from the immutable release artifact remain pending until the release commit is created.
+The MIT-licensed `v0.1.0` release is published at [jeongyeop91/ContextRail](https://github.com/jeongyeop91/ContextRail), which is a public GitHub Template Repository. Its attached package was verified in an isolated prefix before release. ContextRail is not published to the npm registry.
 
 See [documentation routing](docs/README.md), [architecture](docs/authority/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [third-party notices](THIRD_PARTY_NOTICES.md).

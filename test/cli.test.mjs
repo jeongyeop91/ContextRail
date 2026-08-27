@@ -31,8 +31,11 @@ test('route and continue emit structured repository context', async () => {
   assert.equal(routeCode, 0);
   assert.ok(JSON.parse(streamRoute.output().stdout).instructionFiles.includes('src/AGENTS.md'));
 
+  const continuationTarget = await mkdtemp(join(tmpdir(), 'contextrail-cli-continue-'));
+  const initStream = capture();
+  assert.equal(await run(['init', '--target', continuationTarget, '--apply', '--json'], initStream.io), 0);
   const streamContinue = capture();
-  const continueCode = await run(['continue', '--target', original, '--json'], streamContinue.io);
+  const continueCode = await run(['continue', '--target', continuationTarget, '--json'], streamContinue.io);
   assert.equal(continueCode, 0);
   const continuation = JSON.parse(streamContinue.output().stdout);
   assert.equal(continuation.status, 'ready');

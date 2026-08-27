@@ -30,7 +30,7 @@
     {
       "id": "CR-003",
       "title": "Create and configure the GitHub Template Repository",
-      "status": "ready",
+      "status": "done",
       "dependsOn": ["CR-001", "CR-002"],
       "acceptance": ["Remote ownership, visibility, name, and template setting are confirmed"],
       "authority": ["docs/authority/PROJECT.md"],
@@ -67,7 +67,7 @@
     {
       "id": "CR-006",
       "title": "Publish and install ContextRail v0.1.0",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["CR-001", "CR-002"],
       "acceptance": [
         "The installable 0.1.0 package passes isolated smoke tests",
@@ -77,7 +77,7 @@
       ],
       "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/VALIDATION.md"],
       "sourceHints": ["package.json", "src/version.mjs", "src/cli/main.mjs", "test/release.test.mjs"],
-      "nextSteps": ["Commit the verified release candidate, then publish and validate the approved GitHub release"],
+      "nextSteps": ["Use the immutable v0.1.0 release as the installation baseline"],
       "validation": [["npm", "run", "verify"]]
     }
   ]
