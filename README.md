@@ -46,13 +46,58 @@ node bin/contextrail.mjs init --target "$project_root" --apply --json
 node bin/contextrail.mjs check --target "$project_root"
 ```
 
-`init` accepts only an empty target except `.git`. `adopt` creates missing owned files while preserving existing files. `upgrade` changes a scaffold-owned file only when its current SHA-256 matches the previously recorded owned hash; there is no general force-overwrite option.
+`init` accepts only an empty target except `.git`. Neutral `adopt` creates missing scaffold files while preserving existing files. `upgrade` changes a scaffold-owned file only when its current SHA-256 matches the previously recorded owned hash; there is no general force-overwrite option.
+
+## Adopt an existing repository
+
+Use the `existing-repository` profile when a mature project already has instructions, documentation, status, plans, and a backlog. Put the mapping in a JSON file outside or inside the target, review a dry run, and then apply the same plan:
+
+```bash
+node /path/to/ContextRail/bin/contextrail.mjs adopt \
+  --target /path/to/project \
+  --profile existing-repository \
+  --adoption-config /path/to/adoption-config.json \
+  --dry-run --json
+
+node /path/to/ContextRail/bin/contextrail.mjs adopt \
+  --target /path/to/project \
+  --profile existing-repository \
+  --adoption-config /path/to/adoption-config.json \
+  --apply --json
+```
+
+The schema maps, rather than replaces, existing files:
+
+```json
+{
+  "schema": 1,
+  "profile": "existing-repository",
+  "documentRouter": "docs/README.md",
+  "authority": {
+    "roots": ["docs/product", "docs/architecture"],
+    "exclude": ["docs/architecture/adr", "docs/STATUS.md"]
+  },
+  "state": {
+    "mode": "references",
+    "current": "docs/STATUS.md",
+    "planDirectory": "plans",
+    "backlog": "backlog/work.yaml"
+  },
+  "limits": { "routerLines": 50, "authorityLines": 500 },
+  "instructionsFile": "AGENTS.md",
+  "validationHints": [["node", "--test"]]
+}
+```
+
+All mapped paths are repository-relative. Authority roots are recursive; exclusions may name a file or a directory subtree. Validation hints must be argv arrays and are returned by `check`, `route`, and `continue` but never executed automatically.
+
+Apply creates only `.context-rail/config.json`, `.context-rail/version.json`, and `.context-rail/.gitignore`. The latter ignores only `runtime/`. Existing instructions, router, authority, current state, plans, backlog, and root `.gitignore` remain project-owned and unchanged.
 
 ## GitHub Template Repository use
 
 This repository is self-hosting and can be marked as a GitHub Template Repository. A repository created from it includes the ContextRail CLI, tests, project memory, and the neutral project scaffold under `templates/project/`. Replace ContextRail's own state and authority when using the copy as a new control repository, or use its `init` command to create a clean product repository.
 
-For an existing repository, keep a ContextRail checkout available and review adoption before apply:
+For a repository that does not yet have its own authority and state layout, keep a ContextRail checkout available and review neutral adoption before apply:
 
 ```bash
 node /path/to/ContextRail/bin/contextrail.mjs adopt --target /path/to/project --dry-run --json

@@ -10,6 +10,8 @@
 - `docs/generated/**`: reproducible generated artifacts, never hand-edited authority.
 - `state/**`: current operational memory governed by the continuity contract.
 
+An existing-repository profile may map multiple recursive Active Authority roots instead of `docs/authority/`. Its file and directory exclusions are outside the active set. Every non-excluded Markdown file reached by those roots follows the configured line limit and must be linked by the mapped router; overlapping roots may not discover the same authority path twice.
+
 ## Link and path rules
 
 Repository Markdown links must resolve to an existing file or an existing heading anchor. Relative links may not escape the repository. External links are allowed but offline validation does not fetch them.

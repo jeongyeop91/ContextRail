@@ -62,6 +62,7 @@ The MVP command surface is:
 ```text
 contextrail init [--target PATH] [--dry-run]
 contextrail adopt [--target PATH] [--dry-run]
+contextrail adopt --profile existing-repository --adoption-config FILE [--dry-run|--apply]
 contextrail upgrade [--target PATH] [--dry-run]
 contextrail check [--target PATH] [--json]
 contextrail route PATH [--target PATH] [--json]
@@ -79,7 +80,7 @@ Commands that may write default to a plan-only dry run where the command contrac
 
 ## Project Memory
 
-Each fact has one active owner:
+ContextRail supports two memory modes. Native mode owns the neutral scaffold contracts below. Reference mode maps a mature repository's existing files and treats their project-specific formats as authoritative without copying, converting, or parsing the backlog:
 
 - `state/CURRENT.md`: current objective, completed facts, important files, validation, blockers, limitations, and next action;
 - `state/PLAN.md`: the single approved active execution plan;
@@ -91,6 +92,8 @@ Each fact has one active owner:
 - `docs/reference/`: external and supporting reference material.
 
 Raw conversations, complete logs, tool dumps, and transcripts are not project memory.
+
+An existing-repository mapping uses recursive `authority.roots`, file-or-directory `authority.exclude`, and `state.mode: references`. ContextRail owns only its normalized config, version/ownership manifest, and local runtime ignore file. The mapped `AGENTS.md`, router, authority, status, plan directory, backlog, and root ignore file remain user-owned. Upgrade may change a managed metadata file only when its current hash matches the previously recorded owned hash.
 
 ## Documentation Governance
 
@@ -118,7 +121,7 @@ The root `AGENTS.md` contains only the mission, absolute rules, document entry p
 
 ## Continue Contract
 
-`continue` returns a deterministic projection rather than invoking an AI model. It resolves:
+In native mode, `continue` returns a deterministic projection rather than invoking an AI model. It resolves:
 
 1. root and nearest applicable instruction files;
 2. the active backlog item referenced by `CURRENT.md`;
@@ -128,6 +131,8 @@ The root `AGENTS.md` contains only the mission, absolute rules, document entry p
 6. targeted validation commands.
 
 If the current item is blocked, missing, inconsistent, or ambiguous, the command reports the conflict instead of selecting unrelated work.
+
+In references mode, `continue` returns the instruction chain, document router, mapped current/plan/backlog paths, and validation hints. It does not parse a repository-specific backlog or guess the next item; the agent must read those references according to the repository's own instructions.
 
 ## Measurement
 

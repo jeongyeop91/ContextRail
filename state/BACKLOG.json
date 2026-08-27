@@ -48,6 +48,21 @@
       "sourceHints": [".context-rail/runtime/measurements.jsonl"],
       "nextSteps": ["Collect local records after the CLI is in use"],
       "validation": [["node", "bin/contextrail.mjs", "measure", "report", "--json"]]
+    },
+    {
+      "id": "CR-005",
+      "title": "Adopt existing repository authority and state safely",
+      "status": "done",
+      "dependsOn": ["CR-001"],
+      "acceptance": [
+        "Existing authority and state remain user-owned and unmodified",
+        "Only three ContextRail metadata files are planned and owned",
+        "Reference state and recursive authority mappings pass tests and Security dry-run"
+      ],
+      "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/OPERATING_MODEL.md"],
+      "sourceHints": ["src/core/adoption.mjs", "src/core/scaffold.mjs", "src/core/documents.mjs", "src/core/state.mjs"],
+      "nextSteps": ["Use the documented apply command after reviewing a repository-specific adoption config"],
+      "validation": [["npm", "run", "verify"]]
     }
   ]
 }

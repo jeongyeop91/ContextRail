@@ -4,6 +4,7 @@ Active item: none
 
 ## Observed
 
+- Existing-repository adoption is implemented on `main` and preserves mapped project-owned files.
 - The local ContextRail MVP is implemented on `main` with no remote configured.
 - Core operation is independent of Throughline and has no production npm dependencies.
 - The compatibility patch is pinned to immutable Throughline source and patch hashes with its MIT notice.
@@ -15,8 +16,9 @@ Active item: none
 - Architecture: `b3859b5`; execution plan: `4bf5c32`.
 - Foundation: `5ac86bb`; validation: `8a3003d`; workflow: `34625ba`.
 - Measurement: `2f5e932`; Throughline preparation: `2c472c9`; managed integration: `da2ee55`.
-- Deterministic tests: 52 passing after release documentation and upgrade-ownership coverage.
-- Self-check: 8 Active Authority files, 28-line router, 4 consistent backlog items.
+- Existing-repository profile: `c9da4ca`; reference authority and state mapping: `74df134`.
+- Security read-only dry-run at `930b6ee1220e5cb2ce443efd1f76066ac2a69f30` planned only the three `.context-rail` metadata creates; HEAD and clean status were unchanged afterward.
+- Final verification: 66 tests passed; self-check found 8 Active Authority files; neutral template smoke passed; `git diff --check` passed.
 
 ## Next steps
 
