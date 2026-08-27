@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
+import { managedDataRoot } from '../adapters/platform.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
@@ -491,7 +492,7 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       writeStructured(loaded, json, io);
       return 1;
     }
-    const managedRoot = resolve(optionValue(args, '--managed-root') ?? joinHome(dependencies.home ?? homedir(), '.local/share/contextrail/throughline'));
+    const managedRoot = resolve(optionValue(args, '--managed-root') ?? resolve(managedDataRoot({ platform: dependencies.platform ?? process.platform, home: dependencies.home ?? homedir(), env: dependencies.env ?? process.env }), 'throughline'));
     const artifact = resolve(optionValue(args, '--artifact') ?? resolve(root, `.context-rail/runtime/throughline/throughline-${loaded.manifest.packageVersion}.tgz`));
     const plan = planManagedInstall({ managedRoot, artifact, version: loaded.manifest.packageVersion, manifest: loaded.manifest });
     if (args.includes('--dry-run')) {
@@ -508,6 +509,7 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
         plan,
         apply: true,
         home: dependencies.home ?? homedir(),
+        nodePath: dependencies.nodePath ?? process.execPath,
         fs: nodeFilesystem,
         processAdapter: dependencies.processAdapter ?? nodeProcess,
       });
@@ -541,12 +543,13 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       io.stderr.write(USAGE);
       return 2;
     }
-    const managedRoot = resolve(optionValue(args, '--managed-root') ?? joinHome(dependencies.home ?? homedir(), '.local/share/contextrail/throughline'));
+    const managedRoot = resolve(optionValue(args, '--managed-root') ?? resolve(managedDataRoot({ platform: dependencies.platform ?? process.platform, home: dependencies.home ?? homedir(), env: dependencies.env ?? process.env }), 'throughline'));
     try {
       const result = await rollbackManagedInstall({
         managedRoot,
         apply: true,
         home: dependencies.home ?? homedir(),
+        nodePath: dependencies.nodePath ?? process.execPath,
         fs: nodeFilesystem,
         processAdapter: dependencies.processAdapter ?? nodeProcess,
       });
@@ -563,7 +566,3 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
 }
 
 export { validateProject };
-
-function joinHome(home, suffix) {
-  return resolve(home, ...suffix.split('/'));
-}

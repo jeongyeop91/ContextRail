@@ -1,3 +1,5 @@
+import { nodeBinCommand } from '../adapters/platform.mjs';
+
 export function evaluateThroughlineReadiness({ binaryPresent, prepared = false, version = null, diagnostics = null, captureEvidence = null }) {
   const reasons = [];
   if (!binaryPresent) return { state: prepared ? 'prepared' : 'absent', reasons: [prepared ? 'artifact_prepared' : 'binary_absent'] };
@@ -21,16 +23,24 @@ export function evaluateThroughlineReadiness({ binaryPresent, prepared = false, 
   return { state: 'hooks_ready', version, diagnostics, reasons };
 }
 
-export async function verifyThroughline({ binary = 'throughline', processAdapter, env, prepared = false, captureEvidence = null }) {
+export async function verifyThroughline({ binary = 'throughline', nodePath = null, binPath = null, processAdapter, env, prepared = false, captureEvidence = null }) {
+  const run = (args, options) => {
+    if (nodePath || binPath) {
+      if (!nodePath || !binPath) throw new Error('Managed Throughline verification requires nodePath and binPath');
+      const command = nodeBinCommand({ nodePath, binPath, args });
+      return processAdapter.run(command.executable, command.args, { env, ...options });
+    }
+    return processAdapter.run(binary, args, { env, ...options });
+  };
   let versionResult;
   try {
-    versionResult = await processAdapter.run(binary, ['--version'], { env, timeoutMs: 10000 });
+    versionResult = await run(['--version'], { timeoutMs: 10000 });
   } catch (error) {
     return { ...evaluateThroughlineReadiness({ binaryPresent: false, prepared }), error: error.code ?? 'binary_unavailable' };
   }
   if (versionResult.code !== 0) return evaluateThroughlineReadiness({ binaryPresent: true, prepared, version: null });
   const version = versionResult.stdout.trim();
-  const diagnosticsResult = await processAdapter.run(binary, ['factory-diagnostics', '--json'], { env, timeoutMs: 20000 });
+  const diagnosticsResult = await run(['factory-diagnostics', '--json'], { timeoutMs: 20000 });
   if (diagnosticsResult.code !== 0) return { state: 'degraded', version, reasons: ['factory_diagnostics_failed'] };
   let diagnostics;
   try {

@@ -44,19 +44,19 @@ test('registered hooks without non-zero capture bodies never verify capture', ()
   assert.ok(result.reasons.includes('capture_evidence_incomplete'));
 });
 
-test('invokes only version and structured factory diagnostics for read-only verify', async () => {
+test('invokes a JavaScript bin through an absolute Node runtime for read-only verify', async () => {
   const calls = [];
   const adapter = {
     async run(executable, args) {
       calls.push([executable, ...args]);
-      if (args[0] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
       return { code: 0, stdout: JSON.stringify(readyDiagnostics), stderr: '' };
     },
   };
-  const result = await verifyThroughline({ binary: 'throughline', processAdapter: adapter });
+  const result = await verifyThroughline({ nodePath: '/runtime/node', binPath: '/managed/throughline/bin/cli.mjs', processAdapter: adapter });
   assert.equal(result.state, 'hooks_ready');
   assert.deepEqual(calls, [
-    ['throughline', '--version'],
-    ['throughline', 'factory-diagnostics', '--json'],
+    ['/runtime/node', '/managed/throughline/bin/cli.mjs', '--version'],
+    ['/runtime/node', '/managed/throughline/bin/cli.mjs', 'factory-diagnostics', '--json'],
   ]);
 });

@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
+
+import { nodeBinCommand, resolvePackageBin } from '../adapters/platform.mjs';
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -77,21 +79,25 @@ async function readCurrent(plan, fs) {
   return JSON.parse(await fs.readText(path));
 }
 
-export async function applyManagedInstall({ plan, apply, home, fs, processAdapter }) {
+export async function applyManagedInstall({ plan, apply, home, nodePath = process.execPath, fs, processAdapter }) {
   if (!apply) throw new Error('Managed installation requires explicit apply');
   if (!inside(plan.managedRoot, plan.releaseDirectory)) throw new Error('Release is outside managed root');
   const previous = await readCurrent(plan, fs);
   const before = await snapshotHome(home, fs);
   const env = { ...process.env, HOME: home };
-  const binary = resolve(plan.releaseDirectory, 'node_modules/.bin/throughline');
   try {
     if (await fs.exists(plan.releaseDirectory)) throw new Error('Release directory already exists');
     await fs.mkdir(plan.releaseDirectory, { recursive: true });
     const installed = await processAdapter.run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefix', plan.releaseDirectory, plan.artifact], { env, timeoutMs: 120000 });
     if (installed.code !== 0) throw new Error(`npm install failed: ${installed.stderr}`);
-    const version = await processAdapter.run(binary, ['--version'], { env, timeoutMs: 10000 });
+    const binPath = await resolvePackageBin({ installRoot: plan.releaseDirectory, packageName: 'throughline', fs });
+    const runThroughline = (args, options) => {
+      const command = nodeBinCommand({ nodePath: resolve(nodePath), binPath, args });
+      return processAdapter.run(command.executable, command.args, { env, ...options });
+    };
+    const version = await runThroughline(['--version'], { timeoutMs: 10000 });
     if (version.code !== 0) throw new Error(`version verification failed: ${version.stderr}`);
-    const hooks = await processAdapter.run(binary, ['install'], { env, timeoutMs: 30000 });
+    const hooks = await runThroughline(['install'], { timeoutMs: 30000 });
     if (hooks.code !== 0) throw new Error(`hook installation failed: ${hooks.stderr}`);
     const after = await snapshotHome(home, fs);
     if (before.codexHooks !== null) {
@@ -101,7 +107,7 @@ export async function applyManagedInstall({ plan, apply, home, fs, processAdapte
         if (error.message === 'unrelated hook changed') throw error;
       }
     }
-    const diagnostics = await processAdapter.run(binary, ['factory-diagnostics', '--json'], { env, timeoutMs: 20000 });
+    const diagnostics = await runThroughline(['factory-diagnostics', '--json'], { timeoutMs: 20000 });
     if (diagnostics.code !== 0) throw new Error(`factory diagnostics failed: ${diagnostics.stderr}`);
     const parsed = JSON.parse(diagnostics.stdout);
     if (parsed.schema !== 'throughline.native_factory_diagnostics.v1') throw new Error('factory diagnostics schema incompatible');
@@ -110,6 +116,8 @@ export async function applyManagedInstall({ plan, apply, home, fs, processAdapte
       releaseId: plan.releaseId,
       installedAt: new Date().toISOString(),
       version: version.stdout.trim(),
+      nodePath: resolve(nodePath),
+      binPath,
       artifactSha256: sha256(await fs.readBytes(plan.artifact)),
       repository: plan.manifest.repository,
       baseCommit: plan.manifest.baseCommit,
@@ -128,7 +136,7 @@ export async function applyManagedInstall({ plan, apply, home, fs, processAdapte
   }
 }
 
-export async function rollbackManagedInstall({ managedRoot, apply, home, fs, processAdapter }) {
+export async function rollbackManagedInstall({ managedRoot, apply, home, nodePath = process.execPath, fs, processAdapter }) {
   if (!apply) throw new Error('Managed rollback requires explicit apply');
   const root = resolve(managedRoot);
   const currentPath = resolve(root, 'current.json');
@@ -144,14 +152,18 @@ export async function rollbackManagedInstall({ managedRoot, apply, home, fs, pro
   }
   const before = await snapshotHome(home, fs);
   const env = { ...process.env, HOME: home };
-  const currentBinary = resolve(currentDirectory, 'node_modules/.bin/throughline');
-  const previousBinary = resolve(previousDirectory, 'node_modules/.bin/throughline');
+  const currentBinary = await resolvePackageBin({ installRoot: currentDirectory, packageName: 'throughline', fs });
+  const previousBinary = await resolvePackageBin({ installRoot: previousDirectory, packageName: 'throughline', fs });
+  const runThroughline = (binPath, args, options) => {
+    const command = nodeBinCommand({ nodePath: resolve(nodePath), binPath, args });
+    return processAdapter.run(command.executable, command.args, { env, ...options });
+  };
   try {
-    const removed = await processAdapter.run(currentBinary, ['uninstall'], { env, timeoutMs: 30000 });
+    const removed = await runThroughline(currentBinary, ['uninstall'], { timeoutMs: 30000 });
     if (removed.code !== 0) throw new Error(`current uninstall failed: ${removed.stderr}`);
-    const installed = await processAdapter.run(previousBinary, ['install'], { env, timeoutMs: 30000 });
+    const installed = await runThroughline(previousBinary, ['install'], { timeoutMs: 30000 });
     if (installed.code !== 0) throw new Error(`previous install failed: ${installed.stderr}`);
-    const verified = await processAdapter.run(previousBinary, ['factory-diagnostics', '--json'], { env, timeoutMs: 20000 });
+    const verified = await runThroughline(previousBinary, ['factory-diagnostics', '--json'], { timeoutMs: 20000 });
     if (verified.code !== 0) throw new Error(`previous verification failed: ${verified.stderr}`);
     await atomicJson(currentPath, { releaseId: current.previousReleaseId, previousReleaseId: current.releaseId }, fs);
     return { status: 'rolled_back', releaseId: current.previousReleaseId };

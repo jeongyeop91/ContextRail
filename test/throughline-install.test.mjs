@@ -25,19 +25,27 @@ async function fixture() {
   return { root, home, managedRoot, artifact };
 }
 
-function successfulAdapter(home) {
+function successfulAdapter(home, calls = []) {
   return {
     async run(executable, args) {
-      if (executable === 'npm') return { code: 0, stdout: '', stderr: '' };
-      if (args[0] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
-      if (args[0] === 'install') {
+      calls.push([executable, ...args]);
+      if (executable === 'npm') {
+        const prefix = args[args.indexOf('--prefix') + 1];
+        const packageRoot = join(prefix, 'node_modules/throughline');
+        await mkdir(join(packageRoot, 'bin'), { recursive: true });
+        await writeFile(join(packageRoot, 'package.json'), JSON.stringify({ name: 'throughline', bin: { throughline: 'bin/cli.mjs' } }));
+        await writeFile(join(packageRoot, 'bin/cli.mjs'), 'export {};');
+        return { code: 0, stdout: '', stderr: '' };
+      }
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === 'install') {
         const hooksPath = join(home, '.codex/hooks.json');
         const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
         hooks.hooks.Stop.push({ command: 'managed-throughline-hook' });
         await writeFile(hooksPath, JSON.stringify(hooks));
         return { code: 0, stdout: '', stderr: '' };
       }
-      if (args[0] === 'factory-diagnostics') return {
+      if (args[1] === 'factory-diagnostics') return {
         code: 0,
         stdout: JSON.stringify({ schema: 'throughline.native_factory_diagnostics.v1', overall: { status: 'ready' }, hooks: { status: 'ready' }, readiness: {} }),
         stderr: '',
@@ -59,8 +67,13 @@ test('dry-run planning writes nothing and confines release paths', async () => {
 test('explicit apply preserves unrelated hooks and selects only after verification', async () => {
   const scope = await fixture();
   const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.1', manifest });
-  const result = await applyManagedInstall({ plan, apply: true, home: scope.home, fs: nodeFilesystem, processAdapter: successfulAdapter(scope.home) });
+  const calls = [];
+  const nodePath = join(scope.root, 'Node Runtime', 'node.exe');
+  const result = await applyManagedInstall({ plan, apply: true, home: scope.home, nodePath, fs: nodeFilesystem, processAdapter: successfulAdapter(scope.home, calls) });
   assert.equal(result.status, 'installed');
+  const binPath = join(plan.releaseDirectory, 'node_modules/throughline/bin/cli.mjs');
+  assert.ok(calls.some((call) => call[0] === nodePath && call[1] === binPath && call[2] === '--version'));
+  assert.equal(calls.some((call) => call[0].includes('node_modules/.bin') || call[0].endsWith('.cmd')), false);
   const hooks = JSON.parse(await readFile(join(scope.home, '.codex/hooks.json'), 'utf8'));
   assert.ok(hooks.hooks.Stop.some((entry) => entry.command === 'existing-hook'));
   const current = JSON.parse(await readFile(join(scope.managedRoot, 'current.json'), 'utf8'));
