@@ -45,9 +45,9 @@ Active item: `CR-008`
 
 ## Next steps
 
-1. Review `docs/superpowers/specs/2026-08-27-npm-registry-distribution-design.md`.
-2. Revise the CR-008 implementation plan to include ADR-0005 before executing it test-first.
-3. Leave CR-004 outside the active scope.
+1. Execute the revised `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` test-first.
+2. Publish `0.3.0-rc.1` under npm `next` only after packed-artifact and GitHub Release verification.
+3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers
 

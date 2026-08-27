@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver a GitHub Release-backed `contextrail setup` that safely configures ContextRail Core, the pinned Codex-compatible Throughline, ContextRail Codex Hooks, and project automation on macOS, Linux, and native Windows.
+**Goal:** Deliver an npm- and GitHub Release-distributed `contextrail setup` that safely configures ContextRail Core, the pinned Codex-compatible Throughline, ContextRail Codex Hooks, and project automation on macOS, Linux, and native Windows.
 
 **Architecture:** A pure setup planner classifies the project and composes existing component plans into a hash-identified setup plan. Effectful adapters download and verify release assets, resolve native data paths and JavaScript package entry points, and apply the approved steps through their existing ownership boundaries; a receipt records resumable progress without claiming a cross-filesystem transaction. The CLI provides interactive confirmation only on a TTY, while `--dry-run` and `--apply` remain the machine-readable boundaries.
 
 **Tech Stack:** Node.js 22.13+ standard library, `node:test`, GitHub Actions, npm package tarballs, GitHub Releases.
 
-**Spec:** `docs/adr/0003-cross-platform-full-install.md`, `docs/adr/0004-interactive-quickstart.md`
+**Spec:** `docs/adr/0003-cross-platform-full-install.md`, `docs/adr/0004-interactive-quickstart.md`, `docs/adr/0005-npm-registry-distribution.md`, `docs/superpowers/specs/2026-08-27-npm-registry-distribution-design.md`
 
 ## Global Constraints
 
@@ -20,7 +20,9 @@
 - Existing repositories require an explicit adoption config; setup never guesses semantic mappings.
 - Unmanaged Throughline installations are preserved and never overwritten.
 - Windows live Codex evidence remains pending until the user completes the supplied pilot checklist.
-- npm registry publication is outside this plan; installation uses GitHub Release tarballs.
+- npm publication starts with `0.3.0-rc.1` under `next`; `0.3.0` receives `latest` only after recorded Windows live evidence.
+- npm and GitHub Release ContextRail tarballs are byte-identical, while Throughline remains a separate verified GitHub asset.
+- Automated npm publication uses GitHub Actions OIDC Trusted Publishing and no long-lived registry token.
 
 ---
 
@@ -36,7 +38,8 @@
 - `src/cli/main.mjs`: setup arguments, TTY confirmation, JSON output, and exit codes.
 - `scripts/build-release.mjs`: deterministic ContextRail alias/versioned assets, patched Throughline artifact, manifest, and checksum generation.
 - `.github/workflows/verify.yml`: packed-artifact setup matrix on Ubuntu, macOS, and Windows.
-- `.github/workflows/release.yml`: verified prerelease asset publication from a version tag.
+- `.github/workflows/release.yml`: verified GitHub Release asset publication from a version tag.
+- `.github/workflows/publish.yml`: tag/version-gated npm publication of the already verified tarball through OIDC.
 - `test/setup*.test.mjs`, `test/platform.test.mjs`, `test/release-manifest.test.mjs`: focused deterministic coverage.
 - `README.md`, `docs/reference/WINDOWS_PILOT.md`, `integrations/throughline/README.md`: two-command onboarding, mode selection, recovery, and honest live validation.
 
@@ -215,6 +218,7 @@ const handler = {
 - Modify: `package.json`
 - Modify: `.github/workflows/verify.yml`
 - Create: `.github/workflows/release.yml`
+- Create: `.github/workflows/publish.yml`
 - Modify: `.gitignore`
 
 **Interfaces:**
@@ -224,13 +228,21 @@ const handler = {
 - [ ] **Step 1: Write release-asset tests for required names, stable/versioned byte identity, manifest digest agreement, and checksum ordering.**
 - [ ] **Step 2: Run `node --test test/release-assets.test.mjs` and confirm the script is absent.**
 - [ ] **Step 3: Implement the release builder with argv process execution, explicit input artifact, temporary staging, and atomic output replacement.**
-- [ ] **Step 4: Add `npm run build:release` and keep package `private: true` because npm registry publication is excluded.**
+- [ ] **Step 4: Add `npm run build:release`, remove `private: true`, and set `publishConfig.access` to `public` without a permanent dist-tag.**
 - [ ] **Step 5: Expand verification to an Ubuntu/macOS/Windows matrix that runs `npm test`, packs the source, installs into an isolated prefix, and executes packed CLI setup dry-run with paths containing spaces and Unicode.**
-- [ ] **Step 6: Add a tag-triggered release workflow that builds the pinned Throughline patch, runs the matrix-equivalent checks, and publishes only verified prerelease assets with `contents: write`.**
-- [ ] **Step 7: Run `node --test test/release-assets.test.mjs`, `npm pack --dry-run`, and workflow YAML/static command checks.**
-- [ ] **Step 8: Commit `build: publish full install release assets`.**
+- [ ] **Step 6: Add a tag-triggered GitHub release workflow that builds the pinned Throughline patch, runs the matrix-equivalent checks, and publishes only verified assets with `contents: write`.**
+- [ ] **Step 7: Add an npm publish workflow using Node.js 24, `id-token: write`, `contents: read`, disabled release caching, exact tag/package version validation, prerelease-to-`next` and stable-to-`latest` selection, and publication of the previously packed tarball.**
 
-### Task 8: README onboarding, Windows pilot, and repository-wide verification
+```yaml
+permissions:
+  contents: read
+  id-token: write
+```
+
+- [ ] **Step 8: Run `node --test test/release-assets.test.mjs`, `npm pack --dry-run --json`, `npm publish --dry-run --access public --tag next`, and workflow YAML/static command checks.**
+- [ ] **Step 9: Commit `build: publish full install release assets`.**
+
+### Task 8: README onboarding and Windows pilot documentation
 
 **Files:**
 - Modify: `README.md`
@@ -245,15 +257,55 @@ const handler = {
 - Modify: `state/BACKLOG.json`
 
 **Interfaces:**
-- Quickstart: `npm install --global https://github.com/jeongyeop91/ContextRail/releases/latest/download/contextrail.tgz` then `contextrail setup`
+- Release-candidate quickstart: `npm install --global contextrail@next` then `contextrail setup`
+- Stable quickstart after Windows acceptance: `npm install --global contextrail` then `contextrail setup`
+- Audited fallback: install the immutable versioned GitHub Release tarball, then run the same setup command.
 - Machine flow: `contextrail setup --dry-run --json` then `contextrail setup --apply --json`
 
-- [ ] **Step 1: Add a documentation test that extracts the primary commands and rejects `$PWD`, shell continuations, npm-registry installation, or a required manual Throughline artifact.**
-- [ ] **Step 2: Rewrite the README opening around the two-command full default, followed by a compact profile table, existing-project Codex prompt, verification states, recovery, upgrade, and removal.**
+- [ ] **Step 1: Add a documentation test that extracts the primary commands and rejects `$PWD`, shell continuations, a required manual Throughline artifact, or an unqualified npm stable command before the Windows acceptance record exists.**
+- [ ] **Step 2: Rewrite the README opening around the `@next` two-command release-candidate default and immutable GitHub fallback, followed by a compact profile table, existing-project Codex prompt, verification states, recovery, upgrade, and removal.**
 - [ ] **Step 3: Add a native Windows PowerShell pilot checklist covering install, dry-run review, apply, Codex restart, capture, restore, handoff, aggregate verification, and evidence recording; label live evidence pending.**
 - [ ] **Step 4: Update Active Authority command and integration contracts while keeping every authority file at or below 500 lines and the router at or below 50 lines.**
-- [ ] **Step 5: Run `npm test`, `npm run verify`, `npm pack --dry-run`, and `git diff --check`; record exact degraded external states rather than upgrading them to passing.**
-- [ ] **Step 6: Build `0.3.0-rc.1` release assets, verify their SHA-256 values, publish the GitHub prerelease, and smoke the public download URL from an isolated prefix.**
-- [ ] **Step 7: Mark CR-008 implementation complete only for automated/macOS evidence, archive this plan under `docs/history/plans/`, and keep the Windows live acceptance gate explicitly pending for stable publication.**
-- [ ] **Step 8: Commit `docs: publish full installation guide`.**
+- [ ] **Step 5: Run documentation tests and `node bin/contextrail.mjs check --json`; keep live states explicitly unverified.**
+- [ ] **Step 6: Commit `docs: publish full installation guide`.**
 
+### Task 9: npm first-publication bootstrap and public artifact verification
+
+**Files:**
+- Modify: `package.json`
+- Modify: `README.md`
+- Modify: `docs/reference/README.md`
+- Create: `docs/history/releases/2026-08-27-v0.3.0-rc.1.md`
+
+**Interfaces:**
+- Manual bootstrap: `npm publish contextrail-0.3.0-rc.1.tgz --access public --tag next`
+- Registry checks: `npm view contextrail@0.3.0-rc.1 version dist.tarball dist.integrity dist-tags --json`
+- Candidate install: `npm install --global contextrail@next`
+
+- [ ] **Step 1: Set the package and CLI version to `0.3.0-rc.1`, then run the focused release-version test and confirm it initially fails before updating generated metadata.**
+- [ ] **Step 2: Build the patched Throughline and complete release assets once; verify the ContextRail versioned asset, stable-name asset, and npm input tarball have the same SHA-256.**
+- [ ] **Step 3: Run `npm test`, `npm run verify`, `npm pack --dry-run --json`, `npm publish --dry-run --access public --tag next`, and isolated tarball version/help/init/setup smoke.**
+- [ ] **Step 4: Publish the GitHub `v0.3.0-rc.1` prerelease with manifest, checksum, ContextRail, and Throughline assets, then re-download and verify every digest.**
+- [ ] **Step 5: Confirm `npm view contextrail` still returns not-found, then perform the one-time 2FA publication of the exact verified tarball using `--tag next`; never place an OTP in a file, command history, log, or project state.**
+- [ ] **Step 6: Verify public owners, version, `next` dist-tag, registry integrity, unpacked allowlist, and a clean global install from `contextrail@next`; confirm `latest` is absent.**
+- [ ] **Step 7: Configure the npm Trusted Publisher for the public repository, workflow filename `publish.yml`, and allowed `npm publish`; verify OIDC on the next real prerelease rather than publishing a throwaway version.**
+- [ ] **Step 8: Record immutable release digests and automated evidence without credentials, personal paths, prompts, or runtime metrics.**
+- [ ] **Step 9: Commit `docs: record v0.3.0 release candidate`.**
+
+### Task 10: Repository-wide handoff and stable promotion gate
+
+**Files:**
+- Modify: `state/CURRENT.md`
+- Modify: `state/PLAN.md`
+- Modify: `state/BACKLOG.json`
+- Move: `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` to `docs/history/plans/2026-08-27-cross-platform-full-install.md` after automated completion
+
+**Interfaces:**
+- Windows evidence input: `docs/reference/WINDOWS_PILOT.md` completed by the user on native Windows.
+- Stable promotion output: `contextrail@0.3.0` under `latest` only after that evidence is accepted.
+
+- [ ] **Step 1: Run `npm test`, `npm run verify`, `npm pack --dry-run --json`, public npm candidate smoke, public GitHub fallback smoke, and `git diff --check`.**
+- [ ] **Step 2: Update CURRENT with exact Ubuntu/macOS/Windows CI evidence and label Windows live Codex capture, restore, and handoff as pending.**
+- [ ] **Step 3: Mark implementation tasks complete and archive the plan, but keep stable npm promotion as a blocked acceptance gate rather than claiming Windows live readiness.**
+- [ ] **Step 4: After the user supplies passing Windows evidence, tag and verify `0.3.0`, publish the exact tarball through Trusted Publishing under `latest`, move the README from `@next` to the unqualified command, and record the stable digests.**
+- [ ] **Step 5: Commit `chore: complete cross-platform distribution`.**

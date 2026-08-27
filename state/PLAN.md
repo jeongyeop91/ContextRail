@@ -2,7 +2,7 @@
 
 **Goal:** Implement the accepted ADR-0003, ADR-0004, and ADR-0005 installation and distribution contracts.
 
-**Status:** Paused for revision because the linked plan predates ADR-0005 and still excludes npm publication.
+**Status:** Approved for execution with npm release-candidate publication under `next`; stable `latest` promotion remains gated on Windows live evidence.
 
 Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md`
 
@@ -10,4 +10,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [ ] Add cross-platform Codex Hook registration.
 - [ ] Implement plan-first, resumable `contextrail setup` with TTY confirmation.
 - [ ] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
+- [ ] Publish the verified `0.3.0-rc.1` tarball to npm under `next` and configure Trusted Publishing.
 - [ ] Publish the two-command README and Windows live pilot checklist.
