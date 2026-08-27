@@ -1,9 +1,13 @@
 # Current state
 
-Active item: none
+Active item: `CR-007`
 
 ## Observed
 
+- Codex ContextRail automation is approved for `UserPromptSubmit` route/continue and non-blocking `Stop` checks, with project opt-in defaulting to disabled.
+- Current official Codex Hook documentation and the bundled desktop Codex executable agree on the event names, JSON fields, synchronous command handler, timeout, and additional-context contracts required by this work.
+- The user Codex Hook and feature files were inspected read-only; Throughline handlers are present and must remain unchanged.
+- The separately installed npm Codex CLI is currently degraded because its platform vendor executable is absent; the bundled desktop Codex executable is available.
 - Existing-repository adoption is implemented on `main` and preserves mapped project-owned files.
 - MIT and the `v0.1.0` public release defaults are approved for `jeongyeop91/ContextRail`.
 - The public `jeongyeop91/ContextRail` repository is a GitHub Template Repository with release `v0.1.0`.
@@ -30,9 +34,9 @@ Active item: none
 
 ## Next steps
 
-1. Collect a measured ContextRail baseline when comparable tasks are available.
-2. Triage public feedback and security reports against `v0.1.0`.
-3. Prepare a later release only from a newly verified commit and immutable tag.
+1. Implement CR-007 from `state/PLAN.md` with focused failing tests first.
+2. Run the complete temporary-HOME and package verification matrix.
+3. Publish `v0.2.0` only from a fully verified commit.
 
 ## Blockers
 

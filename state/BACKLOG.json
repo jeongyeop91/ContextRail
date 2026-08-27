@@ -79,6 +79,23 @@
       "sourceHints": ["package.json", "src/version.mjs", "src/cli/main.mjs", "test/release.test.mjs"],
       "nextSteps": ["Use the immutable v0.1.0 release as the installation baseline"],
       "validation": [["npm", "run", "verify"]]
+    },
+    {
+      "id": "CR-007",
+      "title": "Add opt-in Codex context automation hooks",
+      "status": "in_progress",
+      "dependsOn": ["CR-006"],
+      "acceptance": [
+        "UserPromptSubmit injects bounded route or continuation context only for enabled projects",
+        "Stop performs a non-blocking read-only ContextRail check",
+        "Install and uninstall preserve Throughline and unrelated hooks with receipt and hash guards",
+        "Automation config changes are plan-first, ownership-guarded, and transactional",
+        "Temporary-HOME, regression, package, and read-only real-HOME diagnostics pass for v0.2.0"
+      ],
+      "authority": ["docs/authority/ARCHITECTURE.md", "docs/authority/OPERATING_MODEL.md", "docs/authority/INTEGRATIONS.md", "docs/authority/VALIDATION.md"],
+      "sourceHints": ["src/core/automation.mjs", "src/integrations/codex-hook-runtime.mjs", "src/integrations/codex-hooks.mjs", "src/cli/main.mjs", "test/"],
+      "nextSteps": ["Execute the checked steps in state/PLAN.md without changing the real user HOME"],
+      "validation": [["npm", "run", "verify"]]
     }
   ]
 }
