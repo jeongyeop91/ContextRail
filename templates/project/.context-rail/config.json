@@ -11,5 +11,12 @@
     "routerLines": 50,
     "authorityLines": 500
   },
-  "instructionsFile": "AGENTS.md"
+  "instructionsFile": "AGENTS.md",
+  "automation": {
+    "codex": {
+      "enabled": false,
+      "promptRouting": false,
+      "stopCheck": false
+    }
+  }
 }

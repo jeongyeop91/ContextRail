@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { isAbsolute, resolve } from 'node:path';
 
+import { codexAutomation } from './automation.mjs';
 import { finish, issue } from './result.mjs';
 import { VERSION } from '../version.mjs';
 
@@ -95,6 +96,7 @@ export function normalizeAdoptionConfig(value) {
     limits: { routerLines, authorityLines },
     instructionsFile,
     validationHints,
+    ...(value.automation === undefined ? {} : { automation: { codex: codexAutomation(value) } }),
   };
   return { ...finish(issues), config: issues.length === 0 ? config : null };
 }

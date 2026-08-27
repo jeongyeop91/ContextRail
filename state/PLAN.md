@@ -28,13 +28,13 @@
 
 **Interfaces:** `codexAutomation(config)` returns `{enabled,promptRouting,stopCheck}`. `planProjectAutomation({target,enabled,fs})` returns a guarded operation plan. `applyProjectAutomation(plan,fs)` rechecks preconditions and applies or restores both files.
 
-- [ ] Write tests that make missing automation default to all false and normalize an explicit valid object.
-- [ ] Run `node --test test/automation.test.mjs` and observe failure because the module is absent.
-- [ ] Implement the defaulting and validation helpers without filesystem writes.
-- [ ] Write tests for enable, disable, dry-run non-mutation, config ownership mismatch, version concurrent change, and atomic rollback.
-- [ ] Implement hash-guarded plan/apply using sibling temporary files and restore snapshots on a failed transition.
-- [ ] Preserve the optional automation object in existing-repository config normalization and add an explicit disabled default to the neutral template.
-- [ ] Run `node --test test/automation.test.mjs test/adoption.test.mjs test/scaffold.test.mjs` and observe all pass.
+- [x] Write tests that make missing automation default to all false and normalize an explicit valid object.
+- [x] Run `node --test test/automation.test.mjs` and observe failure because the module is absent.
+- [x] Implement the defaulting and validation helpers without filesystem writes.
+- [x] Write tests for enable, disable, dry-run non-mutation, config ownership mismatch, version concurrent change, and atomic rollback.
+- [x] Implement hash-guarded plan/apply using sibling temporary files and restore snapshots on a failed transition.
+- [x] Preserve the optional automation object in existing-repository config normalization and add an explicit disabled default to the neutral template.
+- [x] Run `node --test test/automation.test.mjs test/adoption.test.mjs test/scaffold.test.mjs` and observe all pass.
 
 ### Task 2: Codex Hook runtime
 
