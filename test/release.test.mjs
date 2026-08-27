@@ -20,7 +20,7 @@ async function json(path) {
 
 test('release version is consistent across package and generated metadata', async () => {
   const packageMetadata = await json(join(ROOT, 'package.json'));
-  assert.equal(packageMetadata.version, '0.2.0');
+  assert.equal(packageMetadata.version, '0.3.0-rc.1');
   assert.equal((await json(join(ROOT, '.context-rail/version.json'))).templateVersion, packageMetadata.version);
   assert.equal((await json(join(ROOT, 'templates/project/.context-rail/version.json'))).templateVersion, packageMetadata.version);
 
@@ -50,7 +50,7 @@ test('packed CLI installs into an isolated prefix and runs version and help', as
   await execFile('npm', ['install', '--global', '--prefix', prefix, '--ignore-scripts', tarball], { env });
   const binary = join(prefix, 'bin/contextrail');
   const version = await execFile(binary, ['--version'], { env });
-  assert.equal(version.stdout, '0.2.0\n');
+  assert.equal(version.stdout, '0.3.0-rc.1\n');
   const help = await execFile(binary, ['--help'], { env });
   assert.match(help.stdout, /^Usage:/);
 });
