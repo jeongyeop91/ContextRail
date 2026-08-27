@@ -56,14 +56,14 @@
 
 **Interfaces:** `planCodexHooksInstall`, `applyCodexHooksInstall`, `planCodexHooksUninstall`, `applyCodexHooksUninstall`, and `verifyCodexHooks` accept explicit HOME, paths, and filesystem dependencies and return structured results.
 
-- [ ] Write failing tests using a temporary HOME fixture with existing Throughline and unrelated Hook groups.
-- [ ] Cover exact absolute commands, numeric timeouts, preservation, installation idempotency, duplicate detection, and feature flag planning.
-- [ ] Run `node --test test/codex-hooks.test.mjs` and confirm failure because the installer is absent.
-- [ ] Implement JSON merge and TOML feature edits while retaining byte-for-byte unrelated content and order.
-- [ ] Write failing uninstall tests for exact owned-entry removal, feature restoration, missing receipt, and concurrent hash conflict.
-- [ ] Implement receipt-last transactional apply, rollback on write failure, and receipt/hash-guarded uninstall.
-- [ ] Add verification for exact paths, duplicate entries, feature state, preserved non-owned entries, receipt state, and separate project automation state.
-- [ ] Run `node --test test/codex-hooks.test.mjs test/throughline-install.test.mjs` and observe all pass.
+- [x] Write failing tests using a temporary HOME fixture with existing Throughline and unrelated Hook groups.
+- [x] Cover exact absolute commands, numeric timeouts, preservation, installation idempotency, duplicate detection, and feature flag planning.
+- [x] Run `node --test test/codex-hooks.test.mjs` and confirm failure because the installer is absent.
+- [x] Implement JSON merge and TOML feature edits while retaining byte-for-byte unrelated content and order.
+- [x] Write failing uninstall tests for exact owned-entry removal, feature restoration, missing receipt, and concurrent hash conflict.
+- [x] Implement receipt-last transactional apply, rollback on write failure, and receipt/hash-guarded uninstall.
+- [x] Add verification for exact paths, duplicate entries, feature state, preserved non-owned entries, receipt state, and separate project automation state.
+- [x] Run `node --test test/codex-hooks.test.mjs test/throughline-install.test.mjs` and observe all pass.
 
 ### Task 4: CLI commands and synthetic verification smoke
 
