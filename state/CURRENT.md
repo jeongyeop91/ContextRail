@@ -7,6 +7,8 @@ Active item: `CR-007`
 - Codex ContextRail automation is approved for `UserPromptSubmit` route/continue and non-blocking `Stop` checks, with project opt-in defaulting to disabled.
 - Current official Codex Hook documentation and the bundled desktop Codex executable agree on the event names, JSON fields, synchronous command handler, timeout, and additional-context contracts required by this work.
 - The user Codex Hook and feature files were inspected read-only; Throughline handlers are present and must remain unchanged.
+- ContextRail Codex automation runtime, ownership guards, temporary-HOME installer lifecycle, public CLI commands, and isolated verification smoke are implemented on `main`.
+- The real-HOME ContextRail Hook dry run planned two appended entries without a feature change; read-only verify correctly reported `not_installed`, project automation disabled, isolated smoke passed, and live context injection unverified.
 - The separately installed npm Codex CLI is currently degraded because its platform vendor executable is absent; the bundled desktop Codex executable is available.
 - Existing-repository adoption is implemented on `main` and preserves mapped project-owned files.
 - MIT and the `v0.1.0` public release defaults are approved for `jeongyeop91/ContextRail`.
@@ -31,12 +33,15 @@ Active item: `CR-007`
 - Release commit and annotated tag: `78b55b9` / `v0.1.0`; release asset SHA-256: `619c662017d42df6dda763b712a84ed520d703a6bb4a7d834f9e654f60f628a8`.
 - Security read-only validation at `5b2c48ec65f08e7551d9dc3beb9cfc9619b0472f`: check passed, route returned root and gateway instructions, continue returned references mode, and HEAD/status remained unchanged.
 - GitHub onboarding documentation and contribution templates were added after the `v0.1.0` release without changing the immutable release tag or asset.
+- Codex Hook design and implementation commits: `c51efbc`, `4a1b29a`, `6ffaf18`, `daedd7b`, `806c458`, and `3befa6c`.
+- The v0.2.0 release candidate passed 91 tests, self-check with 8 Active Authority files, neutral template smoke, package dry-run, isolated package version/help smoke, and `git diff --check`.
+- Real-HOME install dry-run and read-only verify left the Hook/config hashes unchanged and did not create a ContextRail receipt.
 
 ## Next steps
 
-1. Implement CR-007 from `state/PLAN.md` with focused failing tests first.
-2. Run the complete temporary-HOME and package verification matrix.
-3. Publish `v0.2.0` only from a fully verified commit.
+1. Commit the verified v0.2.0 version and state metadata.
+2. Create and verify the final package artifact from the clean release commit.
+3. Tag, push, publish the GitHub Release, and confirm its workflow and asset digest.
 
 ## Blockers
 
