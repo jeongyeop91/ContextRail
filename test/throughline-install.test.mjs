@@ -38,7 +38,7 @@ function successfulAdapter(home, calls = [], environments = []) {
         await writeFile(join(packageRoot, 'bin/cli.mjs'), 'export {};');
         return { code: 0, stdout: '', stderr: '' };
       }
-      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.2\n', stderr: '' };
       if (args[1] === 'install') {
         const hooksPath = join(home, '.codex/hooks.json');
         const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
@@ -58,16 +58,16 @@ function successfulAdapter(home, calls = [], environments = []) {
 
 test('dry-run planning writes nothing and confines release paths', async () => {
   const scope = await fixture();
-  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.1', manifest });
+  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.2', manifest });
   assert.equal(await nodeFilesystem.exists(scope.managedRoot), false);
-  assert.match(plan.releaseId, /^0\.10\.3-codex\.1-[a-f\d]{12}$/);
+  assert.match(plan.releaseId, /^0\.10\.3-codex\.2-[a-f\d]{12}$/);
   assert.ok(plan.releaseDirectory.startsWith(scope.managedRoot));
   await assert.rejects(() => applyManagedInstall({ plan, apply: false, home: scope.home, fs: nodeFilesystem, processAdapter: successfulAdapter(scope.home) }), /explicit apply/);
 });
 
 test('explicit apply preserves unrelated hooks and selects only after verification', async () => {
   const scope = await fixture();
-  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.1', manifest });
+  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.2', manifest });
   const calls = [];
   const environments = [];
   const nodePath = join(scope.root, 'Node Runtime', 'node.exe');
@@ -89,7 +89,7 @@ test('failed install leaves the previous current selection unchanged', async () 
   const scope = await fixture();
   await mkdir(scope.managedRoot, { recursive: true });
   await writeFile(join(scope.managedRoot, 'current.json'), JSON.stringify({ releaseId: 'previous' }));
-  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.1', manifest });
+  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.2', manifest });
   const failing = { run: async () => ({ code: 1, stdout: '', stderr: 'install failed' }) };
   await assert.rejects(() => applyManagedInstall({ plan, apply: true, home: scope.home, fs: nodeFilesystem, processAdapter: failing }), /npm install failed/);
   assert.equal(JSON.parse(await readFile(join(scope.managedRoot, 'current.json'), 'utf8')).releaseId, 'previous');

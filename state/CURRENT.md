@@ -48,11 +48,13 @@ Active item: `CR-008`
 - The rc.3 candidate resolves standalone verification and doctor commands through the selected managed Node/JavaScript paths and documents the in-place existing-project continuation flow.
 - Release commit and annotated tag: `a5254f6` / `v0.3.0-rc.3`; npm `next` and the GitHub versioned asset are byte-identical at SHA-256 `64478972cd2bc2a6db9c7a0fa67a4f7c0a451d8c78247b8a1ddadff7cbb37d50`.
 - The first rc.3 release-triggered OIDC publish reached `npm publish` but npm rejected it before a Trusted Publisher existed. The exact verified tarball was then published manually with account 2FA, and npm Trusted Publisher ID `85ffcaa4-1e45-4fe7-9c4b-79a45f22cc18` now binds `jeongyeop91/ContextRail` workflow `publish.yml`; the automated OIDC path remains unverified until a future release.
+- The Windows Codex config contains persisted trust hashes for all three Throughline handlers and both ContextRail handlers. Throughline `0.10.3-codex.1` falsely reports `0/3 trusted` because its doctor parser accepts only TOML basic-string Hook state keys, while Codex emits literal-string keys for Windows paths.
+- The compatibility fix is covered by a failing-then-passing upstream doctor regression and reproducibly packages as managed Throughline `0.10.3-codex.2` with SHA-256 `29053de08c4ec074c2e02f724314f91e7359a48fb79f7feadaceb7de7f594fd9`.
 
 ## Next steps
 
-1. Resume the existing `C:\Projects\RathonSales` Windows live pilot without recreating its adoption mapping or managed Throughline installation.
-2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after Hook trust approval.
+1. Publish `0.3.0-rc.4` with the managed Throughline Windows Hook-trust diagnostic fix under npm `next` and the matching GitHub prerelease.
+2. Update the existing `C:\Projects\RathonSales` installation in place, then verify ContextRail live routing plus Throughline capture, restore, and handoff without recreating its adoption mapping.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers

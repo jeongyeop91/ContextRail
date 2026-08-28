@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.4 - 2026-08-28
+
+### Fixed
+
+- Recognize Codex Hook trust state written as TOML literal-string keys on Windows, so approved managed Hooks no longer report the false diagnostic `0/3 trusted`.
+- Ship the fix as the reproducibly patched managed Throughline `0.10.3-codex.2` artifact and cover it with the upstream doctor regression suite.
+
 ## 0.3.0-rc.3 - 2026-08-28
 
 ### Fixed

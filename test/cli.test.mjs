@@ -51,7 +51,7 @@ test('unknown commands return CLI usage exit code', async () => {
 test('version and help are successful read-only top-level options', async () => {
   const version = capture();
   assert.equal(await run(['--version'], version.io), 0);
-  assert.equal(version.output().stdout, '0.3.0-rc.3\n');
+  assert.equal(version.output().stdout, '0.3.0-rc.4\n');
   assert.equal(version.output().stderr, '');
 
   const help = capture();
@@ -143,7 +143,7 @@ test('Throughline verify reports structured readiness through a read-only adapte
   const stream = capture();
   const processAdapter = {
     async run(_binary, args) {
-      if (args[0] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[0] === '--version') return { code: 0, stdout: '0.10.3-codex.2\n', stderr: '' };
       return {
         code: 0,
         stdout: JSON.stringify({ schema: 'throughline.native_factory_diagnostics.v1', overall: { status: 'ready' }, hooks: { status: 'ready' }, readiness: {} }),
@@ -158,7 +158,7 @@ test('Throughline verify reports structured readiness through a read-only adapte
 
 test('Throughline verify and doctor use the selected managed JavaScript binary', async () => {
   const managedRoot = join(await mkdtemp(join(tmpdir(), 'contextrail-cli-managed-')), 'managed');
-  const releaseId = '0.10.3-codex.1-test';
+  const releaseId = '0.10.3-codex.2-test';
   const packageRoot = join(managedRoot, 'releases', releaseId, 'node_modules', 'throughline');
   const binPath = join(packageRoot, 'bin', 'cli.mjs');
   const nodePath = join(managedRoot, 'runtime', 'node.exe');
@@ -178,7 +178,7 @@ test('Throughline verify and doctor use the selected managed JavaScript binary',
         error.code = 'ENOENT';
         throw error;
       }
-      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.2\n', stderr: '' };
       if (args[1] === 'factory-diagnostics') {
         return {
           code: 0,

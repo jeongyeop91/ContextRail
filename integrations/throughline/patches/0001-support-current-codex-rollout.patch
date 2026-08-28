@@ -1,29 +1,33 @@
-From 4d94defd2057df25eb24dc402d7b6c06fa1264d4 Mon Sep 17 00:00:00 2001
+From d5ff84cd698511e0375d17721f41b4b86bbe37c6 Mon Sep 17 00:00:00 2001
 From: Jeongyeop <jylee91@gmail.com>
-Date: Wed, 26 Aug 2026 12:43:44 +0900
-Subject: [PATCH] fix(codex): support current rollout schema
+Date: Fri, 28 Aug 2026 16:21:45 +0900
+Subject: [PATCH] fix(codex): support current rollout and Windows hook trust
 
 ---
- CHANGELOG.md                   |  9 ++++
+ CHANGELOG.md                   | 11 ++++
  CLAUDE.md                      | 10 +++-
  README.ja.md                   | 12 ++++-
  README.md                      | 10 ++++
  docs/05_codex_first_roadmap.md |  4 ++
  package.json                   |  2 +-
+ src/cli/doctor.mjs             |  4 +-
+ src/cli/doctor.test.mjs        | 24 +++++++++
  src/codex-capture.test.mjs     | 99 ++++++++++++++++++++++++++++++++++
  src/codex-rollout-memory.mjs   | 58 +++++++++++++++-----
- 8 files changed, 186 insertions(+), 18 deletions(-)
+ 10 files changed, 214 insertions(+), 20 deletions(-)
 
 diff --git a/CHANGELOG.md b/CHANGELOG.md
-index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..1eb26804a294ec47102e5451c8a37753363ee63b 100644
+index 008e37a..b7fca44 100644
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
-@@ -10,6 +10,15 @@ shipped to npm but were not individually tagged on GitHub.
- 
+@@ -10,6 +10,17 @@ shipped to npm but were not individually tagged on GitHub.
+
  ## [Unreleased]
- 
+
 +### Fixed
 +
++- Codex hook trust diagnosis now accepts TOML literal-string state keys emitted
++  for Windows paths, avoiding a false `0/3 trusted` result after approval.
 +- Codex rollout capture now accepts both the legacy `event_msg` conversation /
 +  `function_call` tool records and the current Codex App `response_item.message` /
 +  `custom_tool_call` records. Host-injected user context such as the Codex
@@ -32,16 +36,16 @@ index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..1eb26804a294ec47102e5451c8a37753
 +  `0.149.0-alpha.4.1` rollout cover the current shape.
 +
  ## [0.10.3] — 2026-08-24
- 
+
  ### Added
 diff --git a/CLAUDE.md b/CLAUDE.md
-index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366707b55a7 100644
+index fb8e9cc..e832ed5 100644
 --- a/CLAUDE.md
 +++ b/CLAUDE.md
 @@ -20,6 +20,12 @@ GitHub Release、このMacのregistry由来global install（`throughline --versi
  `~/.cursor/hooks.json` に sessionStart / beforeSubmitPrompt / stop の絶対パスを確認し、
  工場 `cursor-*-hook` は残っている。新規 Cursor session の capture 受入は別 H。
- 
+
 +**Unreleased Codex compatibility update（2026-08-26）**: Codex rollout parserは旧
 +`event_msg` / `function_call` に加え、Desktop `0.149.0-alpha.4.1` の
 +`response_item.message` / `custom_tool_call` / `custom_tool_call_output` をL2/L3へ保存する。
@@ -70,13 +74,13 @@ index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366
  | [src/codex-auto-refresh.test.mjs](src/codex-auto-refresh.test.mjs) | Dormant helper の default disabled、75% 閾値、estimate usage の非実行、明示 enabled 時に threshold reached で rollback/inject を呼ぶこと、DB memory が無い場合の skip |
  | [src/codex-handoff.test.mjs](src/codex-handoff.test.mjs) | `toThroughlineHandoffBlock` の `throughline_handoff` v1 JSON shape と Codex active-work context renderer |
 diff --git a/README.ja.md b/README.ja.md
-index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2eadba5c99b7 100644
+index 4d1e7d8..c1d7e74 100644
 --- a/README.ja.md
 +++ b/README.ja.md
 @@ -94,6 +94,13 @@ current-thread rollback
  診断が要る時だけ明示的に `trim --execute --host codex` を使う。既存の
  非 Throughline Codex hook は保持される。
- 
+
 +Codex rollout の互換性は schema に依存する。この build は旧
 +`event_msg` / `function_call` と、Codex App の現行
 +`response_item.message` / `custom_tool_call` を扱う。後者は2026-08-26に
@@ -85,12 +89,12 @@ index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2ead
 +hook が registered であることだけでは rollout 本文の互換性を証明しない。
 +
  </details>
- 
+
  ## 他の手段との比較
 @@ -413,10 +420,13 @@ latest session推測・`sessions.merged_into`変更・L1/L2/L3 rowの所属変
- 
+
  ## 動作要件
- 
+
 -- **Node.js 22.5 以上** (組み込み `node:sqlite` モジュール使用、ネイティブビルド不要)
 +- **Node.js 22.13 以上** (組み込み `node:sqlite` モジュール使用、ネイティブビルド不要)
  - **Claude Code** (`SessionStart`, `Stop`, `UserPromptSubmit` hooks 対応版)
@@ -100,16 +104,16 @@ index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2ead
 +  `0.149.0-alpha.4.1` の `response_item.message` / `custom_tool_call` schemaを検証済み。
 +  Codex更新後はcapture本文が0件でないことを再確認する
  - 対応 OS: **Windows / macOS / Linux**
- 
+
  ランタイム依存 **ゼロ**。npm パッケージは純 `.mjs` ファイルのみで構成されています。
 diff --git a/README.md b/README.md
-index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fce418cf14 100644
+index 37ce80e..34c51d0 100644
 --- a/README.md
 +++ b/README.md
 @@ -69,6 +69,13 @@ DB handoff memory as a developer item, and opens that thread in the selected
  host; ask explicitly for current-thread rollback diagnostics when you want the
  guarded `trim --execute --host codex` surface.
- 
+
 +Codex rollout compatibility is schema-sensitive. This build accepts the legacy
 +`event_msg` / `function_call` records and the current Codex App
 +`response_item.message` / `custom_tool_call` records, verified against a
@@ -118,7 +122,7 @@ index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fc
 +a registered hook by itself does not prove rollout-body compatibility.
 +
  </details>
- 
+
  <details>
 @@ -981,6 +988,9 @@ throughline auditor-context --session claude-session-id --project "$PWD" \
  - **Codex CLI login** (default L1 summarization backend, `gpt-5.6-luna`) or a
@@ -128,10 +132,10 @@ index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fc
 +  shape and Codex Desktop `0.149.0-alpha.4.1`'s `response_item.message` /
 +  `custom_tool_call` shape. Re-verify non-zero capture after Codex upgrades.
  - Works on **Windows, macOS, Linux**
- 
+
  Throughline has **zero runtime dependencies**. The published tarball is just
 diff --git a/docs/05_codex_first_roadmap.md b/docs/05_codex_first_roadmap.md
-index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e852f762f 100644
+index 1132b8b..9c448e2 100644
 --- a/docs/05_codex_first_roadmap.md
 +++ b/docs/05_codex_first_roadmap.md
 @@ -188,6 +188,10 @@ Phase 1 implementation result (2026-05-06):
@@ -143,28 +147,80 @@ index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e
 +  L2 / L3へ保存する。旧 `event_msg` と `function_call` 系も維持し、Codex hostが
 +  user roleで注入する `recommended_plugins` / `AGENTS.md` context envelopeはL2から除外する。
  - [x] `npm test` で Claude hook entrypoint / transcript capture を含む 355 tests pass。
- 
+
  ## Phase 2: Codex CLI L2 -> L1 Backend
 diff --git a/package.json b/package.json
-index 3c66b8a7ff0d6898e98902d5342427a6d3820864..9b2ebe116e21f819f80ba1d80a12c0c193225712 100644
+index 3c66b8a..df0bebb 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,6 +1,6 @@
  {
    "name": "throughline",
 -    "version": "0.10.3",
-+    "version": "0.10.3-codex.1",
++    "version": "0.10.3-codex.2",
      "type": "module",
      "description": "Persistent memory hooks for Claude Code, Codex, Grok, and Cursor (/clear-safe context compression)",
      "keywords": [
+diff --git a/src/cli/doctor.mjs b/src/cli/doctor.mjs
+index 55a716a..f6c71d0 100644
+--- a/src/cli/doctor.mjs
++++ b/src/cli/doctor.mjs
+@@ -409,10 +409,10 @@ function parseCodexTrustedHookState(configText) {
+   }
+
+   for (const line of configText.split(/\r?\n/)) {
+-    const section = line.match(/^\s*\[hooks\.state\."([^"]+)"\]\s*$/);
++    const section = line.match(/^\s*\[hooks\.state\.(?:"([^"]+)"|'([^']+)')\]\s*$/);
+     if (section) {
+       flush();
+-      currentKey = section[1];
++      currentKey = section[1] ?? section[2];
+       currentTrusted = false;
+       continue;
+     }
+diff --git a/src/cli/doctor.test.mjs b/src/cli/doctor.test.mjs
+index a2b3330..2b2b78a 100644
+--- a/src/cli/doctor.test.mjs
++++ b/src/cli/doctor.test.mjs
+@@ -451,6 +451,30 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
+     assert.equal(diagnosis.managedStopHooks.length, 1);
+     assert.equal(diagnosis.managedStopHooks[0].throughlineDoctorTrusted, true);
+     assert.equal(diagnosis.legacyManagedStopHooks.length, 1);
++
++    writeFileSync(
++      join(codexHome, 'config.toml'),
++      [
++        '[features]',
++        'codex_hooks = true',
++        'hooks = true',
++        '',
++        `[hooks.state.'${hooksPath}:user_prompt_submit:0:0']`,
++        'trusted_hash = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
++        '',
++        `[hooks.state.'${hooksPath}:post_tool_use:0:0']`,
++        'trusted_hash = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"',
++        '',
++        `[hooks.state.'${hooksPath}:stop:0:0']`,
++        'trusted_hash = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"',
++        '',
++      ].join('\n'),
++    );
++
++    const literalStringDiagnosis = readCodexHookDiagnosis(codexHome);
++    assert.equal(literalStringDiagnosis.managedHookTrust.status, 'trusted');
++    assert.equal(literalStringDiagnosis.managedHookTrust.trustedCount, 3);
++    assert.equal(literalStringDiagnosis.managedHookTrust.totalCount, 3);
+   } finally {
+     rmSync(codexHome, { recursive: true, force: true });
+   }
 diff --git a/src/codex-capture.test.mjs b/src/codex-capture.test.mjs
-index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331200c650e 100644
+index a145c89..266a2c2 100644
 --- a/src/codex-capture.test.mjs
 +++ b/src/codex-capture.test.mjs
 @@ -248,6 +248,105 @@ test('captureCodexRolloutToDb: rebuilds namespaced Codex session from active rol
    }
  });
- 
+
 +test('captureCodexRolloutToDb: captures current Codex response messages and custom tools', () => {
 +  const db = makeDb();
 +  const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
@@ -268,12 +324,12 @@ index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331
    const db = makeDb();
    const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
 diff --git a/src/codex-rollout-memory.mjs b/src/codex-rollout-memory.mjs
-index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05f1c63c3c 100644
+index 57c6f10..7b1d83e 100644
 --- a/src/codex-rollout-memory.mjs
 +++ b/src/codex-rollout-memory.mjs
 @@ -106,19 +106,39 @@ export function parseCodexRolloutFile(
      }
- 
+
      if (row?.type === 'response_item') {
 -      const responseUserMessage = responseItemToUserMessage(payload, row.timestamp);
 -      if (responseUserMessage) {
@@ -316,7 +372,7 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
          stats.injectedDeveloperMessages++;
 @@ -372,30 +392,35 @@ function compactedPayloadToUserMessages(payload, timestamp) {
  }
- 
+
  function responseItemToDetail(payload, timestamp, toolNameByCallId) {
 -  if (payload?.type === 'function_call') {
 +  if (payload?.type === 'function_call' || payload?.type === 'custom_tool_call') {
@@ -338,7 +394,7 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
        output_text: null,
      };
    }
- 
+
 -  if (payload?.type === 'function_call_output') {
 +  if (payload?.type === 'function_call_output' || payload?.type === 'custom_tool_call_output') {
      const callId = typeof payload.call_id === 'string' ? payload.call_id : null;
@@ -355,11 +411,11 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
 +      output_text: stringifyToolArguments(payload.output),
      };
    }
- 
+
 @@ -502,13 +527,13 @@ function responseItemToMemoryMessage(payload, timestamp) {
    };
  }
- 
+
 -function responseItemToUserMessage(payload, timestamp) {
 -  if (payload?.type !== 'message' || payload.role !== 'user') return null;
 +function responseItemToConversationMessage(payload, timestamp) {
@@ -376,7 +432,7 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
  }
 @@ -531,7 +556,12 @@ function messageContentToText(content) {
  }
- 
+
  function shouldSkipUserMessage(text) {
 -  return text.startsWith('# AGENTS.md instructions') || text.startsWith('<hook_prompt');
 +  return (
@@ -386,7 +442,7 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
 +    text.startsWith('<hook_prompt')
 +  );
  }
- 
+
  function normalizeMessageText(value) {
 -- 
 2.50.1 (Apple Git-155)

@@ -2,18 +2,18 @@
   "schema": 1,
   "repository": "https://github.com/kitepon/Throughline.git",
   "baseCommit": "4bf84f548eeb7173a3b46be33b9b0c54723ab21f",
-  "compatibilityCommit": "4d94defd2057df25eb24dc402d7b6c06fa1264d4",
-  "packageVersion": "0.10.3-codex.1",
+  "compatibilityCommit": "d5ff84cd698511e0375d17721f41b4b86bbe37c6",
+  "packageVersion": "0.10.3-codex.2",
   "patch": {
     "path": "integrations/throughline/patches/0001-support-current-codex-rollout.patch",
-    "sha256": "866ba2c07863e59defa44adf83f313db7596ca16b1775d4be0a00c6b2a58f3d8"
+    "sha256": "15b6a263ec6861c2d7b1b439471e131b10b8c8eba62fab2b6ec00d4e9d9fb8e4"
   },
   "license": {
     "spdx": "MIT",
     "path": "integrations/throughline/LICENSE"
   },
   "tests": [
-    ["node", "--import", "./src/test-env.mjs", "--test", "src/codex-capture.test.mjs", "src/codex-rollout-memory.test.mjs"],
+    ["node", "--import", "./src/test-env.mjs", "--test", "src/codex-capture.test.mjs", "src/codex-rollout-memory.test.mjs", "src/cli/doctor.test.mjs"],
     ["npm", "test"]
   ],
   "pack": ["npm", "pack", "--json"],

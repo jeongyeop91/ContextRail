@@ -5,7 +5,7 @@ import { evaluateThroughlineReadiness, verifyThroughline } from '../src/integrat
 
 const readyDiagnostics = {
   schema: 'throughline.native_factory_diagnostics.v1',
-  version: '0.10.3-codex.1',
+  version: '0.10.3-codex.2',
   overall: { status: 'ready' },
   hooks: { status: 'ready' },
   readiness: { capture: { status: 'ready' }, restore: { status: 'ready' }, handoff: { status: 'ready' } },
@@ -49,7 +49,7 @@ test('invokes a JavaScript bin through an absolute Node runtime for read-only ve
   const adapter = {
     async run(executable, args) {
       calls.push([executable, ...args]);
-      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.2\n', stderr: '' };
       return { code: 0, stdout: JSON.stringify(readyDiagnostics), stderr: '' };
     },
   };

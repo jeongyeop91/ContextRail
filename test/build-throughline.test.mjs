@@ -10,8 +10,8 @@ import { buildThroughlineArtifact } from '../scripts/build-throughline.mjs';
 
 test('copies only the prepared pinned Throughline tarball to the requested output', async () => {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-build-throughline-'));
-  const prepared = join(root, 'prepared', 'throughline-0.10.3-codex.1.tgz');
-  const output = join(root, 'release-inputs', 'throughline-0.10.3-codex.1.tgz');
+  const prepared = join(root, 'prepared', 'throughline-0.10.3-codex.2.tgz');
+  const output = join(root, 'release-inputs', 'throughline-0.10.3-codex.2.tgz');
   const payload = Buffer.from('prepared Throughline tar payload'.repeat(2048));
   await nodeFilesystem.mkdir(join(root, 'prepared'), { recursive: true });
   await writeFile(prepared, gzipSync(payload, { level: 9 }));
