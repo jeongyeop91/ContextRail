@@ -60,10 +60,11 @@ Active item: `CR-008`
 - The rc.6 Windows apply completed managed Throughline and project verification, then failed ContextRail Hook installation because the receipt treated Throughline's legitimate Hook replacement as a full-file concurrent change. The rc.7 fix refreshes only the ContextRail receipt when both owned handlers and the feature contract remain current; changed owned handlers still conflict. Focused red/green tests and a resumed-setup integration test cover the exact partial state.
 - Release commit and annotated tag: `40b4693` / `v0.3.0-rc.7`; GitHub prerelease automation, Ubuntu/macOS/Windows tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `16365f312fc50630c53287d00693c3fe0edc75d3f9a1fffab21b9564153fc474`.
 - The rc.7 Windows resume completed managed Throughline and project verification, then hit a transient `EPERM` while atomically replacing `.context-rail/runtime/setup-receipt.json`. The rc.8 fix retries bounded Windows sharing violations, cleans only its own temporary file after a final failure, and attributes receipt failures to the step that was actually running.
+- Release commit and annotated tag: `c06efc0` / `v0.3.0-rc.8`; GitHub prerelease automation, Ubuntu/macOS/Windows tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `81a445081d5a9b939d6b6365424b0548446752a88eb1c6b03ff3a93bf7aa5584`.
 
 ## Next steps
 
-1. Publish rc.8, then resume the existing `C:\Projects\RathonSales` installation in place; managed Throughline must be reused and only the stale ContextRail receipt updated.
+1. Resume the existing `C:\Projects\RathonSales` installation in place with rc.8; managed Throughline must be reused and only the stale ContextRail receipt updated.
 2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.8 setup apply completes.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
