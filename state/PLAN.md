@@ -11,5 +11,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [ ] Implement plan-first, resumable `contextrail setup` with TTY confirmation.
 - [ ] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
 - [x] Publish the verified `0.3.0-rc.3` tarball to npm under `next`; configure Trusted Publishing for future releases.
-- [ ] Publish `0.3.0-rc.4` with the Windows Hook-trust diagnostic fix and verify the OIDC Trusted Publishing path.
+- [x] Publish `0.3.0-rc.4` with the Windows Hook-trust diagnostic fix and verify the OIDC Trusted Publishing path.
 - [ ] Publish the two-command README and Windows live pilot checklist.
