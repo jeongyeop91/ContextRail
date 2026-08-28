@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.7 - 2026-08-28
+
+### Fixed
+
+- Refresh the ContextRail Hook receipt after a non-owned Throughline or user Hook changes while continuing to reject missing, duplicate, or modified ContextRail-owned handlers.
+- Resume a setup whose managed Throughline step completed before the ContextRail Hook receipt became stale, updating only the receipt and leaving live Hook and Codex config files untouched.
+
 ## 0.3.0-rc.6 - 2026-08-28
 
 ### Fixed

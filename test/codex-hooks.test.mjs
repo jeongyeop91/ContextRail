@@ -159,6 +159,53 @@ test('Codex trust state remains receipt-current when ContextRail did not edit co
   assert.equal(report.receipt, 'current');
 });
 
+test('repeated install refreshes its receipt after a non-owned Throughline Hook replacement', async () => {
+  const scope = await fixture();
+  const firstPlan = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+  await applyCodexHooksInstall(firstPlan, { fs: nodeFilesystem });
+  const hooksPath = join(scope.home, '.codex/hooks.json');
+  const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
+  hooks.hooks.Stop[0].hooks[0].command = '/opt/throughline-v2 stop';
+  const replacedHooks = `${JSON.stringify(hooks, null, 2)}\n`;
+  await writeFile(hooksPath, replacedHooks);
+
+  const refreshPlan = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+
+  assert.equal(refreshPlan.ok, true);
+  assert.equal(refreshPlan.status, 'planned');
+  assert.deepEqual(refreshPlan.files.map(({ action }) => action), ['skip', 'skip', 'update']);
+  const renamedTo = [];
+  const trackingFilesystem = {
+    ...nodeFilesystem,
+    async rename(from, to) {
+      renamedTo.push(to);
+      return nodeFilesystem.rename(from, to);
+    },
+  };
+  await applyCodexHooksInstall(refreshPlan, { fs: trackingFilesystem });
+  assert.deepEqual(renamedTo, [join(scope.home, RECEIPT)]);
+  assert.equal(await readFile(hooksPath, 'utf8'), replacedHooks);
+  const report = await verifyCodexHooks({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+  assert.equal(report.state, 'registered');
+  assert.equal(report.receipt, 'current');
+  assert.equal(report.nonOwnedHooks, 'preserved');
+});
+
 test('external config changes cannot disable Hooks under a receipt with no feature edit', async () => {
   const scope = await fixture();
   const trustedConfig = await installThenRecordCodexTrust(scope);
@@ -173,6 +220,31 @@ test('external config changes cannot disable Hooks under a receipt with no featu
     cliPath: scope.cliPath,
     fs: nodeFilesystem,
   });
+  assert.equal(repeatedPlan.ok, false);
+  assert.equal(repeatedPlan.issues[0].code, 'CODEX_HOOK_CONCURRENT_CHANGE');
+});
+
+test('receipt refresh still refuses a changed ContextRail-owned Hook', async () => {
+  const scope = await fixture();
+  const install = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+  await applyCodexHooksInstall(install, { fs: nodeFilesystem });
+  const hooksPath = join(scope.home, '.codex/hooks.json');
+  const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
+  contextRailHandlers(hooks, 'Stop')[0].timeout = 31;
+  await writeFile(hooksPath, `${JSON.stringify(hooks, null, 2)}\n`);
+
+  const repeatedPlan = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+
   assert.equal(repeatedPlan.ok, false);
   assert.equal(repeatedPlan.issues[0].code, 'CODEX_HOOK_CONCURRENT_CHANGE');
 });

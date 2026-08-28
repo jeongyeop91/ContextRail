@@ -232,6 +232,31 @@ test('repeat apply verifies completed components and does not download or duplic
   assert.equal(owned.length, 1);
 });
 
+test('repeat setup refreshes only the ContextRail receipt after a non-owned Hook changes', async () => {
+  const scope = await fixture();
+  const deps = dependencies(scope);
+  const first = await planSetup(deps);
+  await applySetup({ planned: first, approvedPlanId: first.plan.id, dependencies: deps });
+  const hooksPath = join(scope.home, '.codex/hooks.json');
+  const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
+  const throughline = hooks.hooks.Stop.find((group) => JSON.stringify(group).includes('managed-throughline-stop'));
+  throughline.hooks[0].command = 'managed-throughline-stop-v2';
+  const changedHooks = `${JSON.stringify(hooks, null, 2)}\n`;
+  await writeFile(hooksPath, changedHooks);
+
+  const resumed = await planSetup(deps);
+
+  assert.equal(resumed.plan.status, 'planned');
+  assert.deepEqual(
+    resumed.plan.steps.find(({ id }) => id === 'context_hooks').files.map(({ action }) => action),
+    ['skip', 'skip', 'update'],
+  );
+  const result = await applySetup({ planned: resumed, approvedPlanId: resumed.plan.id, dependencies: deps });
+  assert.equal(result.status, 'installed_live_verification_required');
+  assert.equal(scope.downloads(), 1);
+  assert.equal(await readFile(hooksPath, 'utf8'), changedHooks);
+});
+
 test('a failed download reports recoverable component state and leaves project and HOME unchanged', async () => {
   const scope = await fixture();
   const homeBefore = await readFile(join(scope.home, '.codex/hooks.json'), 'utf8');

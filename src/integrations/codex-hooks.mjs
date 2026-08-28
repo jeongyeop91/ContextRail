@@ -273,12 +273,30 @@ export async function planCodexHooksInstall({ home, nodePath, cliPath, fs = node
   const counts = entries.map((entry) => entryCounts(parsed, entry));
   if (receipt) {
     const live = hashes(before);
-    const current = receipt.hashes?.hooksAfter === live.hooks && receiptConfigCurrent(before.config, receipt);
-    if (current && counts.every((count) => count.exact === 1 && count.owned === 1)) {
+    const ownedCurrent = counts.every((count) => count.exact === 1 && count.owned === 1)
+      && receiptConfigCurrent(before.config, receipt);
+    if (ownedCurrent && receipt.hashes?.hooksAfter === live.hooks) {
       return {
         ...finish([]), status: 'already_installed', home: root, entries, before, after: before,
         hashes: { hooksBefore: live.hooks, hooksAfter: live.hooks, configBefore: live.config, configAfter: live.config },
         files: publicFiles(before, before), receipt,
+      };
+    }
+    if (ownedCurrent) {
+      const refreshedReceipt = {
+        ...receipt,
+        nodePath,
+        cliPath,
+        entries,
+        hashes: { ...receipt.hashes, hooksAfter: live.hooks, configAfter: live.config },
+        nonOwnedHooksSha256: nonOwnedDigest(parsed, entries),
+      };
+      const after = { hooks: before.hooks, config: before.config, receipt: '[planned]' };
+      return {
+        ...finish([], { entries: entries.length, receiptRefreshed: true }),
+        status: 'planned', home: root, entries, before, after, receipt: refreshedReceipt,
+        hashes: refreshedReceipt.hashes,
+        files: publicFiles(before, after),
       };
     }
     issues.push(issue('CODEX_HOOK_CONCURRENT_CHANGE', '.codex', 'Live Codex configuration does not match the ContextRail receipt'));
@@ -344,12 +362,14 @@ export async function applyCodexHooksInstall(plan, { fs = nodeFilesystem } = {})
   const receiptContent = json({ ...plan.receipt, installedAt: new Date().toISOString() });
   const temporaries = [];
   try {
-    temporaries.push(await writeTemporary(hooksPath, plan.after.hooks, fs, suffix));
+    if (plan.after.hooks !== plan.before.hooks) {
+      temporaries.push(await writeTemporary(hooksPath, plan.after.hooks, fs, suffix));
+    }
     if (plan.after.config !== plan.before.config && plan.after.config !== null) {
       temporaries.push(await writeTemporary(configPath, plan.after.config, fs, suffix));
     }
     temporaries.push(await writeTemporary(receiptPath, receiptContent, fs, suffix));
-    await fs.rename(`${hooksPath}${suffix}`, hooksPath);
+    if (plan.after.hooks !== plan.before.hooks) await fs.rename(`${hooksPath}${suffix}`, hooksPath);
     if (plan.after.config !== plan.before.config && plan.after.config !== null) await fs.rename(`${configPath}${suffix}`, configPath);
     await fs.rename(`${receiptPath}${suffix}`, receiptPath);
     return { status: 'installed', files: plan.files };
