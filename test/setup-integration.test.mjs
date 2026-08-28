@@ -257,6 +257,74 @@ test('repeat setup refreshes only the ContextRail receipt after a non-owned Hook
   assert.equal(await readFile(hooksPath, 'utf8'), changedHooks);
 });
 
+test('repeat setup retries a transient Windows EPERM while replacing its progress receipt', async () => {
+  const scope = await fixture();
+  const firstDependencies = dependencies(scope);
+  const first = await planSetup(firstDependencies);
+  await applySetup({ planned: first, approvedPlanId: first.plan.id, dependencies: firstDependencies });
+  const setupReceiptPath = join(scope.target, '.context-rail/runtime/setup-receipt.json');
+  let transientFailures = 0;
+  const windowsFilesystem = {
+    ...nodeFilesystem,
+    async rename(from, to) {
+      if (to === setupReceiptPath && transientFailures === 0) {
+        transientFailures += 1;
+        const error = new Error(`EPERM: operation not permitted, rename '${from}' -> '${to}'`);
+        error.code = 'EPERM';
+        throw error;
+      }
+      return nodeFilesystem.rename(from, to);
+    },
+  };
+  const resumedDependencies = { ...dependencies(scope), fs: windowsFilesystem };
+  const resumed = await planSetup(resumedDependencies);
+
+  const result = await applySetup({
+    planned: resumed,
+    approvedPlanId: resumed.plan.id,
+    dependencies: resumedDependencies,
+  });
+
+  assert.equal(result.status, 'installed_live_verification_required');
+  assert.equal(transientFailures, 1);
+  assert.equal(scope.downloads(), 1);
+  const receipt = JSON.parse(await readFile(setupReceiptPath, 'utf8'));
+  assert.equal(receipt.steps.every(({ status }) => status === 'completed'), true);
+});
+
+test('progress receipt failure is attributed to the current setup step without masking structured state', async () => {
+  const scope = await fixture();
+  const firstDependencies = dependencies(scope);
+  const first = await planSetup(firstDependencies);
+  await applySetup({ planned: first, approvedPlanId: first.plan.id, dependencies: firstDependencies });
+  const setupReceiptPath = join(scope.target, '.context-rail/runtime/setup-receipt.json');
+  const failingFilesystem = {
+    ...nodeFilesystem,
+    async rename(from, to) {
+      if (to === setupReceiptPath) {
+        const error = new Error(`EIO: synthetic progress receipt failure, rename '${from}' -> '${to}'`);
+        error.code = 'EIO';
+        throw error;
+      }
+      return nodeFilesystem.rename(from, to);
+    },
+  };
+  const resumedDependencies = { ...dependencies(scope), fs: failingFilesystem };
+  const resumed = await planSetup(resumedDependencies);
+
+  await assert.rejects(
+    applySetup({ planned: resumed, approvedPlanId: resumed.plan.id, dependencies: resumedDependencies }),
+    (error) => {
+      assert.equal(error.code, 'EIO');
+      assert.equal(error.setup.steps[0].status, 'failed');
+      assert.equal(error.setup.steps.slice(1).every(({ status }) => status === 'pending'), true);
+      return true;
+    },
+  );
+  const runtimeFiles = await nodeFilesystem.list(join(scope.target, '.context-rail/runtime'));
+  assert.equal(runtimeFiles.some((name) => name.includes('.tmp-')), false);
+});
+
 test('a failed download reports recoverable component state and leaves project and HOME unchanged', async () => {
   const scope = await fixture();
   const homeBefore = await readFile(join(scope.home, '.codex/hooks.json'), 'utf8');

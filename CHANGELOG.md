@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.8 - 2026-08-28
+
+### Fixed
+
+- Retry transient Windows `EPERM`, `EBUSY`, and `EACCES` failures while atomically replacing the resumable setup progress receipt, without deleting the current receipt.
+- Attribute a progress-receipt write failure to the setup step that was actually running and preserve the original structured failure if recording that failure also fails.
+
 ## 0.3.0-rc.7 - 2026-08-28
 
 ### Fixed

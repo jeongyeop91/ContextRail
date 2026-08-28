@@ -15,4 +15,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [x] Publish `0.3.0-rc.5` with the post-approval Hook receipt ownership fix.
 - [x] Publish `0.3.0-rc.6` with the managed Throughline upgrade ownership fix.
 - [x] Publish `0.3.0-rc.7` with the resumable ContextRail Hook receipt refresh fix.
+- [ ] Publish `0.3.0-rc.8` with resilient Windows setup progress receipt replacement.
 - [ ] Publish the two-command README and Windows live pilot checklist.

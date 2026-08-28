@@ -26,7 +26,7 @@ function execNpm(args, options) {
 
 test('release version is consistent across package and generated metadata', async () => {
   const packageMetadata = await json(join(ROOT, 'package.json'));
-  assert.equal(packageMetadata.version, '0.3.0-rc.7');
+  assert.equal(packageMetadata.version, '0.3.0-rc.8');
   assert.equal((await json(join(ROOT, '.context-rail/version.json'))).templateVersion, packageMetadata.version);
   assert.equal((await json(join(ROOT, 'templates/project/.context-rail/version.json'))).templateVersion, packageMetadata.version);
 
@@ -58,7 +58,7 @@ test('packed CLI installs into an isolated prefix and runs version and help', as
     ? join(prefix, 'node_modules/contextrail/bin/contextrail.mjs')
     : join(prefix, 'lib/node_modules/contextrail/bin/contextrail.mjs');
   const version = await execFile(process.execPath, [cliPath, '--version'], { env });
-  assert.equal(version.stdout, '0.3.0-rc.7\n');
+  assert.equal(version.stdout, '0.3.0-rc.8\n');
   const help = await execFile(process.execPath, [cliPath, '--help'], { env });
   assert.match(help.stdout, /^Usage:/);
   const target = join(temporary, 'Project With Spaces 한글');

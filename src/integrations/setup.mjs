@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { nodeFilesystem } from '../adapters/filesystem.mjs';
+import { nodeFilesystem, renameWithRetry } from '../adapters/filesystem.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
 import { validateDocuments } from '../core/documents.mjs';
@@ -178,10 +178,15 @@ export async function planSetup({
 async function writeReceipt({ target, planId, profile, steps, fs }) {
   if (!(await fs.exists(resolve(target, '.context-rail/config.json')))) return;
   const path = resolve(target, RECEIPT_PATH);
-  const temporary = `${path}.tmp-${process.pid}`;
+  const temporary = `${path}.tmp-${process.pid}-${Date.now()}`;
   await fs.mkdir(resolve(path, '..'), { recursive: true });
-  await fs.writeText(temporary, `${JSON.stringify({ schema: 1, planId, profile, updatedAt: new Date().toISOString(), steps }, null, 2)}\n`);
-  await fs.rename(temporary, path);
+  try {
+    await fs.writeText(temporary, `${JSON.stringify({ schema: 1, planId, profile, updatedAt: new Date().toISOString(), steps }, null, 2)}\n`);
+    await renameWithRetry(fs, temporary, path);
+  } catch (error) {
+    await fs.remove(temporary, { force: true });
+    throw error;
+  }
 }
 
 async function managedAlreadySelected(managedRoot, releaseId, fs) {
@@ -199,8 +204,15 @@ export async function applySetup({ planned, approvedPlanId, dependencies }) {
   const { fs = nodeFilesystem } = dependencies;
   const steps = planned.plan.steps.map(({ id }) => ({ id, status: 'pending' }));
   const complete = async (id) => {
-    steps.find((entry) => entry.id === id).status = 'completed';
-    await writeReceipt({ target: planned.plan.target, planId: planned.plan.id, profile: planned.plan.profile, steps, fs });
+    const entry = steps.find((candidate) => candidate.id === id);
+    entry.status = 'completed';
+    try {
+      await writeReceipt({ target: planned.plan.target, planId: planned.plan.id, profile: planned.plan.profile, steps, fs });
+    } catch (error) {
+      entry.status = 'failed';
+      error.setupStep = id;
+      throw error;
+    }
   };
   let temporary = null;
   try {
@@ -247,9 +259,15 @@ export async function applySetup({ planned, approvedPlanId, dependencies }) {
     await complete('verify');
     return { status: report.status, planId: planned.plan.id, steps, report };
   } catch (error) {
-    const failed = steps.find((entry) => entry.status === 'pending');
+    const failed = error.setupStep
+      ? steps.find((entry) => entry.id === error.setupStep)
+      : steps.find((entry) => entry.status === 'pending');
     if (failed) failed.status = 'failed';
-    await writeReceipt({ target: planned.plan.target, planId: planned.plan.id, profile: planned.plan.profile, steps, fs });
+    try {
+      await writeReceipt({ target: planned.plan.target, planId: planned.plan.id, profile: planned.plan.profile, steps, fs });
+    } catch {
+      // Preserve the operation error and its in-memory structured step state.
+    }
     error.setup = { status: 'failed', planId: planned.plan.id, steps };
     throw error;
   } finally {
