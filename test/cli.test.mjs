@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, mkdtemp, readFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -51,7 +51,7 @@ test('unknown commands return CLI usage exit code', async () => {
 test('version and help are successful read-only top-level options', async () => {
   const version = capture();
   assert.equal(await run(['--version'], version.io), 0);
-  assert.equal(version.output().stdout, '0.3.0-rc.2\n');
+  assert.equal(version.output().stdout, '0.3.0-rc.3\n');
   assert.equal(version.output().stderr, '');
 
   const help = capture();
@@ -139,6 +139,7 @@ test('Throughline install dry-run plans a managed release without creating it', 
 });
 
 test('Throughline verify reports structured readiness through a read-only adapter', async () => {
+  const managedRoot = join(await mkdtemp(join(tmpdir(), 'contextrail-cli-empty-managed-')), 'managed');
   const stream = capture();
   const processAdapter = {
     async run(_binary, args) {
@@ -150,7 +151,56 @@ test('Throughline verify reports structured readiness through a read-only adapte
       };
     },
   };
-  const code = await run(['throughline', 'verify', '--json'], stream.io, { processAdapter });
+  const code = await run(['throughline', 'verify', '--json'], stream.io, { managedRoot, processAdapter });
   assert.equal(code, 0);
   assert.equal(JSON.parse(stream.output().stdout).state, 'hooks_ready');
+});
+
+test('Throughline verify and doctor use the selected managed JavaScript binary', async () => {
+  const managedRoot = join(await mkdtemp(join(tmpdir(), 'contextrail-cli-managed-')), 'managed');
+  const releaseId = '0.10.3-codex.1-test';
+  const packageRoot = join(managedRoot, 'releases', releaseId, 'node_modules', 'throughline');
+  const binPath = join(packageRoot, 'bin', 'cli.mjs');
+  const nodePath = join(managedRoot, 'runtime', 'node.exe');
+  await mkdir(join(packageRoot, 'bin'), { recursive: true });
+  await mkdir(join(managedRoot, 'runtime'), { recursive: true });
+  await writeFile(join(managedRoot, 'current.json'), `${JSON.stringify({ releaseId })}\n`);
+  await writeFile(join(packageRoot, 'package.json'), `${JSON.stringify({ name: 'throughline', bin: { throughline: 'bin/cli.mjs' } })}\n`);
+  await writeFile(binPath, 'synthetic Throughline CLI');
+  await writeFile(nodePath, 'synthetic Node runtime');
+
+  const calls = [];
+  const processAdapter = {
+    async run(executable, args) {
+      calls.push([executable, ...args]);
+      if (executable !== nodePath) {
+        const error = new Error(`spawn ${executable} ENOENT`);
+        error.code = 'ENOENT';
+        throw error;
+      }
+      if (args[1] === '--version') return { code: 0, stdout: '0.10.3-codex.1\n', stderr: '' };
+      if (args[1] === 'factory-diagnostics') {
+        return {
+          code: 0,
+          stdout: JSON.stringify({ schema: 'throughline.native_factory_diagnostics.v1', overall: { status: 'ready' }, hooks: { status: 'ready' }, readiness: {} }),
+          stderr: '',
+        };
+      }
+      return { code: 0, stdout: 'Codex hooks: trusted\n', stderr: '' };
+    },
+  };
+  const stream = capture();
+  const code = await run(['throughline', 'verify', '--doctor'], stream.io, {
+    managedRoot,
+    nodePath,
+    processAdapter,
+  });
+
+  assert.equal(code, 0, stream.output().stderr);
+  assert.match(stream.output().stdout, /Codex hooks: trusted/);
+  assert.deepEqual(calls, [
+    [nodePath, binPath, '--version'],
+    [nodePath, binPath, 'factory-diagnostics', '--json'],
+    [nodePath, binPath, 'doctor', '--codex'],
+  ]);
 });

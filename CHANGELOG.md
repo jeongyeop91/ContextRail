@@ -2,9 +2,12 @@
 
 All notable changes to ContextRail are documented here.
 
-## Unreleased
+## 0.3.0-rc.3 - 2026-08-28
 
-- No changes yet.
+### Fixed
+
+- Resolve the selected ContextRail-managed Throughline executable for standalone verification and Codex doctor diagnostics instead of requiring a global `throughline` command on `PATH`.
+- Document Hook trust approval and in-place candidate updates for the native Windows existing-project pilot.
 
 ## 0.2.0 - 2026-08-27
 

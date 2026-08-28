@@ -44,11 +44,13 @@ Active item: `CR-008`
 - Main and tag verification for `v0.3.0-rc.1` passed on Ubuntu, macOS, and Windows before the separate release job exposed the cross-platform gzip-byte mismatch.
 - ADR-0006 separates the embedded setup manifest from the detached release envelope so the ContextRail tarball never contains its own digest.
 - Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
+- The native Windows existing-project pilot installed every component but exposed two host-level gaps: Codex required manual trust for the three Throughline and two ContextRail Hook handlers, and `contextrail throughline verify --doctor` incorrectly searched `PATH` instead of the selected managed release.
+- The rc.3 candidate resolves standalone verification and doctor commands through the selected managed Node/JavaScript paths and documents the in-place existing-project continuation flow.
 
 ## Next steps
 
-1. Execute the revised `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md` test-first.
-2. Publish `0.3.0-rc.2` under npm `next` only after canonical archive, packed-artifact, and GitHub Release verification.
+1. Publish and verify `0.3.0-rc.3` under npm `next` with the managed doctor-path fix.
+2. Resume the existing `C:\Projects\RathonSales` Windows live pilot without recreating its adoption mapping or managed Throughline installation.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers

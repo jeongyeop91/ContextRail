@@ -1,4 +1,25 @@
-import { nodeBinCommand } from '../adapters/platform.mjs';
+import { resolve } from 'node:path';
+
+import { nodeBinCommand, resolvePackageBin } from '../adapters/platform.mjs';
+
+export async function resolveManagedThroughline({ managedRoot, nodePath, fs }) {
+  const current = JSON.parse(await fs.readText(resolve(managedRoot, 'current.json')));
+  if (typeof current.releaseId !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(current.releaseId)) {
+    throw new Error('Managed Throughline release identity is invalid');
+  }
+  const releaseRoot = resolve(managedRoot, 'releases', current.releaseId);
+  const binPath = await resolvePackageBin({ installRoot: releaseRoot, packageName: 'throughline', fs });
+  return { nodePath: resolve(nodePath), binPath };
+}
+
+export function runThroughlineCommand({ binary = 'throughline', nodePath = null, binPath = null, processAdapter, env, args, timeoutMs }) {
+  if (nodePath || binPath) {
+    if (!nodePath || !binPath) throw new Error('Managed Throughline invocation requires nodePath and binPath');
+    const command = nodeBinCommand({ nodePath, binPath, args });
+    return processAdapter.run(command.executable, command.args, { env, timeoutMs });
+  }
+  return processAdapter.run(binary, args, { env, timeoutMs });
+}
 
 export function evaluateThroughlineReadiness({ binaryPresent, prepared = false, version = null, diagnostics = null, captureEvidence = null }) {
   const reasons = [];
@@ -24,14 +45,15 @@ export function evaluateThroughlineReadiness({ binaryPresent, prepared = false, 
 }
 
 export async function verifyThroughline({ binary = 'throughline', nodePath = null, binPath = null, processAdapter, env, prepared = false, captureEvidence = null }) {
-  const run = (args, options) => {
-    if (nodePath || binPath) {
-      if (!nodePath || !binPath) throw new Error('Managed Throughline verification requires nodePath and binPath');
-      const command = nodeBinCommand({ nodePath, binPath, args });
-      return processAdapter.run(command.executable, command.args, { env, ...options });
-    }
-    return processAdapter.run(binary, args, { env, ...options });
-  };
+  const run = (args, options) => runThroughlineCommand({
+    binary,
+    nodePath,
+    binPath,
+    processAdapter,
+    env,
+    args,
+    timeoutMs: options.timeoutMs,
+  });
   let versionResult;
   try {
     versionResult = await run(['--version'], { timeoutMs: 10000 });

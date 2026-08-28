@@ -30,7 +30,7 @@ import {
 import { loadThroughlineManifest } from '../integrations/throughline-manifest.mjs';
 import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from '../integrations/throughline-install.mjs';
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
-import { verifyThroughline } from '../integrations/throughline-verify.mjs';
+import { resolveManagedThroughline, runThroughlineCommand, verifyThroughline } from '../integrations/throughline-verify.mjs';
 import { loadSetupManifest } from '../integrations/setup-manifest.mjs';
 import { applySetup, planSetup } from '../integrations/setup.mjs';
 import { VERSION } from '../version.mjs';
@@ -639,13 +639,41 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       return 2;
     }
     const adapter = dependencies.processAdapter ?? nodeProcess;
-    const binary = optionValue(args, '--binary') ?? 'throughline';
-    const result = await verifyThroughline({ binary, processAdapter: adapter });
+    const environment = dependencies.env ?? process.env;
+    const explicitBinary = optionValue(args, '--binary');
+    let invocation = { binary: explicitBinary ?? 'throughline' };
+    if (!explicitBinary) {
+      const home = resolve(dependencies.home ?? homedir());
+      const platform = dependencies.platform ?? process.platform;
+      const managedRoot = dependencies.managedRoot
+        ?? resolve(managedDataRoot({ platform, home, env: environment }), 'throughline');
+      try {
+        invocation = await resolveManagedThroughline({
+          managedRoot,
+          nodePath: dependencies.nodePath ?? process.execPath,
+          fs: nodeFilesystem,
+        });
+      } catch {
+        // Fall back to an explicitly installed Throughline on PATH.
+      }
+    }
+    const result = await verifyThroughline({ ...invocation, processAdapter: adapter, env: environment });
     writeStructured(result, json, io);
     if (args.includes('--doctor') && !json) {
-      const doctor = await adapter.run(binary, ['doctor', '--codex'], { timeoutMs: 30000 });
-      io.stdout.write(doctor.stdout);
-      if (doctor.stderr) io.stderr.write(doctor.stderr);
+      try {
+        const doctor = await runThroughlineCommand({
+          ...invocation,
+          processAdapter: adapter,
+          env: environment,
+          args: ['doctor', '--codex'],
+          timeoutMs: 30000,
+        });
+        io.stdout.write(doctor.stdout);
+        if (doctor.stderr) io.stderr.write(doctor.stderr);
+      } catch (error) {
+        io.stderr.write(`Throughline doctor unavailable: ${error.code ?? error.message}\n`);
+        return 3;
+      }
     }
     return ['hooks_ready', 'capture_verified'].includes(result.state) ? 0 : 3;
   }

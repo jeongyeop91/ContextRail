@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish the canonically normalized 0.3.0-rc.2 artifacts under next, configure Trusted Publishing, and retain the Windows live gate for latest"],
+      "nextSteps": ["Publish the managed-doctor-path fix as 0.3.0-rc.3 under next, resume the existing Windows project pilot, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

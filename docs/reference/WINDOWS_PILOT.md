@@ -2,7 +2,7 @@
 
 Windows live validation: pending
 
-Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.2` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
+Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.3` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
 
 ## Preconditions
 
@@ -20,7 +20,17 @@ contextrail --version
 contextrail setup --dry-run --json
 ```
 
-Confirm the version is `0.3.0-rc.2`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+Confirm the version is `0.3.0-rc.3`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+
+When continuing a pilot in an already configured repository, update the global CLI in place and rerun setup from that same repository. Do not remove the existing ContextRail metadata, managed Throughline release, or adoption mapping:
+
+```powershell
+npm install --global contextrail@next
+contextrail --version
+Set-Location C:\Projects\RathonSales
+contextrail setup --dry-run --json
+contextrail setup --apply --json
+```
 
 For a mature existing repository, follow the README Codex prompt to create a temporary adoption mapping, repeat the dry run with `--project existing --adoption-config <temporary-file>`, and stop if any semantic mapping is uncertain.
 
@@ -39,14 +49,15 @@ Confirm that existing user Hooks remain present, ContextRail handlers contain `c
 
 ## Exercise live Codex behavior
 
-1. Close and restart Codex Desktop so it reloads Hook configuration.
-2. Trust and open the selected repository.
-3. Send a bounded prompt that refers to a project file and confirm ContextRail route context is available.
-4. Complete a small turn that produces capturable content.
-5. Run the Throughline read-only diagnostics and confirm capture contains non-empty body and detail evidence; Hook declarations alone do not pass capture.
-6. Start a fresh Codex task and exercise Throughline restore.
-7. Prepare a fresh-task handoff and exercise Throughline handoff.
-8. Confirm injected ContextRail guidance is excluded from captured memory according to the compatibility contract.
+1. In Codex Desktop, open `Settings -> Hooks` and review the entries sourced from the user `hooks.json`.
+2. Trust the three Throughline handlers (`UserPromptSubmit`, `PostToolUse`, and `Stop`) and the two ContextRail handlers (`UserPromptSubmit` and `Stop`) after verifying their absolute commands.
+3. Close and restart Codex Desktop so it reloads Hook configuration, then open the selected repository.
+4. Send a bounded prompt that refers to a project file and confirm ContextRail route context is available.
+5. Complete a small turn that produces capturable content.
+6. Run `contextrail throughline verify --doctor` and confirm the Throughline Hook trust summary is `3/3 trusted` and capture contains non-empty body and detail evidence; Hook declarations alone do not pass capture.
+7. Start a fresh Codex task and exercise Throughline restore.
+8. Prepare a fresh-task handoff and exercise Throughline handoff.
+9. Confirm injected ContextRail guidance is excluded from captured memory according to the compatibility contract.
 
 Record capture, restore, and handoff as separate pass or fail results. Do not record conversation text.
 
