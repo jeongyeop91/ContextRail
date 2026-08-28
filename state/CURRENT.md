@@ -58,13 +58,13 @@ Active item: `CR-008`
 - The rc.5 Windows retry reached managed Throughline replacement but ContextRail misclassified the previous Throughline-owned absolute Hook commands as unrelated changes. The rc.6 fix compares preservation after removing only canonical Throughline Codex handlers, while a mutation test proves ContextRail and user handlers still trigger rollback if changed.
 - Release commit and annotated tag: `364d4ce` / `v0.3.0-rc.6`; GitHub prerelease automation, Ubuntu/macOS/Windows tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `734477abe42f15dcc8d43e41faa82b4f83dabaa6124c8f5cf5ae2e36c0fa23c9`.
 - The rc.6 Windows apply completed managed Throughline and project verification, then failed ContextRail Hook installation because the receipt treated Throughline's legitimate Hook replacement as a full-file concurrent change. The rc.7 fix refreshes only the ContextRail receipt when both owned handlers and the feature contract remain current; changed owned handlers still conflict. Focused red/green tests and a resumed-setup integration test cover the exact partial state.
+- Release commit and annotated tag: `40b4693` / `v0.3.0-rc.7`; GitHub prerelease automation, Ubuntu/macOS/Windows tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `16365f312fc50630c53287d00693c3fe0edc75d3f9a1fffab21b9564153fc474`.
 
 ## Next steps
 
-1. Publish rc.7 through the verified GitHub prerelease and npm `next` path.
-2. Resume the existing `C:\Projects\RathonSales` installation in place with rc.7; managed Throughline must be reused and only the stale ContextRail receipt updated.
-3. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.7 setup apply completes.
-4. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
+1. Resume the existing `C:\Projects\RathonSales` installation in place with rc.7; managed Throughline must be reused and only the stale ContextRail receipt updated.
+2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.7 setup apply completes.
+3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers
 
