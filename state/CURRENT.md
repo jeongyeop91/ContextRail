@@ -46,11 +46,13 @@ Active item: `CR-008`
 - Windows is the first external pilot host. Automated Windows CI belongs to implementation evidence; live Codex capture, restore, and handoff remain user-run acceptance evidence.
 - The native Windows existing-project pilot installed every component but exposed two host-level gaps: Codex required manual trust for the three Throughline and two ContextRail Hook handlers, and `contextrail throughline verify --doctor` incorrectly searched `PATH` instead of the selected managed release.
 - The rc.3 candidate resolves standalone verification and doctor commands through the selected managed Node/JavaScript paths and documents the in-place existing-project continuation flow.
+- Release commit and annotated tag: `a5254f6` / `v0.3.0-rc.3`; npm `next` and the GitHub versioned asset are byte-identical at SHA-256 `64478972cd2bc2a6db9c7a0fa67a4f7c0a451d8c78247b8a1ddadff7cbb37d50`.
+- The first rc.3 release-triggered OIDC publish reached `npm publish` but npm rejected it before a Trusted Publisher existed. The exact verified tarball was then published manually with account 2FA, and npm Trusted Publisher ID `85ffcaa4-1e45-4fe7-9c4b-79a45f22cc18` now binds `jeongyeop91/ContextRail` workflow `publish.yml`; the automated OIDC path remains unverified until a future release.
 
 ## Next steps
 
-1. Publish and verify `0.3.0-rc.3` under npm `next` with the managed doctor-path fix.
-2. Resume the existing `C:\Projects\RathonSales` Windows live pilot without recreating its adoption mapping or managed Throughline installation.
+1. Resume the existing `C:\Projects\RathonSales` Windows live pilot without recreating its adoption mapping or managed Throughline installation.
+2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after Hook trust approval.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers

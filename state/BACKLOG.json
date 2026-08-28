@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish the managed-doctor-path fix as 0.3.0-rc.3 under next, resume the existing Windows project pilot, and retain the Windows live gate for latest"],
+      "nextSteps": ["Resume the existing Windows project pilot on 0.3.0-rc.3, verify live context plus capture/restore/handoff, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]
