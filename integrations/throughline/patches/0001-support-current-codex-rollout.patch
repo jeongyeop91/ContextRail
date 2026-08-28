@@ -1,31 +1,39 @@
-From d5ff84cd698511e0375d17721f41b4b86bbe37c6 Mon Sep 17 00:00:00 2001
+From aea08a5537de358ff273f3d7eb98ac133cc990dd Mon Sep 17 00:00:00 2001
 From: Jeongyeop <jylee91@gmail.com>
-Date: Fri, 28 Aug 2026 16:21:45 +0900
-Subject: [PATCH] fix(codex): support current rollout and Windows hook trust
+Date: Fri, 28 Aug 2026 18:05:54 +0900
+Subject: [PATCH] fix(codex): resolve Desktop app-server executable
 
 ---
- CHANGELOG.md                   | 11 ++++
- CLAUDE.md                      | 10 +++-
- README.ja.md                   | 12 ++++-
- README.md                      | 10 ++++
- docs/05_codex_first_roadmap.md |  4 ++
- package.json                   |  2 +-
- src/cli/doctor.mjs             |  4 +-
- src/cli/doctor.test.mjs        | 24 +++++++++
- src/codex-capture.test.mjs     | 99 ++++++++++++++++++++++++++++++++++
- src/codex-rollout-memory.mjs   | 58 +++++++++++++++-----
- 10 files changed, 214 insertions(+), 20 deletions(-)
+ CHANGELOG.md                         | 14 ++++
+ CLAUDE.md                            | 10 ++-
+ README.ja.md                         | 12 +++-
+ README.md                            | 10 +++
+ bin/throughline.mjs                  |  9 +++
+ docs/05_codex_first_roadmap.md       |  4 ++
+ package.json                         |  2 +-
+ src/cli/codex-handoff-start.mjs      |  7 +-
+ src/cli/codex-handoff-start.test.mjs | 45 +++++++++++++
+ src/cli/doctor.mjs                   |  4 +-
+ src/cli/doctor.test.mjs              | 24 +++++++
+ src/codex-capture.test.mjs           | 99 ++++++++++++++++++++++++++++
+ src/codex-cli-resolver.mjs           | 83 +++++++++++++++++++++++
+ src/codex-rollout-memory.mjs         | 58 ++++++++++++----
+ 14 files changed, 359 insertions(+), 22 deletions(-)
+ create mode 100644 src/codex-cli-resolver.mjs
 
 diff --git a/CHANGELOG.md b/CHANGELOG.md
-index 008e37a..b7fca44 100644
+index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..e96d0f652d1411ad227b5cabe09e90dca0e063b0 100644
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
-@@ -10,6 +10,17 @@ shipped to npm but were not individually tagged on GitHub.
+@@ -10,6 +10,20 @@ shipped to npm but were not individually tagged on GitHub.
 
  ## [Unreleased]
 
 +### Fixed
 +
++- Codex app-server commands now discover the executable bundled or cached by
++  Codex Desktop on Windows and macOS, with `CODEX_CLI_PATH` taking precedence,
++  instead of requiring a separately installed global `codex` command.
 +- Codex hook trust diagnosis now accepts TOML literal-string state keys emitted
 +  for Windows paths, avoiding a false `0/3 trusted` result after approval.
 +- Codex rollout capture now accepts both the legacy `event_msg` conversation /
@@ -39,7 +47,7 @@ index 008e37a..b7fca44 100644
 
  ### Added
 diff --git a/CLAUDE.md b/CLAUDE.md
-index fb8e9cc..e832ed5 100644
+index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366707b55a7 100644
 --- a/CLAUDE.md
 +++ b/CLAUDE.md
 @@ -20,6 +20,12 @@ GitHub Release、このMacのregistry由来global install（`throughline --versi
@@ -74,7 +82,7 @@ index fb8e9cc..e832ed5 100644
  | [src/codex-auto-refresh.test.mjs](src/codex-auto-refresh.test.mjs) | Dormant helper の default disabled、75% 閾値、estimate usage の非実行、明示 enabled 時に threshold reached で rollback/inject を呼ぶこと、DB memory が無い場合の skip |
  | [src/codex-handoff.test.mjs](src/codex-handoff.test.mjs) | `toThroughlineHandoffBlock` の `throughline_handoff` v1 JSON shape と Codex active-work context renderer |
 diff --git a/README.ja.md b/README.ja.md
-index 4d1e7d8..c1d7e74 100644
+index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2eadba5c99b7 100644
 --- a/README.ja.md
 +++ b/README.ja.md
 @@ -94,6 +94,13 @@ current-thread rollback
@@ -107,7 +115,7 @@ index 4d1e7d8..c1d7e74 100644
 
  ランタイム依存 **ゼロ**。npm パッケージは純 `.mjs` ファイルのみで構成されています。
 diff --git a/README.md b/README.md
-index 37ce80e..34c51d0 100644
+index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fce418cf14 100644
 --- a/README.md
 +++ b/README.md
 @@ -69,6 +69,13 @@ DB handoff memory as a developer item, and opens that thread in the selected
@@ -134,8 +142,29 @@ index 37ce80e..34c51d0 100644
  - Works on **Windows, macOS, Linux**
 
  Throughline has **zero runtime dependencies**. The published tarball is just
+diff --git a/bin/throughline.mjs b/bin/throughline.mjs
+index 93c471e3ae676e22ee173ac25b97d016d8d5f270..aef13b957be4929726623bb59acb41748c3f42eb 100755
+--- a/bin/throughline.mjs
++++ b/bin/throughline.mjs
+@@ -45,7 +45,16 @@
+  *        inject-context (UserPromptSubmit) も廃止。L1/L2 注入は SessionStart で 1 回のみ。
+  */
+
++import { resolveCodexAppServerCommand } from '../src/codex-cli-resolver.mjs';
++
+ const [, , cmd, ...rest] = process.argv;
++const resolvedCodex = resolveCodexAppServerCommand();
++if (!process.env.THROUGHLINE_CODEX_APP_SERVER_BIN && resolvedCodex.source !== 'path') {
++  process.env.THROUGHLINE_CODEX_APP_SERVER_BIN = resolvedCodex.command;
++}
++if (!process.env.THROUGHLINE_CODEX_CLI_BIN && resolvedCodex.source !== 'path') {
++  process.env.THROUGHLINE_CODEX_CLI_BIN = resolvedCodex.command;
++}
+
+ try {
+ switch (cmd) {
 diff --git a/docs/05_codex_first_roadmap.md b/docs/05_codex_first_roadmap.md
-index 1132b8b..9c448e2 100644
+index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e852f762f 100644
 --- a/docs/05_codex_first_roadmap.md
 +++ b/docs/05_codex_first_roadmap.md
 @@ -188,6 +188,10 @@ Phase 1 implementation result (2026-05-06):
@@ -150,19 +179,109 @@ index 1132b8b..9c448e2 100644
 
  ## Phase 2: Codex CLI L2 -> L1 Backend
 diff --git a/package.json b/package.json
-index 3c66b8a..df0bebb 100644
+index 3c66b8a7ff0d6898e98902d5342427a6d3820864..e58249690a52fcc1431c06934f090bc4fe996bb9 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,6 +1,6 @@
  {
    "name": "throughline",
 -    "version": "0.10.3",
-+    "version": "0.10.3-codex.2",
++    "version": "0.10.3-codex.3",
      "type": "module",
      "description": "Persistent memory hooks for Claude Code, Codex, Grok, and Cursor (/clear-safe context compression)",
      "keywords": [
+diff --git a/src/cli/codex-handoff-start.mjs b/src/cli/codex-handoff-start.mjs
+index 06f4d48bf0cef70324881feb5a7def07a057bd3e..0bcc3e2d8da20edd77015e95b352c06eaf73154a 100644
+--- a/src/cli/codex-handoff-start.mjs
++++ b/src/cli/codex-handoff-start.mjs
+@@ -9,6 +9,7 @@ import { sameProjectPath } from '../project-path.mjs';
+ import { shQuote } from '../os/shell.mjs';
+ import { openUrlWithOsHandler } from '../os/open-url.mjs';
+ import { runTerminalDoScript } from '../os/macos-terminal.mjs';
++import { resolveCodexAppServerCommand } from '../codex-cli-resolver.mjs';
+
+ async function readStdin() {
+   let raw = '';
+@@ -452,11 +453,12 @@ export async function run(args) {
+   }
+
+   if (parsed.execute && result.status === 'ready') {
++    const resolvedCodex = resolveCodexAppServerCommand();
+     const startResult = await runCodexNewThreadHandoff({
+       cwd: process.cwd(),
+       prompt: handoffPrompt,
+-      command: parsed.codexAppServerBin ?? 'codex',
+-      commandArgs: parsed.codexAppServerBin ? [] : ['app-server', '--listen', 'stdio://'],
++      command: parsed.codexAppServerBin ?? resolvedCodex.command,
++      commandArgs: parsed.codexAppServerBin ? [] : resolvedCodex.commandArgs,
+       timeoutMs: parsed.timeoutMs,
+       requestTimeoutMs: parsed.requestTimeoutMs,
+       waitForTurn: false,
+@@ -487,5 +489,6 @@ export const _internal = {
+   isCodexDesktopEnvironment,
+   parseArgs,
+   renderTextResult,
++  resolveCodexAppServerCommand,
+   resolveOpenHost,
+ };
+diff --git a/src/cli/codex-handoff-start.test.mjs b/src/cli/codex-handoff-start.test.mjs
+index ebc8f38dca44812094923275a9e6ef62d8431087..e658245515d2e9e28eb85e5e3744e66cd24df5b5 100644
+--- a/src/cli/codex-handoff-start.test.mjs
++++ b/src/cli/codex-handoff-start.test.mjs
+@@ -57,6 +57,51 @@ test('codex-handoff-start builds the Codex Desktop local thread deep link', () =
+   );
+ });
+
++test('codex-handoff-start resolves the Windows Desktop user-local Codex CLI without PATH', () => {
++  const localAppData = 'C:\\Users\\sample-user\\AppData\\Local';
++  const bundled = `${localAppData}\\OpenAI\\Codex\\bin\\release-hash\\codex.exe`;
++  const result = _internal.resolveCodexAppServerCommand({
++    platform: 'win32',
++    env: { LOCALAPPDATA: localAppData },
++    pathExists: (candidate) => candidate === bundled,
++    listDirectoryNames: (candidate) =>
++      candidate === `${localAppData}\\OpenAI\\Codex\\bin` ? ['release-hash'] : [],
++  });
++
++  assert.deepEqual(result, {
++    command: bundled,
++    commandArgs: ['app-server', '--listen', 'stdio://'],
++    source: 'windows_desktop_user_cache',
++  });
++});
++
++test('codex-handoff-start prefers an executable CODEX_CLI_PATH and falls back to PATH elsewhere', () => {
++  assert.deepEqual(
++    _internal.resolveCodexAppServerCommand({
++      platform: 'linux',
++      env: { CODEX_CLI_PATH: '/opt/codex/bin/codex' },
++      pathExists: (candidate) => candidate === '/opt/codex/bin/codex',
++    }),
++    {
++      command: '/opt/codex/bin/codex',
++      commandArgs: ['app-server', '--listen', 'stdio://'],
++      source: 'codex_cli_path',
++    },
++  );
++  assert.deepEqual(
++    _internal.resolveCodexAppServerCommand({
++      platform: 'linux',
++      env: { CODEX_CLI_PATH: '/missing/codex' },
++      pathExists: () => false,
++    }),
++    {
++      command: 'codex',
++      commandArgs: ['app-server', '--listen', 'stdio://'],
++      source: 'path',
++    },
++  );
++});
++
+ function makeTempHome() {
+   return mkdtempSync(join(tmpdir(), 'tl-codex-handoff-start-home-'));
+ }
 diff --git a/src/cli/doctor.mjs b/src/cli/doctor.mjs
-index 55a716a..f6c71d0 100644
+index 55a716a575a24ed489dd4ac11148685795b8b93d..f6c71d0cfd97f06c9f58bcebd908d790c7dca376 100644
 --- a/src/cli/doctor.mjs
 +++ b/src/cli/doctor.mjs
 @@ -409,10 +409,10 @@ function parseCodexTrustedHookState(configText) {
@@ -179,7 +298,7 @@ index 55a716a..f6c71d0 100644
        continue;
      }
 diff --git a/src/cli/doctor.test.mjs b/src/cli/doctor.test.mjs
-index a2b3330..2b2b78a 100644
+index a2b3330d812f35b204e4e9b2fea815624e518682..2b2b78aae971db4065cd37ccee96c938bf817607 100644
 --- a/src/cli/doctor.test.mjs
 +++ b/src/cli/doctor.test.mjs
 @@ -451,6 +451,30 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
@@ -214,7 +333,7 @@ index a2b3330..2b2b78a 100644
      rmSync(codexHome, { recursive: true, force: true });
    }
 diff --git a/src/codex-capture.test.mjs b/src/codex-capture.test.mjs
-index a145c89..266a2c2 100644
+index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331200c650e 100644
 --- a/src/codex-capture.test.mjs
 +++ b/src/codex-capture.test.mjs
 @@ -248,6 +248,105 @@ test('captureCodexRolloutToDb: rebuilds namespaced Codex session from active rol
@@ -323,8 +442,97 @@ index a145c89..266a2c2 100644
  test('captureCodexRolloutToDb: second capture removes stale rows from previous active tail', () => {
    const db = makeDb();
    const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
+diff --git a/src/codex-cli-resolver.mjs b/src/codex-cli-resolver.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f6d5e012c5822960d3ee54bde51430980a27438
+--- /dev/null
++++ b/src/codex-cli-resolver.mjs
+@@ -0,0 +1,83 @@
++import { existsSync, readdirSync } from 'node:fs';
++import { posix, win32 } from 'node:path';
++
++function defaultListDirectoryNames(path) {
++  try {
++    return readdirSync(path, { withFileTypes: true })
++      .filter((entry) => entry.isDirectory())
++      .map((entry) => entry.name)
++      .sort();
++  } catch {
++    return [];
++  }
++}
++
++function firstExisting(candidates, pathExists) {
++  return candidates.find((candidate) => {
++    try {
++      return pathExists(candidate);
++    } catch {
++      return false;
++    }
++  }) ?? null;
++}
++
++function findWindowsUserLocalCodex({ localAppData, pathExists, listDirectoryNames }) {
++  if (!localAppData) return null;
++  const roots = [
++    win32.join(localAppData, 'Programs', 'OpenAI', 'Codex', 'bin'),
++    win32.join(localAppData, 'OpenAI', 'Codex', 'bin'),
++    win32.join(
++      localAppData,
++      'Packages',
++      'OpenAI.Codex_2p2nqsd0c76g0',
++      'LocalCache',
++      'Local',
++      'OpenAI',
++      'Codex',
++      'bin',
++    ),
++  ];
++  const direct = firstExisting(roots.map((root) => win32.join(root, 'codex.exe')), pathExists);
++  if (direct) return direct;
++  for (const root of roots) {
++    const nested = firstExisting(
++      listDirectoryNames(root)
++        .slice()
++        .sort()
++        .reverse()
++        .map((name) => win32.join(root, name, 'codex.exe')),
++      pathExists,
++    );
++    if (nested) return nested;
++  }
++  return null;
++}
++
++export function resolveCodexAppServerCommand({
++  platform = process.platform,
++  env = process.env,
++  pathExists = existsSync,
++  listDirectoryNames = defaultListDirectoryNames,
++} = {}) {
++  const args = ['app-server', '--listen', 'stdio://'];
++  if (env.CODEX_CLI_PATH && firstExisting([env.CODEX_CLI_PATH], pathExists)) {
++    return { command: env.CODEX_CLI_PATH, commandArgs: args, source: 'codex_cli_path' };
++  }
++  if (platform === 'win32') {
++    const command = findWindowsUserLocalCodex({
++      localAppData: env.LOCALAPPDATA,
++      pathExists,
++      listDirectoryNames,
++    });
++    if (command) return { command, commandArgs: args, source: 'windows_desktop_user_cache' };
++  }
++  if (platform === 'darwin') {
++    const command = firstExisting([
++      posix.join('/Applications', 'Codex.app', 'Contents', 'Resources', 'codex'),
++      posix.join('/Applications', 'ChatGPT.app', 'Contents', 'Resources', 'codex'),
++    ], pathExists);
++    if (command) return { command, commandArgs: args, source: 'macos_desktop_bundle' };
++  }
++  return { command: 'codex', commandArgs: args, source: 'path' };
++}
 diff --git a/src/codex-rollout-memory.mjs b/src/codex-rollout-memory.mjs
-index 57c6f10..7b1d83e 100644
+index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05f1c63c3c 100644
 --- a/src/codex-rollout-memory.mjs
 +++ b/src/codex-rollout-memory.mjs
 @@ -106,19 +106,39 @@ export function parseCodexRolloutFile(
@@ -444,6 +652,5 @@ index 57c6f10..7b1d83e 100644
  }
 
  function normalizeMessageText(value) {
--- 
+--
 2.50.1 (Apple Git-155)
-

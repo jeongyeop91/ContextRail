@@ -21,9 +21,9 @@ jobs:
       - name: Run repository verification
         run: npm run verify
       - name: Build pinned Throughline artifact
-        run: node scripts/build-throughline.mjs --output .release-inputs/throughline-0.10.3-codex.2.tgz
+        run: node scripts/build-throughline.mjs --output .release-inputs/throughline-0.10.3-codex.3.tgz
       - name: Build detached release assets
-        run: node scripts/build-release.mjs --output dist --throughline-artifact .release-inputs/throughline-0.10.3-codex.2.tgz
+        run: node scripts/build-release.mjs --output dist --throughline-artifact .release-inputs/throughline-0.10.3-codex.3.tgz
       - name: Block stable release without Windows live evidence
         if: ${{ !contains(github.ref_name, '-') && vars.WINDOWS_LIVE_VALIDATED != 'true' }}
         run: node -e "throw new Error('WINDOWS_LIVE_VALIDATED must be true for a stable release')"

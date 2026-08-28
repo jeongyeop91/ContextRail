@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.9 - 2026-08-28
+
+### Fixed
+
+- Resolve the Codex CLI bundled or cached by Codex Desktop on Windows and macOS before falling back to `PATH`, so Throughline app-server handoff no longer requires a separately installed global `codex` command.
+- Prefer an executable `CODEX_CLI_PATH` and support both direct and release-hash user-local Windows Codex layouts without scanning the protected `WindowsApps` package.
+
 ## 0.3.0-rc.8 - 2026-08-28
 
 ### Fixed

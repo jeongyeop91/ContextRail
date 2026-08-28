@@ -2,11 +2,11 @@
   "schema": 1,
   "repository": "https://github.com/kitepon/Throughline.git",
   "baseCommit": "4bf84f548eeb7173a3b46be33b9b0c54723ab21f",
-  "compatibilityCommit": "d5ff84cd698511e0375d17721f41b4b86bbe37c6",
-  "packageVersion": "0.10.3-codex.2",
+  "compatibilityCommit": "aea08a5537de358ff273f3d7eb98ac133cc990dd",
+  "packageVersion": "0.10.3-codex.3",
   "patch": {
     "path": "integrations/throughline/patches/0001-support-current-codex-rollout.patch",
-    "sha256": "15b6a263ec6861c2d7b1b439471e131b10b8c8eba62fab2b6ec00d4e9d9fb8e4"
+    "sha256": "56dbaee1baa82d398f6a9dd6515eaa735abd5b2042bba4c7f54d6ef373d651fa"
   },
   "license": {
     "spdx": "MIT",

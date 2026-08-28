@@ -182,7 +182,7 @@ The initial integration pins:
 
 - repository: `https://github.com/kitepon/Throughline.git`;
 - base: `4bf84f548eeb7173a3b46be33b9b0c54723ab21f`;
-- compatibility commit: `d5ff84cd698511e0375d17721f41b4b86bbe37c6`;
+- compatibility commit: `aea08a5537de358ff273f3d7eb98ac133cc990dd`;
 - upstream license: MIT.
 
 Preparation clones the exact base into a temporary directory, verifies `HEAD`, runs `git apply --check`, applies the patch, runs focused compatibility tests and the relevant upstream suite, and produces a tarball. Tests use temporary HOME and npm prefixes.
