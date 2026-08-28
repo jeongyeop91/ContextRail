@@ -162,6 +162,11 @@ function featureState(content) {
   return canonical ?? deprecated ?? { enabled: true, key: 'default', value: null };
 }
 
+function receiptConfigCurrent(content, receipt) {
+  if (receipt.hashes?.configAfter === contentHash(content)) return true;
+  return receipt.featureEdit?.type === 'none' && featureState(content).enabled;
+}
+
 function enableFeature(content) {
   const state = featureState(content);
   if (state.enabled) return { content, edit: { type: 'none' } };
@@ -268,7 +273,7 @@ export async function planCodexHooksInstall({ home, nodePath, cliPath, fs = node
   const counts = entries.map((entry) => entryCounts(parsed, entry));
   if (receipt) {
     const live = hashes(before);
-    const current = receipt.hashes?.hooksAfter === live.hooks && receipt.hashes?.configAfter === live.config;
+    const current = receipt.hashes?.hooksAfter === live.hooks && receiptConfigCurrent(before.config, receipt);
     if (current && counts.every((count) => count.exact === 1 && count.owned === 1)) {
       return {
         ...finish([]), status: 'already_installed', home: root, entries, before, after: before,
@@ -375,7 +380,7 @@ export async function planCodexHooksUninstall({ home, fs = nodeFilesystem }) {
     return { ...finish(issues), status: 'conflict', home: root, before, files: [] };
   }
   const live = hashes(before);
-  if (receipt.hashes?.hooksAfter !== live.hooks || receipt.hashes?.configAfter !== live.config) {
+  if (receipt.hashes?.hooksAfter !== live.hooks || !receiptConfigCurrent(before.config, receipt)) {
     issues.push(issue('CODEX_HOOK_CONCURRENT_CHANGE', '.codex', 'Live Codex configuration changed after ContextRail installation'));
     return { ...finish(issues), status: 'conflict', home: root, before, files: [], receipt };
   }
@@ -453,7 +458,7 @@ export async function verifyCodexHooks({
   }
   const receiptCurrent = Boolean(receipt)
     && receipt.hashes?.hooksAfter === contentHash(snapshot.hooks)
-    && receipt.hashes?.configAfter === contentHash(snapshot.config);
+    && receiptConfigCurrent(snapshot.config, receipt);
   const preservation = receipt && hooks && receipt.nonOwnedHooksSha256 === nonOwnedDigest(hooks, receipt.entries ?? [])
     ? 'preserved'
     : receipt ? 'unverified' : 'not_recorded';

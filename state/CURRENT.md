@@ -52,11 +52,13 @@ Active item: `CR-008`
 - The compatibility fix is covered by a failing-then-passing upstream doctor regression and reproducibly packages as managed Throughline `0.10.3-codex.2` with SHA-256 `29053de08c4ec074c2e02f724314f91e7359a48fb79f7feadaceb7de7f594fd9`.
 - Release commit and annotated tag: `de40523` / `v0.3.0-rc.4`; npm `next` and the GitHub versioned asset are byte-identical at SHA-256 `78eb266278d39d2c4a3bb30eb2244e748fec4150e956520f04c66e458851f89b`.
 - The rc.4 release-triggered npm workflow published successfully through the configured OIDC Trusted Publisher. Main and tag verification passed; the separate release build reached only its final create step and reported failure because the same prerelease had already been created manually with the verified assets.
+- The rc.4 Windows in-place update correctly selected managed Throughline `0.10.3-codex.2` but stopped with `CODEX_HOOK_CONCURRENT_CHANGE`: Codex had persisted approved Hook trust state in `config.toml` after ContextRail recorded a full-file receipt hash, even though ContextRail had recorded `featureEdit: none` and owned no config change.
+- The rc.5 fix treats later config changes as receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled; owned Hook-entry changes and feature disablement still conflict. Focused red/green and mutation checks cover repeat install, verification, removal preservation, and the disabled-feature guard.
 
 ## Next steps
 
-1. Update the existing `C:\Projects\RathonSales` installation in place to `0.3.0-rc.4` / managed Throughline `0.10.3-codex.2` without recreating its adoption mapping.
-2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after any updated Throughline Hook commands are trusted in Codex Desktop.
+1. Publish `0.3.0-rc.5` with the receipt ownership fix while retaining managed Throughline `0.10.3-codex.2`.
+2. Update the existing `C:\Projects\RathonSales` installation in place to rc.5 without recreating its adoption mapping, then verify ContextRail live routing plus Throughline capture, restore, and handoff.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers

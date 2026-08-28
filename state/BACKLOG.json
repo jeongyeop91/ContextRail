@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Update the existing Windows project in place to 0.3.0-rc.4, verify live context plus capture/restore/handoff, and retain the Windows live gate for latest"],
+      "nextSteps": ["Publish 0.3.0-rc.5, update the existing Windows project in place, verify live context plus capture/restore/handoff, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

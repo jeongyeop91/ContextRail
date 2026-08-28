@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.5 - 2026-08-28
+
+### Fixed
+
+- Treat Codex Hook trust state written after user approval as a valid external `config.toml` change when ContextRail did not edit that file, while still rejecting a disabled Hook feature or changes to receipt-owned Hook entries.
+- Preserve the approved Codex trust state during repeated setup and ContextRail Hook removal instead of reporting `CODEX_HOOK_CONCURRENT_CHANGE`.
+
 ## 0.3.0-rc.4 - 2026-08-28
 
 ### Fixed

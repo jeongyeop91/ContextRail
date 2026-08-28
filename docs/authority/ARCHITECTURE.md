@@ -125,7 +125,7 @@ External links are not fetched by the default offline validator.
 
 ## Codex Context Automation
 
-Codex automation separates global registration from project activation. `hooks install` merges two synchronous command handlers into the user Hook file and writes its ownership receipt last. It preserves group order and non-owned handlers, changes the canonical feature flag only when required, and refuses unreceipted lookalikes, duplicates, or concurrent hash changes. Apply writes through sibling temporary files and restores the captured precondition state on failure.
+Codex automation separates global registration from project activation. `hooks install` merges two synchronous command handlers into the user Hook file and writes its ownership receipt last. It preserves group order and non-owned handlers, changes the canonical feature flag only when required, and refuses unreceipted lookalikes, duplicates, or concurrent changes to owned state. When the receipt records no ContextRail feature edit, later Codex trust-state changes in `config.toml` remain current only while the Hook feature stays enabled. Apply writes through sibling temporary files and restores the captured precondition state on failure.
 
 Every scaffold carries an explicit disabled `automation.codex` object. `automation enable` may update only a config matching the ownership hash recorded in `.context-rail/version.json`; the config and new ownership hash are one guarded transition. Disable retains the route/check preferences while setting the activation gate false.
 

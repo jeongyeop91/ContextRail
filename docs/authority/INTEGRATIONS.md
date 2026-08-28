@@ -10,7 +10,7 @@ ContextRail and Throughline may both register Codex Hooks. ContextRail appends o
 
 ## Codex Hook registration
 
-Global handler registration is inert for repositories whose `automation.codex.enabled` is not true. Install, feature-flag editing, project opt-in, and uninstall are separate plan/apply operations. User-level apply writes its receipt last and uses before/after hashes; project apply updates only ContextRail-owned metadata. Any concurrent change produces a conflict.
+Global handler registration is inert for repositories whose `automation.codex.enabled` is not true. Install, feature-flag editing, project opt-in, and uninstall are separate plan/apply operations. User-level apply writes its receipt last and uses before/after hashes at the apply boundary; project apply updates only ContextRail-owned metadata. After installation, a config change is receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled, allowing Codex to persist user-approved trust state without weakening owned Hook-entry checks. Concurrent changes to receipt-owned state produce a conflict.
 
 Verification may prove registration and isolated handler behavior, but not consumption by a live Codex conversation. Trust approval, host reload, and live context observation remain manual host-level evidence.
 

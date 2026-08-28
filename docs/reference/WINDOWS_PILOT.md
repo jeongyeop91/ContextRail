@@ -2,7 +2,7 @@
 
 Windows live validation: pending
 
-Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.4` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
+Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.5` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
 
 ## Preconditions
 
@@ -20,7 +20,7 @@ contextrail --version
 contextrail setup --dry-run --json
 ```
 
-Confirm the version is `0.3.0-rc.4`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+Confirm the version is `0.3.0-rc.5`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
 
 When continuing a pilot in an already configured repository, update the global CLI in place and rerun setup from that same repository. Do not remove the existing ContextRail metadata, managed Throughline release, or adoption mapping:
 
