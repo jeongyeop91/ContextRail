@@ -64,10 +64,11 @@ Active item: `CR-008`
 - The rc.8 Windows pilot proved trusted Hooks, automatic capture, and a structurally ready fresh-task handoff prompt. Live handoff execution then failed at `spawn codex ENOENT` because Throughline assumed a separately installed global Codex CLI instead of resolving the executable supplied by Codex Desktop.
 - The rc.9 compatibility patch resolves an executable `CODEX_CLI_PATH`, user-local Windows Desktop layouts (including release-hash directories), and macOS Codex/ChatGPT app bundles before falling back to `PATH`. A focused Windows-path regression and a macOS no-global-PATH app-server schema audit pass; native Windows live execution remains pending.
 - Managed Throughline `0.10.3-codex.3` was reproducibly prepared from the immutable source and compatibility patch as SHA-256 `5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2`.
+- Release commit and annotated tag: `f801588` / `v0.3.0-rc.9`; GitHub prerelease automation, Ubuntu/macOS/Windows verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `34e0d53352cb8a9a982a2b6e40dc3bdce7081e638757260cb52c82824acb0f94`.
 
 ## Next steps
 
-1. Publish rc.9 and update the existing `C:\Projects\RathonSales` installation in place so managed Throughline advances to `0.10.3-codex.3`.
+1. Update the existing `C:\Projects\RathonSales` installation in place to rc.9 so managed Throughline advances to `0.10.3-codex.3`.
 2. Re-run the already-ready handoff with `--execute --open-host desktop` and record the native Windows result.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
