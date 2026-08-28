@@ -51,7 +51,7 @@ test('unknown commands return CLI usage exit code', async () => {
 test('version and help are successful read-only top-level options', async () => {
   const version = capture();
   assert.equal(await run(['--version'], version.io), 0);
-  assert.equal(version.output().stdout, '0.3.0-rc.5\n');
+  assert.equal(version.output().stdout, '0.3.0-rc.6\n');
   assert.equal(version.output().stderr, '');
 
   const help = capture();

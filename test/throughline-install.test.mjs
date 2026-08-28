@@ -25,7 +25,7 @@ async function fixture() {
   return { root, home, managedRoot, artifact };
 }
 
-function successfulAdapter(home, calls = [], environments = []) {
+function successfulAdapter(home, calls = [], environments = [], { installHooks } = {}) {
   return {
     async run(executable, args, options = {}) {
       calls.push([executable, ...args]);
@@ -42,7 +42,8 @@ function successfulAdapter(home, calls = [], environments = []) {
       if (args[1] === 'install') {
         const hooksPath = join(home, '.codex/hooks.json');
         const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));
-        hooks.hooks.Stop.push({ command: 'managed-throughline-hook' });
+        if (installHooks) installHooks(hooks);
+        else hooks.hooks.Stop.push({ command: 'managed-throughline-hook' });
         await writeFile(hooksPath, JSON.stringify(hooks));
         return { code: 0, stdout: '', stderr: '' };
       }
@@ -83,6 +84,78 @@ test('explicit apply preserves unrelated hooks and selects only after verificati
   assert.equal(current.releaseId, plan.releaseId);
   const receipt = JSON.parse(await readFile(join(plan.releaseDirectory, 'receipt.json'), 'utf8'));
   assert.equal(receipt.patchSha256, manifest.patch.sha256);
+});
+
+test('managed upgrade may replace previous Throughline hooks while preserving unrelated hooks', async () => {
+  const scope = await fixture();
+  const hooksPath = join(scope.home, '.codex/hooks.json');
+  const unrelated = {
+    hooks: [{ type: 'command', command: 'contextrail context route', timeout: 30 }],
+  };
+  await writeFile(hooksPath, JSON.stringify({
+    hooks: {
+      Stop: [
+        {
+          hooks: [{
+            type: 'command',
+            command: '& "C:\\Program Files\\nodejs\\node.exe" "C:\\Users\\pilot\\AppData\\Local\\ContextRail\\throughline\\releases\\0.10.3-codex.1-old\\node_modules\\throughline\\bin\\throughline.mjs" codex-hook stop',
+            timeout: 300,
+          }],
+        },
+        unrelated,
+      ],
+    },
+  }));
+  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.2', manifest });
+  const processAdapter = successfulAdapter(scope.home, [], [], {
+    installHooks(hooks) {
+      hooks.hooks.Stop = [
+        {
+          hooks: [{
+            type: 'command',
+            command: '& "C:\\Program Files\\nodejs\\node.exe" "C:\\Users\\pilot\\AppData\\Local\\ContextRail\\throughline\\releases\\0.10.3-codex.2-new\\node_modules\\throughline\\bin\\throughline.mjs" codex-hook stop',
+            timeout: 300,
+          }],
+        },
+        unrelated,
+      ];
+    },
+  });
+
+  const result = await applyManagedInstall({ plan, apply: true, home: scope.home, fs: nodeFilesystem, processAdapter });
+
+  assert.equal(result.status, 'installed');
+  const installedHooks = JSON.parse(await readFile(hooksPath, 'utf8'));
+  assert.deepEqual(installedHooks.hooks.Stop[1], unrelated);
+});
+
+test('managed upgrade still refuses changes to unrelated hooks', async () => {
+  const scope = await fixture();
+  const hooksPath = join(scope.home, '.codex/hooks.json');
+  const before = JSON.stringify({
+    hooks: {
+      Stop: [
+        { hooks: [{ type: 'command', command: 'throughline codex-hook stop', timeout: 300 }] },
+        { hooks: [{ type: 'command', command: 'contextrail context check', timeout: 30 }] },
+      ],
+    },
+  });
+  await writeFile(hooksPath, before);
+  const plan = planManagedInstall({ managedRoot: scope.managedRoot, artifact: scope.artifact, version: '0.10.3-codex.2', manifest });
+  const processAdapter = successfulAdapter(scope.home, [], [], {
+    installHooks(hooks) {
+      hooks.hooks.Stop = [
+        { hooks: [{ type: 'command', command: 'throughline codex-hook stop', timeout: 300 }] },
+      ];
+    },
+  });
+
+  await assert.rejects(
+    () => applyManagedInstall({ plan, apply: true, home: scope.home, fs: nodeFilesystem, processAdapter }),
+    /unrelated hook changed/,
+  );
+  assert.equal(await readFile(hooksPath, 'utf8'), before);
+  assert.equal(await nodeFilesystem.exists(plan.releaseDirectory), false);
 });
 
 test('failed install leaves the previous current selection unchanged', async () => {

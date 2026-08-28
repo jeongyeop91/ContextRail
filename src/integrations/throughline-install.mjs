@@ -50,6 +50,39 @@ function deepSubset(before, after) {
   return before === after;
 }
 
+function isThroughlineCodexHookCommand(command) {
+  if (typeof command !== 'string') return false;
+  const normalized = command.replace(/["']/g, '');
+  return [
+    'throughline codex-hook stop',
+    'throughline codex-hook user-prompt-submit',
+    'throughline codex-hook post-tool-use',
+    'throughline.mjs codex-hook stop',
+    'throughline.mjs codex-hook user-prompt-submit',
+    'throughline.mjs codex-hook post-tool-use',
+  ].some((ownedCommand) => normalized.includes(ownedCommand));
+}
+
+function withoutThroughlineCodexHooks(settings) {
+  if (!settings?.hooks || typeof settings.hooks !== 'object' || Array.isArray(settings.hooks)) return settings;
+  const projected = { ...settings, hooks: {} };
+  for (const [event, groups] of Object.entries(settings.hooks)) {
+    if (!Array.isArray(groups)) {
+      projected.hooks[event] = groups;
+      continue;
+    }
+    const preserved = groups
+      .map((group) => {
+        if (!Array.isArray(group?.hooks)) return group;
+        return { ...group, hooks: group.hooks.filter((hook) => !isThroughlineCodexHookCommand(hook?.command)) };
+      })
+      .filter((group) => !Array.isArray(group?.hooks) || group.hooks.length > 0);
+    if (preserved.length > 0) projected.hooks[event] = preserved;
+  }
+  if (Object.keys(projected.hooks).length === 0) delete projected.hooks;
+  return projected;
+}
+
 async function atomicJson(path, value, fs) {
   const temporary = `${path}.tmp-${process.pid}`;
   await fs.writeText(temporary, `${JSON.stringify(value, null, 2)}\n`);
@@ -102,7 +135,9 @@ export async function applyManagedInstall({ plan, apply, home, nodePath = proces
     const after = await snapshotHome(home, fs);
     if (before.codexHooks !== null) {
       try {
-        if (!deepSubset(JSON.parse(before.codexHooks), JSON.parse(after.codexHooks))) throw new Error('unrelated hook changed');
+        const unrelatedBefore = withoutThroughlineCodexHooks(JSON.parse(before.codexHooks));
+        const unrelatedAfter = withoutThroughlineCodexHooks(JSON.parse(after.codexHooks));
+        if (!deepSubset(unrelatedBefore, unrelatedAfter)) throw new Error('unrelated hook changed');
       } catch (error) {
         if (error.message === 'unrelated hook changed') throw error;
       }

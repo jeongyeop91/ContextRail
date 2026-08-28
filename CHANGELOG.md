@@ -2,6 +2,13 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.6 - 2026-08-28
+
+### Fixed
+
+- Allow a managed Throughline upgrade to replace its own previous Codex Hook commands while continuing to reject changes to ContextRail or user-owned Hook entries.
+- Roll back the Codex Hook file and incomplete managed release when an upgrade changes an unrelated Hook.
+
 ## 0.3.0-rc.5 - 2026-08-28
 
 ### Fixed
