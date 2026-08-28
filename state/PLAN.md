@@ -13,5 +13,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [x] Publish the verified `0.3.0-rc.3` tarball to npm under `next`; configure Trusted Publishing for future releases.
 - [x] Publish `0.3.0-rc.4` with the Windows Hook-trust diagnostic fix and verify the OIDC Trusted Publishing path.
 - [x] Publish `0.3.0-rc.5` with the post-approval Hook receipt ownership fix.
-- [ ] Publish `0.3.0-rc.6` with the managed Throughline upgrade ownership fix.
+- [x] Publish `0.3.0-rc.6` with the managed Throughline upgrade ownership fix.
 - [ ] Publish the two-command README and Windows live pilot checklist.

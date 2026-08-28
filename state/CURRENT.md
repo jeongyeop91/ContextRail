@@ -56,13 +56,13 @@ Active item: `CR-008`
 - The rc.5 fix treats later config changes as receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled; owned Hook-entry changes and feature disablement still conflict. Focused red/green and mutation checks cover repeat install, verification, removal preservation, and the disabled-feature guard.
 - Release commit and annotated tag: `8362f27` / `v0.3.0-rc.5`; GitHub release automation, main/tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and the GitHub versioned asset are byte-identical at SHA-256 `a7427f800c019e258dcfc8791bf74822c244ff411cb07bd088caa55532832473`.
 - The rc.5 Windows retry reached managed Throughline replacement but ContextRail misclassified the previous Throughline-owned absolute Hook commands as unrelated changes. The rc.6 fix compares preservation after removing only canonical Throughline Codex handlers, while a mutation test proves ContextRail and user handlers still trigger rollback if changed.
+- Release commit and annotated tag: `364d4ce` / `v0.3.0-rc.6`; GitHub prerelease automation, Ubuntu/macOS/Windows tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `734477abe42f15dcc8d43e41faa82b4f83dabaa6124c8f5cf5ae2e36c0fa23c9`.
 
 ## Next steps
 
-1. Publish rc.6 through the verified GitHub prerelease and npm `next` path.
-2. Update the existing `C:\Projects\RathonSales` installation in place to rc.6 without recreating its adoption mapping.
-3. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.6 setup apply completes.
-4. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
+1. Update the existing `C:\Projects\RathonSales` installation in place to rc.6 without recreating its adoption mapping.
+2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.6 setup apply completes.
+3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers
 
