@@ -12,5 +12,5 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 - [ ] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
 - [x] Publish the verified `0.3.0-rc.3` tarball to npm under `next`; configure Trusted Publishing for future releases.
 - [x] Publish `0.3.0-rc.4` with the Windows Hook-trust diagnostic fix and verify the OIDC Trusted Publishing path.
-- [ ] Publish `0.3.0-rc.5` with the post-approval Hook receipt ownership fix.
+- [x] Publish `0.3.0-rc.5` with the post-approval Hook receipt ownership fix.
 - [ ] Publish the two-command README and Windows live pilot checklist.

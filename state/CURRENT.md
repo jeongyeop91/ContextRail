@@ -54,11 +54,12 @@ Active item: `CR-008`
 - The rc.4 release-triggered npm workflow published successfully through the configured OIDC Trusted Publisher. Main and tag verification passed; the separate release build reached only its final create step and reported failure because the same prerelease had already been created manually with the verified assets.
 - The rc.4 Windows in-place update correctly selected managed Throughline `0.10.3-codex.2` but stopped with `CODEX_HOOK_CONCURRENT_CHANGE`: Codex had persisted approved Hook trust state in `config.toml` after ContextRail recorded a full-file receipt hash, even though ContextRail had recorded `featureEdit: none` and owned no config change.
 - The rc.5 fix treats later config changes as receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled; owned Hook-entry changes and feature disablement still conflict. Focused red/green and mutation checks cover repeat install, verification, removal preservation, and the disabled-feature guard.
+- Release commit and annotated tag: `8362f27` / `v0.3.0-rc.5`; GitHub release automation, main/tag verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and the GitHub versioned asset are byte-identical at SHA-256 `a7427f800c019e258dcfc8791bf74822c244ff411cb07bd088caa55532832473`.
 
 ## Next steps
 
-1. Publish `0.3.0-rc.5` with the receipt ownership fix while retaining managed Throughline `0.10.3-codex.2`.
-2. Update the existing `C:\Projects\RathonSales` installation in place to rc.5 without recreating its adoption mapping, then verify ContextRail live routing plus Throughline capture, restore, and handoff.
+1. Update the existing `C:\Projects\RathonSales` installation in place to rc.5 without recreating its adoption mapping.
+2. Verify ContextRail live routing plus Throughline capture, restore, and handoff after the rc.5 setup apply completes.
 3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers
