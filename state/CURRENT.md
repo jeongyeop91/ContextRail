@@ -67,12 +67,14 @@ Active item: `CR-008`
 - Release commit and annotated tag: `f801588` / `v0.3.0-rc.9`; GitHub prerelease automation, Ubuntu/macOS/Windows verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `34e0d53352cb8a9a982a2b6e40dc3bdce7081e638757260cb52c82824acb0f94`.
 - Native Windows rc.9 handoff succeeded: managed Throughline started task `01a05523-bd1e-7530-80d9-531f574c678d`, injected developer memory, preserved the current task, and opened Codex Desktop.
 - The successful Windows prompt route exposed a deprecated `[features].codex_hooks` warning. The approved follow-up separates one-command `setup` and `handoff` operations, adds concise human output plus explicit debug output, and migrates the legacy feature key through the managed setup boundary.
+- The follow-up implementation now provides concise default `setup`, top-level `doctor`, and one-command managed `handoff`; preserves stable JSON output; isolates local-path troubleshooting behind `--debug`; migrates deprecated `codex_hooks` without restoring it on uninstall; and writes a content-free Stop-dispatch marker under ignored runtime state.
+- Focused tests distinguish Hook registration, ContextRail Stop dispatch, and Throughline capture as separate evidence. Automatic Windows Stop capture has not yet been revalidated against a published candidate, so no capture success is claimed.
 
 ## Next steps
 
-1. Review `docs/superpowers/specs/2026-08-31-human-cli-and-handoff-design.md`.
-2. Write and execute the approved implementation plan with test-first feature migration, concise human rendering, and one-command handoff.
-3. Re-run the native Windows setup and handoff acceptance before promoting npm `latest`; leave CR-004 outside the active scope.
+1. Complete repository-wide verification for the human CLI, feature migration, Stop diagnostics, and managed handoff changes.
+2. Prepare the next release candidate without promoting npm `latest`.
+3. Re-run native Windows setup, `doctor`, automatic Stop capture, and one-command handoff acceptance; leave CR-004 outside the active scope.
 
 ## Blockers
 

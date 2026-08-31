@@ -63,7 +63,10 @@ The MVP command surface is:
 contextrail --version|--help
 contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE]
                   [--core-only|--no-context-hooks|--use-existing-throughline]
-                  [--dry-run|--apply] [--json]
+                  [--dry-run|--apply] [--debug|--json]
+contextrail doctor [--target PATH] [--debug|--json]
+contextrail handoff [--session codex:ID] [--open-host desktop|vscode|cli|auto]
+                    [--debug|--json]
 contextrail init [--target PATH] [--dry-run]
 contextrail adopt [--target PATH] [--dry-run]
 contextrail adopt --profile existing-repository --adoption-config FILE [--dry-run|--apply]
@@ -86,7 +89,9 @@ contextrail automation enable|disable --host codex --target PATH --dry-run|--app
 
 Commands that may write default to a plan-only dry run where the command contract specifies it. Existing files are never overwritten silently. Paths are normalized and confined to the selected target. Writes use a sibling temporary file followed by atomic rename.
 
-`setup` composes the lower-level ownership boundaries. A TTY invocation displays the full hash-identified plan and asks for confirmation; a flagless non-TTY invocation is plan-only, and non-interactive writes require `--apply`. The full profile installs or verifies Throughline, initializes or adopts the project, appends ContextRail Hooks, enables only that project, and aggregates structural versus live readiness. Reduced profiles keep Core independent and explicit.
+`setup` composes the lower-level ownership boundaries. A TTY invocation displays a concise human plan and asks for confirmation; a flagless non-TTY invocation is plan-only, and non-interactive writes require `--apply`. The full profile installs or verifies Throughline, initializes or adopts the project, appends ContextRail Hooks, enables only that project, and aggregates structural versus live readiness. Reduced profiles keep Core independent and explicit. `--json` exposes the stable machine contract; mutually exclusive `--debug` appends bounded troubleshooting evidence and may expose local paths.
+
+`doctor` presents project, managed Throughline, Codex Hook registration/trust, recent ContextRail Stop dispatch, and automatic capture as separate components. `handoff` resolves the selected managed Throughline release and invokes its fresh-task start boundary through executable-plus-argv, without mutating the current task. An omitted session delegates latest-source selection to Throughline; ContextRail does not inspect its database or rollout files to guess one.
 
 ## Project Memory
 
@@ -131,9 +136,9 @@ Every scaffold carries an explicit disabled `automation.codex` object. `automati
 
 `UserPromptSubmit` walks upward from the Hook `cwd` to locate an enabled ContextRail project. It selects ordinary route context or exact continuation intent, emits only bounded project-relative paths, state references, and argv validation hints through `additionalContext`, and does not echo the prompt. Outside an enabled project it emits nothing.
 
-`Stop` validates documents and state without executing hints. Passing and disabled cases emit an empty JSON object. Violations emit a bounded `systemMessage`, never a blocking decision. Handler failures also return a concise fail-open message with exit code zero.
+`Stop` validates documents and state without executing hints. Passing and disabled cases emit an empty JSON object. Violations emit a bounded `systemMessage`, never a blocking decision. Handler failures also return a concise fail-open message with exit code zero. After an enabled handler completes, ContextRail atomically overwrites one Git-ignored diagnostic marker containing only event, timestamp, hashed session identifier, identifier source, project match, and result status. Marker failure is fail-open and no prompt, assistant, tool, secret, or personal-path content is recorded.
 
-Verification distinguishes exact registration, duplicate/mismatched entries, executable paths, feature state, receipt currency, non-owned Hook preservation, project opt-in, and isolated route/continue/check smoke. It never claims that a live Codex conversation consumed injected context; that remains `unverified` until observed in a trusted host session.
+Verification distinguishes exact registration, duplicate/mismatched entries, executable paths, feature state, receipt currency, non-owned Hook preservation, project opt-in, isolated route/continue/check smoke, and recent Stop dispatch. A Stop marker is dispatch evidence, not Throughline capture evidence. Verification never claims that a live Codex conversation consumed injected context or that Throughline captured it without the corresponding external structured evidence.
 
 ## Instruction Routing
 
@@ -189,7 +194,7 @@ Preparation clones the exact base into a temporary directory, verifies `HEAD`, r
 
 Real installation requires explicit `--apply`. It uses a ContextRail-managed, versioned npm prefix rather than modifying an existing global `node_modules` tree. It displays affected paths, preserves non-Throughline hooks, records configuration hashes, keeps the previous managed release for rollback, and does not edit shell startup files.
 
-Integration readiness states are `prepared`, `installed`, `hooks_ready`, `capture_verified`, `degraded`, and `incompatible`. Hook registration alone is not capture verification. A live smoke must show non-zero body capture, user/assistant L2 bodies, tool L3 details, and exclusion of host-injected AGENTS and recommended-plugin context. Missing Codex authentication or a live rollout leaves the installation explicitly unverified.
+Integration readiness states are `prepared`, `installed`, `hooks_ready`, `capture_verified`, `degraded`, and `incompatible`. Hook registration and ContextRail Stop dispatch alone are not capture verification. A live smoke must show non-zero body capture, user/assistant L2 bodies, tool L3 details, and exclusion of host-injected AGENTS and recommended-plugin context. Missing Codex authentication or a live rollout leaves the installation explicitly unverified.
 
 ## Security and Failure Handling
 

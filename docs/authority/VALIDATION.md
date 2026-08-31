@@ -21,8 +21,10 @@ Validation returns stable issues shaped as `code`, `path`, `message`, and `sever
 
 ## Evidence
 
-Claims must name the command and observed result. A dry run proves planning, not installation. Registered hooks prove configuration, not captured content. Estimated measurements remain separate from host- or tool-reported values.
+Claims must name the command and observed result. A dry run proves planning, not installation. Registered hooks prove configuration, not dispatch or captured content. A recent ContextRail Stop marker proves dispatch of that handler, not Throughline capture. Capture requires separate structured evidence from the Throughline-owned boundary. Estimated measurements remain separate from host- or tool-reported values.
 
 External state may be `degraded` while core validation passes. Never coerce a missing or legacy integration into a successful state.
 
 `installed_live_verification_required` means structural installation and synthetic behavior passed while live ContextRail consumption or Throughline capture, restore, and handoff remain unverified. Windows CI is executable evidence but does not satisfy the native Windows Codex pilot. npm `latest` promotion remains blocked until that pilot is recorded.
+
+Human command output is a bounded summary, not an archival evidence format. `--json` is the automation contract. `--debug` is mutually exclusive with JSON and may include local paths or redacted upstream diagnostics; it must be reviewed before sharing.

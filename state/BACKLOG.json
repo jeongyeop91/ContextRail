@@ -87,7 +87,7 @@
       "dependsOn": ["CR-006"],
       "acceptance": [
         "UserPromptSubmit injects bounded route or continuation context only for enabled projects",
-        "Stop performs a non-blocking read-only ContextRail check",
+        "Stop performs a non-blocking read-only ContextRail check and records only bounded content-free dispatch diagnostics",
         "Install and uninstall preserve Throughline and unrelated hooks with receipt and hash guards",
         "Automation config changes are plan-first, ownership-guarded, and transactional",
         "Temporary-HOME, regression, package, and read-only real-HOME diagnostics pass for v0.2.0"
@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish 0.3.0-rc.9, update the existing Windows project in place, verify app-server handoff through the Desktop-bundled Codex CLI, and retain the Windows live gate for latest"],
+      "nextSteps": ["Verify and publish the concise setup/doctor/handoff candidate, rerun automatic Stop capture and fresh-task handoff on native Windows, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

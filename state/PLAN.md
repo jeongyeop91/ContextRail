@@ -8,10 +8,10 @@ Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-insta
 
 Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-diagnostics.md`
 
-- [ ] Add verified release metadata and portable Throughline execution.
-- [ ] Add cross-platform Codex Hook registration.
-- [ ] Implement plan-first, resumable `contextrail setup` with TTY confirmation.
-- [ ] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
+- [x] Add verified release metadata and portable Throughline execution.
+- [x] Add cross-platform Codex Hook registration.
+- [x] Implement plan-first, resumable `contextrail setup` with TTY confirmation.
+- [x] Build and test GitHub Release assets across Ubuntu, macOS, and Windows CI.
 - [x] Publish the verified `0.3.0-rc.3` tarball to npm under `next`; configure Trusted Publishing for future releases.
 - [x] Publish `0.3.0-rc.4` with the Windows Hook-trust diagnostic fix and verify the OIDC Trusted Publishing path.
 - [x] Publish `0.3.0-rc.5` with the post-approval Hook receipt ownership fix.
@@ -19,4 +19,6 @@ Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-di
 - [x] Publish `0.3.0-rc.7` with the resumable ContextRail Hook receipt refresh fix.
 - [x] Publish `0.3.0-rc.8` with resilient Windows setup progress receipt replacement.
 - [x] Publish `0.3.0-rc.9` with Codex Desktop app-server executable discovery.
-- [ ] Publish the two-command README and Windows live pilot checklist.
+- [x] Implement concise human setup/doctor output, explicit debug evidence, canonical Hook feature migration, bounded Stop diagnostics, and one-command managed handoff.
+- [ ] Publish the updated README and implementation in the next release candidate.
+- [ ] Re-run the Windows live pilot and promote npm `latest` only after capture and handoff evidence pass.

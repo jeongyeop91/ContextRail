@@ -10,9 +10,11 @@ ContextRail and Throughline may both register Codex Hooks. ContextRail appends o
 
 ## Codex Hook registration
 
-Global handler registration is inert for repositories whose `automation.codex.enabled` is not true. Install, feature-flag editing, project opt-in, and uninstall are separate plan/apply operations. User-level apply writes its receipt last and uses before/after hashes at the apply boundary; project apply updates only ContextRail-owned metadata. After installation, a config change is receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled, allowing Codex to persist user-approved trust state without weakening owned Hook-entry checks. Concurrent changes to receipt-owned state produce a conflict.
+Global handler registration is inert for repositories whose `automation.codex.enabled` is not true. Install, feature-flag editing, project opt-in, and uninstall are separate plan/apply operations. User-level apply writes its receipt last and uses before/after hashes at the apply boundary; project apply updates only ContextRail-owned metadata. Install migrates the deprecated `codex_hooks` feature key to canonical `hooks`; if both exist, canonical `hooks` wins and the deprecated entry is removed. Uninstall never restores a deprecated key. After installation, a config change is receipt-current only when ContextRail recorded no feature edit and the Hook feature remains enabled, allowing Codex to persist user-approved trust state without weakening owned Hook-entry checks. Concurrent changes to receipt-owned state produce a conflict.
 
 Verification may prove registration and isolated handler behavior, but not consumption by a live Codex conversation. Trust approval, host reload, and live context observation remain manual host-level evidence.
+
+An enabled ContextRail Stop handler records one bounded, Git-ignored dispatch marker after its document/state check. The marker stores no conversation or tool content. It proves only that Codex dispatched ContextRail Stop for the project; it is not Throughline capture proof.
 
 ## Throughline provenance
 
@@ -32,8 +34,10 @@ Rollback refuses to run if live configuration differs from the selected release 
 
 Setup records component completion after each owned boundary. A failure distinguishes completed, failed, and pending components. Repeated apply verifies a selected managed release and exact ContextRail receipts before resuming; it never replaces an unmanaged Throughline installation.
 
+The top-level `handoff` adapter invokes the selected managed Throughline `codex-handoff-start` command with explicit argv, execution enabled, and a selected host. Throughline owns source selection, memory rendering, task creation, injection, and host opening. ContextRail maps structured output into concise human or stable JSON results and never reads the Throughline database to construct a fallback.
+
 ## Readiness
 
 Readiness states are `absent`, `prepared`, `installed`, `hooks_ready`, `capture_verified`, `degraded`, and `incompatible`. Capture verification requires structured evidence of non-empty captured layers; the presence of hook declarations alone is insufficient.
 
-Ordinary verification invokes only the selected binary's version and `factory-diagnostics --json`. Human `doctor --codex` output is an optional read-only passthrough. ContextRail never opens the Throughline database to infer readiness.
+Ordinary verification invokes only the selected binary's version and `factory-diagnostics --json`. Top-level `doctor` combines ContextRail-owned structured evidence and treats upstream Throughline doctor output as debug evidence only. It reports Stop dispatch separately from automatic capture and never opens the Throughline database to infer readiness.

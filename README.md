@@ -16,9 +16,11 @@ The current release candidate supports macOS, Linux, and native Windows. Install
 ```text
 npm install --global contextrail@next
 contextrail setup
+contextrail doctor
+contextrail handoff --open-host desktop
 ```
 
-`contextrail setup` defaults to the current directory and the full profile. It discovers the project without writing, displays every component and affected path, and asks `Apply? [y/N]` only in an interactive terminal. The full profile initializes or adopts ContextRail, installs the pinned Codex-compatible Throughline, appends ContextRail Codex Hooks, enables the selected project, and verifies the result.
+`contextrail setup` defaults to the current directory and the full profile. It discovers the project without writing, prints a short human-readable plan, and asks `Apply? [y/N]` only in an interactive terminal. The full profile initializes or adopts ContextRail, installs the pinned Codex-compatible Throughline, appends ContextRail Codex Hooks, enables the selected project, and verifies the result. Use `contextrail doctor` for the concise readiness result, then `contextrail handoff --open-host desktop` to continue the latest captured work in a new Codex Desktop task.
 
 Windows live validation is still pending. Use `@next` until the [native Windows pilot](docs/reference/WINDOWS_PILOT.md) passes; afterward the stable command becomes `npm install --global contextrail`. The npm tag is `latest`, not `last`.
 
@@ -41,6 +43,40 @@ contextrail setup --apply --json
 A flagless non-interactive `contextrail setup` prints a plan and never waits or writes. `--apply` is the only non-interactive write authorization.
 
 A newly configured host normally reports `installed_live_verification_required`: structural installation and synthetic checks passed, while a trusted Codex session must still prove live ContextRail consumption and Throughline capture, restore, and handoff.
+
+### Human, machine, and debug output
+
+Flagless `setup`, `doctor`, and `handoff` output is intentionally short and written for a person. Use `--json` when another program needs the stable structured contract. Use `--debug` only when troubleshooting requires component paths or upstream command evidence:
+
+```text
+contextrail doctor
+contextrail doctor --json
+contextrail doctor --debug
+```
+
+`--json` and `--debug` are mutually exclusive. Debug output can contain local paths and upstream diagnostics, so review it before sharing.
+
+### Continue in a new Codex task
+
+After at least one trusted Codex turn has been captured, start a fresh task and inject the latest available Throughline handoff memory with one command:
+
+```text
+contextrail handoff --open-host desktop
+```
+
+Use an explicit source only when you need a specific captured task:
+
+```text
+contextrail handoff --session codex:<source-task-id> --open-host desktop
+```
+
+The command uses the managed Throughline release selected by ContextRail, creates a different Codex task, injects the handoff memory, and opens it in the requested host. It does not mutate or resurrect the current task. If desktop opening fails, the concise result prints the manual resume command.
+
+### Diagnose automatic capture
+
+`contextrail doctor` reports project readiness, managed Throughline, Codex Hook registration and trust, recent ContextRail Stop dispatch, and automatic Throughline capture as separate components. A bounded Stop marker proves that Codex invoked the ContextRail Stop handler; a Throughline database record proves capture. **Stop dispatch and Throughline capture are not the same evidence.**
+
+The Stop marker contains only timestamp, hashed session identifier, source, project match, and result status. It contains no prompt, response, transcript, tool body, secret, or personal path, and is stored under the Git-ignored `.context-rail/runtime/` directory.
 
 ### Audited GitHub fallback
 
@@ -208,7 +244,7 @@ contextrail automation enable --host codex --target /path/to/project --apply --j
 contextrail hooks verify --host codex --target /path/to/project --json
 ```
 
-`UserPromptSubmit` supplies bounded paths, state references, and validation hints as additional context; it never echoes the raw prompt. A prompt consisting of `continue`, `계속해`, `계속`, or `이어서` selects continuation context. `Stop` runs the read-only ContextRail document/state check and reports violations without returning a Codex block decision or executing validation hints.
+`UserPromptSubmit` supplies bounded paths, state references, and validation hints as additional context; it never echoes the raw prompt. A prompt consisting of `continue`, `계속해`, `계속`, or `이어서` selects continuation context. `Stop` runs the read-only ContextRail document/state check and reports violations without returning a Codex block decision or executing validation hints. After the handler completes, it atomically records the bounded diagnostic marker described above; this is the only Stop-side project write.
 
 `hooks verify` checks exact commands, executable paths, duplicate entries, feature and receipt state, preservation of non-owned Hooks, selected-project opt-in, and isolated synthetic Hook behavior. It reports live Codex context injection as `unverified`; confirm that only by starting or restarting a trusted Codex session and observing the next prompt. Codex may require repository trust before project configuration takes effect.
 
@@ -230,6 +266,8 @@ Uninstall restores only the feature edit recorded by ContextRail and refuses to 
 | `contextrail --version` | Print the installed version | No |
 | `contextrail --help` | Print CLI usage | No |
 | `contextrail setup` | Plan or interactively apply the selected end-to-end profile | No |
+| `contextrail doctor` | Print concise project, Hook, Stop-dispatch, and capture readiness | No |
+| `contextrail handoff` | Create a new Codex task with managed Throughline memory | Yes, new Codex task |
 | `contextrail init` | Plan or create a neutral foundation in an empty target | No |
 | `contextrail adopt` | Plan or add missing neutral scaffold files | No |
 | `contextrail adopt --profile existing-repository` | Map an existing repository without duplicate state | No |
@@ -291,6 +329,7 @@ ContextRail owns repository routing, authority, file memory, validation hints, a
 contextrail throughline prepare --dry-run --json
 contextrail throughline install --dry-run --json
 contextrail throughline verify --json
+contextrail handoff --open-host desktop
 ```
 
 The primary setup command selects and SHA-256 verifies the pinned GitHub Release artifact automatically. Advanced lower-level installation can still accept a locally prepared artifact. ContextRail Core works without Throughline. See [the integration authority](docs/authority/INTEGRATIONS.md) and [integration README](integrations/throughline/README.md) for details.
@@ -337,6 +376,10 @@ Do not remove ownership checks or force an overwrite. Review the reported file, 
 
 Use the stable issue `code`, `path`, and `message` fields in JSON output. Fix the referenced project contract and run the narrowest relevant validation before repeating the full check.
 
+### Hooks are trusted but automatic capture is missing
+
+Run `contextrail doctor` first. If `Stop dispatch` and `Throughline capture` do not identify the failing boundary, run `contextrail doctor --debug` and inspect the redacted ContextRail evidence plus upstream Throughline diagnostics. Use `contextrail doctor --json` for automation; do not parse the human text.
+
 ## Project links
 
 - [Latest release](https://github.com/jeongyeop91/ContextRail/releases/latest)
@@ -360,4 +403,5 @@ ContextRail is available under the [MIT License](LICENSE).
 - Validation hints are returned but never executed automatically.
 - Throughline is optional in reduced profiles and automatically installed or verified by the full setup profile.
 - Live Codex context injection needs a trusted session and cannot be proven by configuration inspection alone.
+- A recent ContextRail Stop marker proves Hook dispatch, not successful Throughline capture; `doctor` reports them independently.
 - No GUI, hosted telemetry, vector index, or RAG service is included.
