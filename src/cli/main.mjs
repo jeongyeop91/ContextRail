@@ -42,7 +42,7 @@ import { VERSION } from '../version.mjs';
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const USAGE = `Usage:
-  contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE] [--core-only|--no-context-hooks|--use-existing-throughline] [--dry-run|--apply] [--json]
+  contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE] [--core-only|--no-context-hooks|--use-existing-throughline] [--dry-run|--apply] [--debug|--json]
   contextrail doctor [--target PATH] [--debug|--json]
   contextrail handoff [--session codex:ID] [--open-host desktop|vscode|cli|auto] [--debug|--json]
   contextrail init|adopt|upgrade [--target PATH] [--dry-run|--apply] [--json]

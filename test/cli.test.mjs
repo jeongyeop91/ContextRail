@@ -57,6 +57,7 @@ test('version and help are successful read-only top-level options', async () => 
   const help = capture();
   assert.equal(await run(['--help'], help.io), 0);
   assert.match(help.output().stdout, /^Usage:/);
+  assert.match(help.output().stdout, /contextrail setup .*\[--debug\|--json\]/);
   assert.equal(help.output().stderr, '');
 });
 
