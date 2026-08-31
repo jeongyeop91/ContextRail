@@ -6,6 +6,8 @@
 
 Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md`
 
+Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-diagnostics.md`
+
 - [ ] Add verified release metadata and portable Throughline execution.
 - [ ] Add cross-platform Codex Hook registration.
 - [ ] Implement plan-first, resumable `contextrail setup` with TTY confirmation.

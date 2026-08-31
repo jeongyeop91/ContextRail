@@ -91,6 +91,14 @@ specific corrective action.
 The existing lower-level `throughline`, `hooks`, and `automation` commands remain
 available for compatibility and advanced recovery.
 
+When ContextRail's own Codex `Stop` handler runs, it updates one bounded local
+runtime marker under `.context-rail/runtime/`. The marker contains only the event
+name, timestamp, hashed session identity, project match, and handler result. It
+never contains prompt text, assistant text, tool payloads, environment values, or
+credentials. Normal doctor output uses only its readiness classification;
+`--debug` may show the marker fields. This is diagnostic evidence that Codex
+dispatched a Stop event, not evidence that Throughline captured the same turn.
+
 ## Output modes
 
 ### Human mode (default)
@@ -174,6 +182,8 @@ rendering.
 - A host-open failure still reports whether the new task and memory injection
   succeeded, together with the manual resume command.
 - Debug output redacts credentials and token-shaped environment values.
+- The Hook marker is local, bounded to one latest event, and Git-ignored with the
+  rest of `.context-rail/runtime/`.
 
 ## Validation
 
