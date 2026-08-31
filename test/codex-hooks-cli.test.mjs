@@ -102,6 +102,19 @@ test('internal Hook commands dispatch stdin without echoing prompts and always f
   assert.equal(routed.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
   assert.equal(prompt.output().stdout.includes(rawPrompt), false);
 
+  const stop = capture();
+  assert.equal(await run(['hook', 'stop'], stop.io, {
+    hookInput: JSON.stringify({
+      session_id: 'thread-sensitive-id',
+      cwd: scope.target,
+      last_assistant_message: '3973 private response',
+    }),
+  }), 0);
+  assert.equal(stop.output().stdout, '{}\n');
+  const marker = await readFile(join(scope.target, '.context-rail/runtime/codex-hook-events.json'), 'utf8');
+  assert.match(marker, /"event": "Stop"/);
+  assert.doesNotMatch(marker, /thread-sensitive-id|3973/);
+
   const malformed = capture();
   assert.equal(await run(['hook', 'stop'], malformed.io, { hookInput: '{not-json' }), 0);
   assert.match(JSON.parse(malformed.output().stdout).systemMessage, /continuing without blocking/i);

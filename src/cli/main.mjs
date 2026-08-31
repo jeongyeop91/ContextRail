@@ -20,6 +20,7 @@ import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
 import { normalizeSetupOptions } from '../core/setup.mjs';
 import { findContextRailRoot, handleStop, handleUserPromptSubmit } from '../integrations/codex-hook-runtime.mjs';
+import { recordCodexHookEvent } from '../integrations/codex-hook-diagnostics.mjs';
 import {
   applyCodexHooksInstall,
   applyCodexHooksUninstall,
@@ -356,6 +357,13 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       const result = args[1] === 'user-prompt-submit'
         ? await handleUserPromptSubmit(payload)
         : await handleStop(payload);
+      if (args[1] === 'stop' && result.projectRoot) {
+        try {
+          await recordCodexHookEvent({ projectRoot: result.projectRoot, payload, result });
+        } catch {
+          // Hook diagnostics are best effort and must not block Codex.
+        }
+      }
       io.stdout.write(result.output);
     } catch {
       failOpenHookOutput(io);
