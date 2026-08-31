@@ -204,3 +204,40 @@ test('Throughline verify and doctor use the selected managed JavaScript binary',
     [nodePath, binPath, 'doctor', '--codex'],
   ]);
 });
+
+test('handoff has concise, json, and debug output without exposing raw upstream output by default', async () => {
+  const operation = {
+    result: {
+      schema: 'contextrail.handoff.v1',
+      status: 'started',
+      sourceSession: 'codex:source-thread',
+      newTask: { id: 'new-thread', status: 'started' },
+      memory: { injected: true, delivery: 'developer-item' },
+      open: { status: 'opened', host: 'desktop', resumeCommand: null },
+    },
+    debugEvidence: { upstream: { stdout: 'raw-internal-output', stderr: '' } },
+  };
+  const human = capture();
+  assert.equal(await run(['handoff', '--open-host', 'desktop'], human.io, {
+    runManagedHandoff: async () => operation,
+  }), 0);
+  assert.match(human.output().stdout, /ContextRail handoff started/);
+  assert.match(human.output().stdout, /New task: new-thread/);
+  assert.doesNotMatch(human.output().stdout, /raw-internal-output|"schema"/);
+
+  const json = capture();
+  assert.equal(await run(['handoff', '--session', 'codex:source-thread', '--json'], json.io, {
+    runManagedHandoff: async (options) => {
+      assert.equal(options.sessionId, 'codex:source-thread');
+      return operation;
+    },
+  }), 0);
+  assert.equal(JSON.parse(json.output().stdout).newTask.id, 'new-thread');
+
+  const debug = capture();
+  assert.equal(await run(['handoff', '--debug'], debug.io, {
+    runManagedHandoff: async () => operation,
+  }), 0);
+  assert.match(debug.output().stdout, /Debug evidence/);
+  assert.match(debug.output().stdout, /raw-internal-output/);
+});

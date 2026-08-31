@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
 import { managedDataRoot } from '../adapters/platform.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
-import { renderDebugEvidence, renderDoctorHuman, renderSetupHuman } from './presentation.mjs';
+import { renderDebugEvidence, renderDoctorHuman, renderHandoffHuman, renderSetupHuman } from './presentation.mjs';
 import { downloadVerifiedArtifact } from '../adapters/release.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
@@ -23,6 +23,7 @@ import { normalizeSetupOptions } from '../core/setup.mjs';
 import { findContextRailRoot, handleStop, handleUserPromptSubmit } from '../integrations/codex-hook-runtime.mjs';
 import { readCodexHookEvent, recordCodexHookEvent } from '../integrations/codex-hook-diagnostics.mjs';
 import { buildDoctorReport } from '../integrations/doctor.mjs';
+import { runManagedHandoff } from '../integrations/throughline-handoff.mjs';
 import {
   applyCodexHooksInstall,
   applyCodexHooksUninstall,
@@ -43,6 +44,7 @@ const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const USAGE = `Usage:
   contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE] [--core-only|--no-context-hooks|--use-existing-throughline] [--dry-run|--apply] [--json]
   contextrail doctor [--target PATH] [--debug|--json]
+  contextrail handoff [--session codex:ID] [--open-host desktop|vscode|cli|auto] [--debug|--json]
   contextrail init|adopt|upgrade [--target PATH] [--dry-run|--apply] [--json]
   contextrail adopt --profile existing-repository --adoption-config FILE [--target PATH] [--dry-run|--apply] [--json]
   contextrail check [--target PATH] [--json]
@@ -420,6 +422,39 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
       if (debug) io.stdout.write(renderDebugEvidence(report.debugEvidence ?? report));
     }
     return report.status === 'ready' ? 0 : 3;
+  }
+
+  if (command === 'handoff') {
+    const supported = ['--session', '--open-host', '--json', '--debug'];
+    const sessionId = optionValue(args, '--session');
+    const openHost = optionValue(args, '--open-host') ?? 'auto';
+    if (unknownOptions(args, 0, supported)
+      || (args.includes('--session') && !sessionId)
+      || (args.includes('--open-host') && !optionValue(args, '--open-host'))
+      || !['auto', 'desktop', 'vscode', 'cli'].includes(openHost)) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    const home = resolve(dependencies.home ?? homedir());
+    const platform = dependencies.platform ?? process.platform;
+    const environment = dependencies.env ?? process.env;
+    const managedRoot = dependencies.managedRoot
+      ?? resolve(managedDataRoot({ platform, home, env: environment }), 'throughline');
+    const operation = await (dependencies.runManagedHandoff ?? runManagedHandoff)({
+      managedRoot,
+      nodePath: resolve(dependencies.nodePath ?? process.execPath),
+      sessionId,
+      openHost,
+      processAdapter: dependencies.processAdapter ?? nodeProcess,
+      env: environment,
+      fs: nodeFilesystem,
+    });
+    if (json) writeStructured(operation.result, true, io);
+    else {
+      io.stdout.write(renderHandoffHuman(operation.result));
+      if (debug) io.stdout.write(renderDebugEvidence(operation.debugEvidence));
+    }
+    return operation.result.status === 'started' ? 0 : 3;
   }
 
   if (command === 'hook' && ['user-prompt-submit', 'stop'].includes(args[1])) {
