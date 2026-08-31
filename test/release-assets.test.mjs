@@ -25,12 +25,12 @@ async function fixture() {
   throughlineBytes[9] = 255;
   const setupManifest = {
     schema: 1,
-    releaseVersion: '0.3.0-rc.9',
+    releaseVersion: '0.3.0-rc.10',
     throughline: {
       packageVersion: '0.10.3-codex.3',
       artifact: {
         name: 'throughline-0.10.3-codex.3.tgz',
-        url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.9/throughline-0.10.3-codex.3.tgz',
+        url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.10/throughline-0.10.3-codex.3.tgz',
         sha256: sha256(throughlineBytes),
       },
     },
@@ -48,18 +48,18 @@ test('assembles byte-identical registry and GitHub assets with a detached integr
     packageTarball: scope.packageTarball,
     throughlineArtifact: scope.throughlineArtifact,
     setupManifestPath: scope.setupManifestPath,
-    packageMetadata: { name: 'contextrail', version: '0.3.0-rc.9' },
+    packageMetadata: { name: 'contextrail', version: '0.3.0-rc.10' },
     fs: nodeFilesystem,
   });
   const names = (await nodeFilesystem.list(scope.output)).sort();
   assert.deepEqual(names, [
     'SHA256SUMS.txt',
-    'contextrail-0.3.0-rc.9.tgz',
+    'contextrail-0.3.0-rc.10.tgz',
     'contextrail.tgz',
     'release-manifest.json',
     'throughline-0.10.3-codex.3.tgz',
   ]);
-  const versionedBytes = await readFile(join(scope.output, 'contextrail-0.3.0-rc.9.tgz'));
+  const versionedBytes = await readFile(join(scope.output, 'contextrail-0.3.0-rc.10.tgz'));
   const stableBytes = await readFile(join(scope.output, 'contextrail.tgz'));
   assert.deepEqual(versionedBytes, stableBytes);
   assert.deepEqual(gunzipSync(versionedBytes), scope.packagePayload);
@@ -77,7 +77,7 @@ test('assembles byte-identical registry and GitHub assets with a detached integr
     contextrailSha256: sha256(versionedBytes),
     throughlineSha256: sha256(scope.throughlineBytes),
   }).ok, true);
-  assert.equal(result.releaseVersion, '0.3.0-rc.9');
+  assert.equal(result.releaseVersion, '0.3.0-rc.10');
 });
 
 test('refuses a Throughline input that differs from the embedded setup manifest', async () => {
@@ -88,7 +88,7 @@ test('refuses a Throughline input that differs from the embedded setup manifest'
     packageTarball: scope.packageTarball,
     throughlineArtifact: scope.throughlineArtifact,
     setupManifestPath: scope.setupManifestPath,
-    packageMetadata: { name: 'contextrail', version: '0.3.0-rc.9' },
+    packageMetadata: { name: 'contextrail', version: '0.3.0-rc.10' },
     fs: nodeFilesystem,
   }), /Throughline artifact digest mismatch/);
   assert.equal(await nodeFilesystem.exists(scope.output), false);

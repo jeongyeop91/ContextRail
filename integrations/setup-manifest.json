@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "releaseVersion": "0.3.0-rc.9",
+  "releaseVersion": "0.3.0-rc.10",
   "nodeVersion": ">=22.13",
   "platforms": ["darwin", "linux", "win32"],
   "throughline": {
@@ -12,7 +12,7 @@
     "removalCondition": "Remove the compatibility patch only after an immutable upstream release contains equivalent current Codex rollout support and passes the same capture verification.",
     "artifact": {
       "name": "throughline-0.10.3-codex.3.tgz",
-      "url": "https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.9/throughline-0.10.3-codex.3.tgz",
+      "url": "https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.10/throughline-0.10.3-codex.3.tgz",
       "sha256": "5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2"
     }
   }

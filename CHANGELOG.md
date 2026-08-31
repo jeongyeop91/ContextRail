@@ -2,6 +2,19 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.10 - 2026-08-31
+
+### Added
+
+- Add concise human `doctor` output that distinguishes Codex Hook registration, ContextRail Stop dispatch, and Throughline capture evidence.
+- Add one-command `contextrail handoff` for managed Throughline fresh-task creation, memory injection, and host opening.
+- Record a bounded, content-free Stop-dispatch marker under Git-ignored project runtime state.
+
+### Changed
+
+- Make flagless `setup`, `doctor`, and `handoff` output concise for people while retaining `--json` for automation and a separate redacted `--debug` mode.
+- Migrate deprecated Codex `[features].codex_hooks` configuration to canonical `[features].hooks` without restoring the legacy key on uninstall.
+
 ## 0.3.0-rc.9 - 2026-08-28
 
 ### Fixed
