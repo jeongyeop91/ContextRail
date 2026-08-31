@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Verify and publish the concise setup/doctor/handoff candidate, rerun automatic Stop capture and fresh-task handoff on native Windows, and retain the Windows live gate for latest"],
+      "nextSteps": ["Install 0.3.0-rc.10 in place, rerun automatic Stop capture and one-command fresh-task handoff on native Windows, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

@@ -20,5 +20,5 @@ Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-di
 - [x] Publish `0.3.0-rc.8` with resilient Windows setup progress receipt replacement.
 - [x] Publish `0.3.0-rc.9` with Codex Desktop app-server executable discovery.
 - [x] Implement concise human setup/doctor output, explicit debug evidence, canonical Hook feature migration, bounded Stop diagnostics, and one-command managed handoff.
-- [ ] Publish the updated README and implementation as `0.3.0-rc.10`.
+- [x] Publish the updated README and implementation as `0.3.0-rc.10`.
 - [ ] Re-run the Windows live pilot and promote npm `latest` only after capture and handoff evidence pass.

@@ -70,11 +70,12 @@ Active item: `CR-008`
 - The follow-up implementation now provides concise default `setup`, top-level `doctor`, and one-command managed `handoff`; preserves stable JSON output; isolates local-path troubleshooting behind `--debug`; migrates deprecated `codex_hooks` without restoring it on uninstall; and writes a content-free Stop-dispatch marker under ignored runtime state.
 - Focused tests distinguish Hook registration, ContextRail Stop dispatch, and Throughline capture as separate evidence. Automatic Windows Stop capture has not yet been revalidated against a published candidate, so no capture success is claimed.
 - Release-candidate metadata is prepared for `0.3.0-rc.10`. Repository-wide verification passes 169 tests, self-check with 8 Active Authority files, and the neutral template smoke. The locally assembled ContextRail tarballs are byte-identical at SHA-256 `aae98a9001b9b300d545c43553dd6ff2bebffa2f22a021b5331983837622a876`; the reproducible Throughline artifact remains SHA-256 `5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2`.
+- Release commit and annotated tag: `e343c21` / `v0.3.0-rc.10`. Main and tag verification, GitHub prerelease assembly, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail tarballs are byte-identical at SHA-256 `aae98a9001b9b300d545c43553dd6ff2bebffa2f22a021b5331983837622a876`.
 
 ## Next steps
 
-1. Publish `0.3.0-rc.10` under npm `next` without promoting `latest`.
-2. Re-run native Windows in-place setup, concise `doctor`, automatic Stop capture, and one-command handoff acceptance.
+1. Re-run native Windows in-place setup and concise `doctor` with `0.3.0-rc.10`.
+2. Exercise automatic Stop capture and one-command handoff as separate live acceptance boundaries.
 3. Record the Windows evidence and leave CR-004 outside the active scope.
 
 ## Blockers
