@@ -98,6 +98,10 @@ test('install dry-run plans absolute synchronous hooks and changes no HOME file'
   ]);
   assert.match(plan.hashes.hooksAfter, /^[a-f\d]{64}$/);
   assert.match(plan.hashes.configAfter, /^[a-f\d]{64}$/);
+  assert.doesNotMatch(plan.after.config, /^\s*codex_hooks\s*=/m);
+  assert.match(plan.after.config, /^hooks = true$/m);
+  assert.match(plan.after.config, /\[history\]\npersistence = "save-all"/);
+  assert.equal(plan.receipt.migrationEdit.type, 'normalize');
   for (const entry of plan.entries) {
     const handler = entry.group.hooks[0];
     const eventName = entry.event === 'UserPromptSubmit' ? 'user-prompt-submit' : 'stop';
@@ -125,6 +129,7 @@ test('install apply preserves Throughline and user hooks and is idempotent', asy
   assert.equal(contextRailHandlers(hooks, 'UserPromptSubmit').length, 1);
   assert.equal(contextRailHandlers(hooks, 'Stop').length, 1);
   assert.match(await readFile(join(scope.home, '.codex/config.toml'), 'utf8'), /^hooks = true$/m);
+  assert.doesNotMatch(await readFile(join(scope.home, '.codex/config.toml'), 'utf8'), /^\s*codex_hooks\s*=/m);
   assert.equal(await nodeFilesystem.exists(join(scope.home, RECEIPT)), true);
 
   const repeatedPlan = await planCodexHooksInstall({ home: scope.home, nodePath: scope.nodePath, cliPath: scope.cliPath, fs: nodeFilesystem });
@@ -284,7 +289,7 @@ test('install rolls back every HOME file when a transactional rename fails', asy
   assert.equal(await nodeFilesystem.exists(join(scope.home, RECEIPT)), false);
 });
 
-test('uninstall removes only owned entries and restores the changed feature flag', async () => {
+test('uninstall removes only owned entries and preserves canonical pre-install feature semantics', async () => {
   const scope = await fixture();
   const install = await planCodexHooksInstall({ home: scope.home, nodePath: scope.nodePath, cliPath: scope.cliPath, fs: nodeFilesystem });
   await applyCodexHooksInstall(install, { fs: nodeFilesystem });
@@ -295,8 +300,55 @@ test('uninstall removes only owned entries and restores the changed feature flag
   const result = await applyCodexHooksUninstall(plan, { fs: nodeFilesystem });
   assert.equal(result.status, 'uninstalled');
   assert.deepEqual(JSON.parse(await readFile(join(scope.home, '.codex/hooks.json'), 'utf8')), scope.hooks);
-  assert.equal(await readFile(join(scope.home, '.codex/config.toml'), 'utf8'), scope.config);
+  const config = await readFile(join(scope.home, '.codex/config.toml'), 'utf8');
+  assert.doesNotMatch(config, /^\s*codex_hooks\s*=/m);
+  assert.match(config, /^hooks = false$/m);
+  assert.match(config, /\[history\]\npersistence = "save-all"/);
   assert.equal(await nodeFilesystem.exists(join(scope.home, RECEIPT)), false);
+});
+
+test('legacy-only true migrates to canonical true and uninstall does not restore the deprecated key', async () => {
+  const scope = await fixture();
+  const configPath = join(scope.home, '.codex/config.toml');
+  await writeFile(configPath, '[features]\n  codex_hooks = true # keep comment\n\n[history]\npersistence = "save-all"\n');
+
+  const install = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+  assert.equal(install.status, 'planned');
+  assert.match(install.after.config, /^  hooks = true # keep comment$/m);
+  assert.doesNotMatch(install.after.config, /codex_hooks/);
+  assert.equal(install.receipt.featureEdit.type, 'none');
+  await applyCodexHooksInstall(install, { fs: nodeFilesystem });
+
+  const uninstall = await planCodexHooksUninstall({ home: scope.home, fs: nodeFilesystem });
+  assert.equal(uninstall.ok, true);
+  await applyCodexHooksUninstall(uninstall, { fs: nodeFilesystem });
+  const config = await readFile(configPath, 'utf8');
+  assert.match(config, /^  hooks = true # keep comment$/m);
+  assert.doesNotMatch(config, /codex_hooks/);
+});
+
+test('canonical hooks wins over a conflicting legacy key while trust sections stay byte-preserved', async () => {
+  const scope = await fixture();
+  const configPath = join(scope.home, '.codex/config.toml');
+  const trust = "[hooks.state.'C:\\Users\\pilot\\.codex\\hooks.json:stop:0:0']\ntrusted_hash = \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n";
+  await writeFile(configPath, `[features]\ncodex_hooks = false\nhooks = true\n\n${trust}`);
+
+  const install = await planCodexHooksInstall({
+    home: scope.home,
+    nodePath: scope.nodePath,
+    cliPath: scope.cliPath,
+    fs: nodeFilesystem,
+  });
+  assert.equal(install.status, 'planned');
+  assert.doesNotMatch(install.after.config, /codex_hooks/);
+  assert.match(install.after.config, /^hooks = true$/m);
+  assert.match(install.after.config, new RegExp(trust.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.equal(install.receipt.featureEdit.type, 'none');
 });
 
 test('uninstall refuses concurrent Hook changes after installation', async () => {

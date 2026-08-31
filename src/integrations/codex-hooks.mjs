@@ -162,6 +162,33 @@ function featureState(content) {
   return canonical ?? deprecated ?? { enabled: true, key: 'default', value: null };
 }
 
+function migrateFeature(content) {
+  if (content === null) return { content, edit: { type: 'none' } };
+  const lines = content.split('\n');
+  const section = featuresSection(lines);
+  if (!section) return { content, edit: { type: 'none' } };
+  const canonicalIndexes = [];
+  const deprecatedIndexes = [];
+  for (let index = section.start + 1; index < section.end; index += 1) {
+    const match = /^\s*(hooks|codex_hooks)\s*=\s*(true|false)\s*(?:#.*)?$/.exec(lines[index]);
+    if (match?.[1] === 'hooks') canonicalIndexes.push(index);
+    if (match?.[1] === 'codex_hooks') deprecatedIndexes.push(index);
+  }
+  if (deprecatedIndexes.length === 0) return { content, edit: { type: 'none' } };
+
+  if (canonicalIndexes.length === 0) {
+    const selected = deprecatedIndexes.at(-1);
+    lines[selected] = lines[selected].replace(/codex_hooks/, 'hooks');
+    for (const index of deprecatedIndexes.slice(0, -1).reverse()) lines.splice(index, 1);
+  } else {
+    for (const index of deprecatedIndexes.reverse()) lines.splice(index, 1);
+  }
+  return {
+    content: lines.join('\n'),
+    edit: { type: 'normalize', removedDeprecatedKey: true },
+  };
+}
+
 function receiptConfigCurrent(content, receipt) {
   if (receipt.hashes?.configAfter === contentHash(content)) return true;
   return receipt.featureEdit?.type === 'none' && featureState(content).enabled;
@@ -270,11 +297,36 @@ export async function planCodexHooksInstall({ home, nodePath, cliPath, fs = node
     return { ...finish(issues), status: 'conflict', home: root, files: [], entries, hashes: hashes(before), before };
   }
 
+  const migration = migrateFeature(before.config);
+
   const counts = entries.map((entry) => entryCounts(parsed, entry));
   if (receipt) {
     const live = hashes(before);
     const ownedCurrent = counts.every((count) => count.exact === 1 && count.owned === 1)
       && receiptConfigCurrent(before.config, receipt);
+    if (ownedCurrent && migration.edit.type !== 'none') {
+      const migratedFeature = enableFeature(migration.content);
+      const refreshedReceipt = {
+        ...receipt,
+        nodePath,
+        cliPath,
+        entries,
+        migrationEdit: migration.edit,
+        hashes: {
+          ...receipt.hashes,
+          hooksAfter: live.hooks,
+          configAfter: contentHash(migratedFeature.content),
+        },
+        nonOwnedHooksSha256: nonOwnedDigest(parsed, entries),
+      };
+      const after = { hooks: before.hooks, config: migratedFeature.content, receipt: '[planned]' };
+      return {
+        ...finish([], { entries: entries.length, featureMigrated: true, receiptRefreshed: true }),
+        status: 'planned', home: root, entries, before, after, receipt: refreshedReceipt,
+        hashes: refreshedReceipt.hashes,
+        files: publicFiles(before, after),
+      };
+    }
     if (ownedCurrent && receipt.hashes?.hooksAfter === live.hooks) {
       return {
         ...finish([]), status: 'already_installed', home: root, entries, before, after: before,
@@ -308,7 +360,7 @@ export async function planCodexHooksInstall({ home, nodePath, cliPath, fs = node
   }
 
   const nextHooks = appendEntries(parsed, entries);
-  const feature = enableFeature(before.config);
+  const feature = enableFeature(migration.content);
   const after = { hooks: json(nextHooks), config: feature.content, receipt: '[planned]' };
   const planHashes = {
     hooksBefore: contentHash(before.hooks),
@@ -322,12 +374,17 @@ export async function planCodexHooksInstall({ home, nodePath, cliPath, fs = node
     nodePath,
     cliPath,
     entries,
+    migrationEdit: migration.edit,
     featureEdit: feature.edit,
     hashes: planHashes,
     nonOwnedHooksSha256: nonOwnedDigest(parsed, entries),
   };
   return {
-    ...finish([], { entries: entries.length, featureChanged: feature.edit.type !== 'none' }),
+    ...finish([], {
+      entries: entries.length,
+      featureChanged: feature.edit.type !== 'none',
+      featureMigrated: migration.edit.type !== 'none',
+    }),
     status: 'planned', home: root, entries, before, after, receipt: receiptData,
     hashes: planHashes,
     files: publicFiles(before, after),
