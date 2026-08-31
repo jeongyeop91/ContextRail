@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { nodeFilesystem } from '../adapters/filesystem.mjs';
 import { managedDataRoot } from '../adapters/platform.mjs';
 import { nodeProcess } from '../adapters/process.mjs';
+import { renderDebugEvidence, renderDoctorHuman, renderSetupHuman } from './presentation.mjs';
 import { downloadVerifiedArtifact } from '../adapters/release.mjs';
 import { EXISTING_REPOSITORY_PROFILE, normalizeAdoptionConfig, planExistingRepositoryAdoption, planExistingRepositoryUpgrade } from '../core/adoption.mjs';
 import { applyProjectAutomation, codexAutomation, planProjectAutomation } from '../core/automation.mjs';
@@ -20,7 +21,8 @@ import { applyScaffold, planScaffold } from '../core/scaffold.mjs';
 import { validateState } from '../core/state.mjs';
 import { normalizeSetupOptions } from '../core/setup.mjs';
 import { findContextRailRoot, handleStop, handleUserPromptSubmit } from '../integrations/codex-hook-runtime.mjs';
-import { recordCodexHookEvent } from '../integrations/codex-hook-diagnostics.mjs';
+import { readCodexHookEvent, recordCodexHookEvent } from '../integrations/codex-hook-diagnostics.mjs';
+import { buildDoctorReport } from '../integrations/doctor.mjs';
 import {
   applyCodexHooksInstall,
   applyCodexHooksUninstall,
@@ -33,13 +35,14 @@ import { applyManagedInstall, planManagedInstall, rollbackManagedInstall } from 
 import { planPreparation } from '../integrations/throughline-prepare.mjs';
 import { resolveManagedThroughline, runThroughlineCommand, verifyThroughline } from '../integrations/throughline-verify.mjs';
 import { loadSetupManifest } from '../integrations/setup-manifest.mjs';
-import { applySetup, planSetup } from '../integrations/setup.mjs';
+import { applySetup, planSetup, verifySetup } from '../integrations/setup.mjs';
 import { VERSION } from '../version.mjs';
 
 const PROJECT_TEMPLATE = resolve(dirname(fileURLToPath(import.meta.url)), '../../templates/project');
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const USAGE = `Usage:
   contextrail setup [--target PATH] [--project new|existing] [--adoption-config FILE] [--core-only|--no-context-hooks|--use-existing-throughline] [--dry-run|--apply] [--json]
+  contextrail doctor [--target PATH] [--debug|--json]
   contextrail init|adopt|upgrade [--target PATH] [--dry-run|--apply] [--json]
   contextrail adopt --profile existing-repository --adoption-config FILE [--target PATH] [--dry-run|--apply] [--json]
   contextrail check [--target PATH] [--json]
@@ -65,7 +68,7 @@ function optionValue(args, name) {
 
 function unknownOptions(args, positionalCount, supported) {
   const options = new Set(supported);
-  const flags = new Set(['--json', '--dry-run', '--apply', '--doctor', '--core-only', '--no-context-hooks', '--use-existing-throughline']);
+  const flags = new Set(['--json', '--debug', '--dry-run', '--apply', '--doctor', '--core-only', '--no-context-hooks', '--use-existing-throughline']);
   let positionals = 0;
   for (let index = 1; index < args.length; index += 1) {
     const value = args[index];
@@ -123,6 +126,15 @@ function writeResult(result, json, io) {
 function writeStructured(result, json, io) {
   if (json) io.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else io.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+}
+
+function writeSetup(result, { json, debug, io }) {
+  if (json) {
+    writeStructured(result, true, io);
+    return;
+  }
+  io.stdout.write(renderSetupHuman(result));
+  if (debug) io.stdout.write(renderDebugEvidence(result));
 }
 
 function publicScaffoldPlan(plan, applied = null) {
@@ -242,9 +254,14 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
   }
   const root = resolve(targetValue ?? process.cwd());
   const json = args.includes('--json');
+  const debug = args.includes('--debug');
+  if (json && debug) {
+    io.stderr.write('--json and --debug cannot be used together\n');
+    return 2;
+  }
 
   if (command === 'setup') {
-    const supported = ['--target', '--project', '--adoption-config', '--core-only', '--no-context-hooks', '--use-existing-throughline', '--dry-run', '--apply', '--json'];
+    const supported = ['--target', '--project', '--adoption-config', '--core-only', '--no-context-hooks', '--use-existing-throughline', '--dry-run', '--apply', '--json', '--debug'];
     const project = optionValue(args, '--project');
     const adoptionConfig = optionValue(args, '--adoption-config');
     const input = {
@@ -301,16 +318,16 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
     const first = await selectedPlanSetup(setupDependencies);
     const explicitApply = args.includes('--apply');
     if (first.plan.status !== 'planned') {
-      writeStructured(first.plan, json, io);
+      writeSetup(first.plan, { json, debug, io });
       return first.plan.status === 'needs_input' ? 1 : 3;
     }
     if (args.includes('--dry-run')) {
-      writeStructured(first.plan, json, io);
+      writeSetup(first.plan, { json, debug, io });
       return 0;
     }
 
     const interactive = dependencies.stdinIsTTY ?? io.stdin?.isTTY ?? process.stdin.isTTY;
-    if (!explicitApply) writeStructured(first.plan, json, io);
+    if (!explicitApply) writeSetup(first.plan, { json, debug, io });
     if (!explicitApply && !interactive) return 0;
     let approved = explicitApply;
     if (!explicitApply) {
@@ -338,13 +355,71 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
     }
     try {
       const result = await selectedApplySetup({ planned: selected, approvedPlanId: first.plan.id, dependencies: setupDependencies });
-      writeStructured(result, json, io);
+      writeSetup(result, { json, debug, io });
       return 0;
     } catch (error) {
-      if (json && error.setup) writeStructured(error.setup, true, io);
+      if (error.setup) writeSetup(error.setup, { json, debug, io });
+      else if (debug) io.stdout.write(renderDebugEvidence({ message: error.message, stack: error.stack }));
       io.stderr.write(`${error.message}\n`);
       return 3;
     }
+  }
+
+  if (command === 'doctor') {
+    if (unknownOptions(args, 0, ['--target', '--json', '--debug'])) {
+      io.stderr.write(USAGE);
+      return 2;
+    }
+    let report = dependencies.doctorReport;
+    if (!report) {
+      const home = resolve(dependencies.home ?? homedir());
+      const platform = dependencies.platform ?? process.platform;
+      const environment = dependencies.env ?? process.env;
+      const managedRoot = dependencies.managedRoot
+        ?? resolve(managedDataRoot({ platform, home, env: environment }), 'throughline');
+      const adapter = dependencies.processAdapter ?? nodeProcess;
+      const setupReport = await (dependencies.verifySetup ?? verifySetup)({
+        target: root,
+        home,
+        managedRoot,
+        nodePath: resolve(dependencies.nodePath ?? process.execPath),
+        cliPath: resolve(dependencies.cliPath ?? process.argv[1]),
+        env: environment,
+        fs: nodeFilesystem,
+        processAdapter: adapter,
+        existingThroughlineBinary: dependencies.existingThroughlineBinary ?? 'throughline',
+        codexSmoke: { route: 'not_run', continue: 'not_run', check: 'not_run' },
+      });
+      const hookEvent = await readCodexHookEvent({ target: root, fs: nodeFilesystem });
+      let evidence = null;
+      if (debug) {
+        evidence = { setupReport, hookEvent };
+        try {
+          const invocation = await resolveManagedThroughline({
+            managedRoot,
+            nodePath: dependencies.nodePath ?? process.execPath,
+            fs: nodeFilesystem,
+          });
+          const upstream = await runThroughlineCommand({
+            ...invocation,
+            processAdapter: adapter,
+            env: environment,
+            args: ['doctor', '--codex'],
+            timeoutMs: 30000,
+          });
+          evidence = { ...evidence, invocation, upstream };
+        } catch (error) {
+          evidence = { ...evidence, upstreamError: error.code ?? error.message };
+        }
+      }
+      report = buildDoctorReport({ setupReport, hookEvent, debugEvidence: evidence });
+    }
+    if (json) writeStructured(report, true, io);
+    else {
+      io.stdout.write(renderDoctorHuman(report));
+      if (debug) io.stdout.write(renderDebugEvidence(report.debugEvidence ?? report));
+    }
+    return report.status === 'ready' ? 0 : 3;
   }
 
   if (command === 'hook' && ['user-prompt-submit', 'stop'].includes(args[1])) {

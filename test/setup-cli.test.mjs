@@ -41,7 +41,8 @@ test('flagless non-TTY setup is plan-only and never reads confirmation or applie
     applySetup: async () => { applies += 1; },
   });
   assert.equal(code, 0);
-  assert.equal(JSON.parse(stream.output().stdout).status, 'planned');
+  assert.match(stream.output().stdout, /^ContextRail setup plan/m);
+  assert.doesNotMatch(stream.output().stdout, /"id"|aaaaaaaa/);
   assert.equal(confirms, 0);
   assert.equal(applies, 0);
 });
@@ -65,7 +66,8 @@ test('interactive setup renders the plan and applies only after affirmative conf
     });
     assert.equal(code, 0);
     assert.equal(applies, expectedApplies);
-    assert.match(stream.output().stdout, /"status": "planned"/);
+    assert.match(stream.output().stdout, /ContextRail setup plan/);
+    if (expectedApplies) assert.match(stream.output().stdout, /ContextRail setup complete/);
   }
 });
 
@@ -119,4 +121,29 @@ test('setup returns needs_input and rejects ambiguous or incompatible CLI flags'
     assert.equal(await run(args, stream.io, { planSetup: async () => planned() }), 2);
     assert.notEqual(stream.output().stderr, '');
   }
+});
+
+test('setup debug keeps the human summary while json and debug are mutually exclusive', async () => {
+  const debug = capture();
+  assert.equal(await run(['setup', '--apply', '--debug'], debug.io, {
+    planSetup: async () => planned(),
+    applySetup: async () => ({
+      status: 'installed_live_verification_required',
+      planId: 'a'.repeat(64),
+      report: {
+        project: { state: 'ready' },
+        throughline: { state: 'hooks_ready', version: '0.10.3-codex.3' },
+        contextHooks: { state: 'registered' },
+        live: { throughline: 'unverified', context: 'unverified' },
+      },
+    }),
+  }), 0);
+  assert.match(debug.output().stdout, /ContextRail setup complete/);
+  assert.match(debug.output().stdout, /Debug evidence/);
+
+  const ambiguous = capture();
+  assert.equal(await run(['setup', '--dry-run', '--json', '--debug'], ambiguous.io, {
+    planSetup: async () => planned(),
+  }), 2);
+  assert.notEqual(ambiguous.output().stderr, '');
 });
