@@ -65,12 +65,14 @@ Active item: `CR-008`
 - The rc.9 compatibility patch resolves an executable `CODEX_CLI_PATH`, user-local Windows Desktop layouts (including release-hash directories), and macOS Codex/ChatGPT app bundles before falling back to `PATH`. A focused Windows-path regression and a macOS no-global-PATH app-server schema audit pass; native Windows live execution remains pending.
 - Managed Throughline `0.10.3-codex.3` was reproducibly prepared from the immutable source and compatibility patch as SHA-256 `5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2`.
 - Release commit and annotated tag: `f801588` / `v0.3.0-rc.9`; GitHub prerelease automation, Ubuntu/macOS/Windows verification, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail assets are byte-identical at SHA-256 `34e0d53352cb8a9a982a2b6e40dc3bdce7081e638757260cb52c82824acb0f94`.
+- Native Windows rc.9 handoff succeeded: managed Throughline started task `01a05523-bd1e-7530-80d9-531f574c678d`, injected developer memory, preserved the current task, and opened Codex Desktop.
+- The successful Windows prompt route exposed a deprecated `[features].codex_hooks` warning. The approved follow-up separates one-command `setup` and `handoff` operations, adds concise human output plus explicit debug output, and migrates the legacy feature key through the managed setup boundary.
 
 ## Next steps
 
-1. Update the existing `C:\Projects\RathonSales` installation in place to rc.9 so managed Throughline advances to `0.10.3-codex.3`.
-2. Re-run the already-ready handoff with `--execute --open-host desktop` and record the native Windows result.
-3. Retain the Windows live gate for npm `latest`; leave CR-004 outside the active scope.
+1. Review `docs/superpowers/specs/2026-08-31-human-cli-and-handoff-design.md`.
+2. Write and execute the approved implementation plan with test-first feature migration, concise human rendering, and one-command handoff.
+3. Re-run the native Windows setup and handoff acceptance before promoting npm `latest`; leave CR-004 outside the active scope.
 
 ## Blockers
 
