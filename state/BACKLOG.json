@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish and install 0.3.0-rc.11 in place, rerun a meaningful multi-turn one-command fresh-task handoff on native Windows, and retain the Windows live gate for latest"],
+      "nextSteps": ["Install 0.3.0-rc.11 in place, rerun a meaningful multi-turn one-command fresh-task handoff on native Windows, and retain the Windows live gate for latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

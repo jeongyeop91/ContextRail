@@ -76,11 +76,12 @@ Active item: `CR-008`
 - The compatibility fix changes the default intent to `continue the current task`, removes fabricated default constraints, and adds a non-Throughline fresh-task regression proving recent L2 is retained without `Claude Code`, `adapter/projection`, or `rollback/inject` contamination. Upstream focused tests and all 783 Throughline tests pass.
 - Managed Throughline `0.10.3-codex.4` was reproducibly prepared from compatibility commit `fb930dd13dd9bd48759217a955298b010867d948` and patch SHA-256 `7fa56a91c0180f03e391b7ebe51ec4bc977a09dae30d6bf9e3d956783b6197f3`; the normalized artifact SHA-256 is `96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1`.
 - Release-candidate metadata is prepared for `0.3.0-rc.11`. Repository tests pass 169 cases, and the locally assembled ContextRail tarballs are byte-identical at SHA-256 `1539d1c529a6703b2c2bd00a81580c6204cb2b1a606b34a1efc2a96f6d37ba6d`.
+- Release commit and annotated tag: `462570a` / `v0.3.0-rc.11`. Main and tag verification, GitHub prerelease assembly (`33462713627`), and workflow-dispatched OIDC npm publication (`33462802612`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `1539d1c529a6703b2c2bd00a81580c6204cb2b1a606b34a1efc2a96f6d37ba6d`; the released Throughline artifact is SHA-256 `96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1`.
 
 ## Next steps
 
-1. Publish `0.3.0-rc.11` with managed Throughline `0.10.3-codex.4` under npm `next` and a matching GitHub prerelease.
-2. Update the native Windows installation in place, create a meaningful multi-turn source task, and rerun one-command handoff.
+1. Update the native Windows installation in place to `0.3.0-rc.11` and managed Throughline `0.10.3-codex.4`.
+2. Create a meaningful multi-turn source task and rerun one-command handoff.
 3. Confirm the new task retains that source L2 without the removed Throughline development constraints, then leave stable `latest` gated until the semantic result is recorded.
 
 ## Blockers
