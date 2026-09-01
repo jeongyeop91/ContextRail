@@ -23,4 +23,6 @@ Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-di
 - [x] Publish the updated README and implementation as `0.3.0-rc.10`.
 - [x] Prepare project-neutral Throughline handoff defaults and the `0.3.0-rc.11` release candidate.
 - [x] Publish `0.3.0-rc.11` under npm `next` with the matching GitHub prerelease.
+- [x] Correct stale Codex Hook approval diagnosis and prepare the `0.3.0-rc.12` release candidate.
+- [ ] Publish `0.3.0-rc.12` under npm `next` with the matching GitHub prerelease.
 - [ ] Rerun the Windows semantic handoff pilot and promote npm `latest` only after the evidence passes.

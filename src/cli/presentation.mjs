@@ -36,6 +36,15 @@ export function renderSetupHuman(value) {
     ].join('\n') + '\n';
   }
 
+  if (value?.status === 'degraded'
+    && value?.report?.throughline?.reasons?.includes('hooks_not_ready')) {
+    return [
+      'ContextRail setup needs attention',
+      '  Cause: changed Codex Hooks require review',
+      'Next: review the changed Hooks in the Codex Hooks menu, then send one normal prompt',
+    ].join('\n') + '\n';
+  }
+
   const cause = firstIssue(value) ?? value?.message ?? `setup status is ${value?.status ?? 'unknown'}`;
   const needsInput = value?.status === 'needs_input';
   return [

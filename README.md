@@ -83,11 +83,11 @@ The Stop marker contains only timestamp, hashed session identifier, source, proj
 The npm tarball and versioned GitHub asset are byte-identical. Install the immutable release-candidate asset if npm is unavailable:
 
 ```text
-npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.11/contextrail-0.3.0-rc.11.tgz
+npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.12/contextrail-0.3.0-rc.12.tgz
 contextrail setup
 ```
 
-Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.11`.
+Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.12`.
 
 ## What ContextRail provides
 
@@ -398,7 +398,7 @@ ContextRail is available under the [MIT License](LICENSE).
 
 ## Known limitations
 
-- `0.3.0-rc.11` is the npm `next` release candidate; `latest` remains gated on the Windows live pilot.
+- `0.3.0-rc.12` is the npm `next` release candidate; `latest` remains gated on the Windows live pilot.
 - Node.js 22.13 or newer is required.
 - Validation hints are returned but never executed automatically.
 - Throughline is optional in reduced profiles and automatically installed or verified by the full setup profile.

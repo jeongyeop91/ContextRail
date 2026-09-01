@@ -12,7 +12,7 @@ const setupResult = {
   planId: 'a'.repeat(64),
   report: {
     project: { state: 'ready', issues: [] },
-    throughline: { state: 'hooks_ready', version: '0.10.3-codex.4' },
+    throughline: { state: 'hooks_ready', version: '0.10.3-codex.5' },
     contextHooks: { state: 'registered' },
     live: { throughline: 'unverified', context: 'unverified' },
   },
@@ -21,11 +21,31 @@ const setupResult = {
 test('setup human output is concise and omits internal plan evidence', () => {
   const output = renderSetupHuman(setupResult);
   assert.match(output, /^ContextRail setup complete/m);
-  assert.match(output, /Throughline: ready \(0\.10\.3-codex\.4\)/);
+  assert.match(output, /Throughline: ready \(0\.10\.3-codex\.5\)/);
   assert.match(output, /Automatic capture: needs verification/);
   assert.match(output, /Next: contextrail doctor/);
   assert.doesNotMatch(output, /aaaa|planId|artifact|https:\/\//);
   assert.equal(output.trim().split('\n').length <= 7, true);
+});
+
+test('setup human output sends changed Hook definitions to Codex review', () => {
+  const output = renderSetupHuman({
+    status: 'degraded',
+    report: {
+      project: { state: 'ready', issues: [] },
+      throughline: {
+        state: 'degraded',
+        version: '0.10.3-codex.5',
+        reasons: ['hooks_not_ready'],
+      },
+      contextHooks: { state: 'registered' },
+    },
+  });
+
+  assert.match(output, /^ContextRail setup needs attention/m);
+  assert.match(output, /changed Codex Hooks require review/i);
+  assert.match(output, /Codex Hooks menu/i);
+  assert.doesNotMatch(output, /--debug/);
 });
 
 test('doctor human output leads with the failing component and one action', () => {

@@ -132,7 +132,7 @@ test('setup debug keeps the human summary while json and debug are mutually excl
       planId: 'a'.repeat(64),
       report: {
         project: { state: 'ready' },
-        throughline: { state: 'hooks_ready', version: '0.10.3-codex.4' },
+        throughline: { state: 'hooks_ready', version: '0.10.3-codex.5' },
         contextHooks: { state: 'registered' },
         live: { throughline: 'unverified', context: 'unverified' },
       },

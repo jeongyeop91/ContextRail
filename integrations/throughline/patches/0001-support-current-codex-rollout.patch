@@ -1,38 +1,44 @@
-From fb930dd13dd9bd48759217a955298b010867d948 Mon Sep 17 00:00:00 2001
-From: Jeongyeop <jylee91@gmail.com>
-Date: Fri, 28 Aug 2026 18:05:54 +0900
-Subject: [PATCH] fix(codex): support Desktop and neutral handoff
+From 4f450cc3a96fabc1b2606222b100f81aff3eb523 Mon Sep 17 00:00:00 2001
+From: ContextRail Release <release@contextrail.local>
+Date: Tue, 1 Sep 2026 14:10:57 +0900
+Subject: [PATCH] fix: harden Codex Desktop compatibility
 
 ---
- CHANGELOG.md                         | 17 +++++
- CLAUDE.md                            | 10 ++-
- README.ja.md                         | 12 +++-
- README.md                            | 10 +++
- bin/throughline.mjs                  |  9 +++
- docs/05_codex_first_roadmap.md       |  4 ++
- package.json                         |  2 +-
- src/cli/codex-handoff-start.mjs      |  7 +-
- src/cli/codex-handoff-start.test.mjs | 45 +++++++++++++
- src/cli/doctor.mjs                   |  4 +-
- src/cli/doctor.test.mjs              | 24 +++++++
- src/codex-capture.test.mjs           | 99 ++++++++++++++++++++++++++++
- src/codex-cli-resolver.mjs           | 83 +++++++++++++++++++++++
- src/codex-rollout-memory.mjs         | 58 ++++++++++++----
- src/handoff-record.mjs               |  8 +--
- src/handoff-record.test.mjs          | 26 +++++++-
- 16 files changed, 388 insertions(+), 30 deletions(-)
+ CHANGELOG.md                         |  21 +++++
+ CLAUDE.md                            |  10 +-
+ README.ja.md                         |  12 ++-
+ README.md                            |  10 ++
+ bin/throughline.mjs                  |   9 ++
+ docs/05_codex_first_roadmap.md       |   4 +
+ package.json                         |   2 +-
+ src/cli/codex-handoff-start.mjs      |   7 +-
+ src/cli/codex-handoff-start.test.mjs |  45 +++++++++
+ src/cli/doctor.mjs                   | 129 ++++++++++++++++++++++----
+ src/cli/doctor.test.mjs              | 133 +++++++++++++++++++--------
+ src/cli/factory-diagnostics.mjs      |   3 +-
+ src/cli/factory-diagnostics.test.mjs |  48 ++++++++--
+ src/codex-capture.test.mjs           |  99 ++++++++++++++++++++
+ src/codex-cli-resolver.mjs           |  83 +++++++++++++++++
+ src/codex-rollout-memory.mjs         |  58 +++++++++---
+ src/handoff-record.mjs               |   8 +-
+ src/handoff-record.test.mjs          |  26 +++++-
+ 18 files changed, 615 insertions(+), 92 deletions(-)
  create mode 100644 src/codex-cli-resolver.mjs
 
 diff --git a/CHANGELOG.md b/CHANGELOG.md
-index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..435b11fedc5c73380d793d2d130bf25c889c2025 100644
+index 008e37a..989a88c 100644
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
-@@ -10,6 +10,23 @@ shipped to npm but were not individually tagged on GitHub.
+@@ -10,6 +10,27 @@ shipped to npm but were not individually tagged on GitHub.
 
  ## [Unreleased]
 
 +### Fixed
 +
++- Codex hook trust diagnosis now compares each stored approval hash with the
++  current normalized hook definition, matching Codex's trust boundary. Managed
++  release path changes are reported as `modified` and factory diagnostics stay
++  degraded until the user reviews the changed Hooks in Codex.
 +- Default fresh-thread handoff records are now project-neutral: they use a
 +  generic continuation intent and do not inject Throughline development
 +  constraints into unrelated repositories.
@@ -52,7 +58,7 @@ index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..435b11fedc5c73380d793d2d130bf25c
 
  ### Added
 diff --git a/CLAUDE.md b/CLAUDE.md
-index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366707b55a7 100644
+index fb8e9cc..e832ed5 100644
 --- a/CLAUDE.md
 +++ b/CLAUDE.md
 @@ -20,6 +20,12 @@ GitHub Release、このMacのregistry由来global install（`throughline --versi
@@ -87,7 +93,7 @@ index fb8e9cc7fb62e8982ed0402da3886bc409fe39b4..e832ed52f662a18a43fe20e01de1b366
  | [src/codex-auto-refresh.test.mjs](src/codex-auto-refresh.test.mjs) | Dormant helper の default disabled、75% 閾値、estimate usage の非実行、明示 enabled 時に threshold reached で rollback/inject を呼ぶこと、DB memory が無い場合の skip |
  | [src/codex-handoff.test.mjs](src/codex-handoff.test.mjs) | `toThroughlineHandoffBlock` の `throughline_handoff` v1 JSON shape と Codex active-work context renderer |
 diff --git a/README.ja.md b/README.ja.md
-index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2eadba5c99b7 100644
+index 4d1e7d8..c1d7e74 100644
 --- a/README.ja.md
 +++ b/README.ja.md
 @@ -94,6 +94,13 @@ current-thread rollback
@@ -120,7 +126,7 @@ index 4d1e7d864c8082492242439d682bb158b640a48d..c1d7e743d0e675e503fbc0e23f1e2ead
 
  ランタイム依存 **ゼロ**。npm パッケージは純 `.mjs` ファイルのみで構成されています。
 diff --git a/README.md b/README.md
-index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fce418cf14 100644
+index 37ce80e..34c51d0 100644
 --- a/README.md
 +++ b/README.md
 @@ -69,6 +69,13 @@ DB handoff memory as a developer item, and opens that thread in the selected
@@ -148,7 +154,7 @@ index 37ce80e221a798a3979ef1e6466b7f5d5fc7fb80..34c51d0e652a8fd67648c8bbabaa93fc
 
  Throughline has **zero runtime dependencies**. The published tarball is just
 diff --git a/bin/throughline.mjs b/bin/throughline.mjs
-index 93c471e3ae676e22ee173ac25b97d016d8d5f270..aef13b957be4929726623bb59acb41748c3f42eb 100755
+index 93c471e..aef13b9 100755
 --- a/bin/throughline.mjs
 +++ b/bin/throughline.mjs
 @@ -45,7 +45,16 @@
@@ -169,7 +175,7 @@ index 93c471e3ae676e22ee173ac25b97d016d8d5f270..aef13b957be4929726623bb59acb4174
  try {
  switch (cmd) {
 diff --git a/docs/05_codex_first_roadmap.md b/docs/05_codex_first_roadmap.md
-index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e852f762f 100644
+index 1132b8b..9c448e2 100644
 --- a/docs/05_codex_first_roadmap.md
 +++ b/docs/05_codex_first_roadmap.md
 @@ -188,6 +188,10 @@ Phase 1 implementation result (2026-05-06):
@@ -184,19 +190,19 @@ index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e
 
  ## Phase 2: Codex CLI L2 -> L1 Backend
 diff --git a/package.json b/package.json
-index 3c66b8a7ff0d6898e98902d5342427a6d3820864..af9d10fcfdea5d0b7ae2efc8c12f8f59bada4f13 100644
+index 3c66b8a..f9558f3 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,6 +1,6 @@
  {
    "name": "throughline",
 -    "version": "0.10.3",
-+    "version": "0.10.3-codex.4",
++    "version": "0.10.3-codex.5",
      "type": "module",
      "description": "Persistent memory hooks for Claude Code, Codex, Grok, and Cursor (/clear-safe context compression)",
      "keywords": [
 diff --git a/src/cli/codex-handoff-start.mjs b/src/cli/codex-handoff-start.mjs
-index 06f4d48bf0cef70324881feb5a7def07a057bd3e..0bcc3e2d8da20edd77015e95b352c06eaf73154a 100644
+index 06f4d48..0bcc3e2 100644
 --- a/src/cli/codex-handoff-start.mjs
 +++ b/src/cli/codex-handoff-start.mjs
 @@ -9,6 +9,7 @@ import { sameProjectPath } from '../project-path.mjs';
@@ -230,7 +236,7 @@ index 06f4d48bf0cef70324881feb5a7def07a057bd3e..0bcc3e2d8da20edd77015e95b352c06e
    resolveOpenHost,
  };
 diff --git a/src/cli/codex-handoff-start.test.mjs b/src/cli/codex-handoff-start.test.mjs
-index ebc8f38dca44812094923275a9e6ef62d8431087..e658245515d2e9e28eb85e5e3744e66cd24df5b5 100644
+index ebc8f38..e658245 100644
 --- a/src/cli/codex-handoff-start.test.mjs
 +++ b/src/cli/codex-handoff-start.test.mjs
 @@ -57,6 +57,51 @@ test('codex-handoff-start builds the Codex Desktop local thread deep link', () =
@@ -286,10 +292,30 @@ index ebc8f38dca44812094923275a9e6ef62d8431087..e658245515d2e9e28eb85e5e3744e66c
    return mkdtempSync(join(tmpdir(), 'tl-codex-handoff-start-home-'));
  }
 diff --git a/src/cli/doctor.mjs b/src/cli/doctor.mjs
-index 55a716a575a24ed489dd4ac11148685795b8b93d..f6c71d0cfd97f06c9f58bcebd908d790c7dca376 100644
+index 55a716a..f9f30bd 100644
 --- a/src/cli/doctor.mjs
 +++ b/src/cli/doctor.mjs
-@@ -409,10 +409,10 @@ function parseCodexTrustedHookState(configText) {
+@@ -18,6 +18,7 @@ import { CODEX_HOST } from '../hosts/identity.mjs';
+ import { join, dirname } from 'node:path';
+ import { homedir } from 'node:os';
+ import { execSync } from 'node:child_process';
++import { createHash } from 'node:crypto';
+ import { getStateDir } from '../state-file.mjs';
+ import { readLatestUsage } from '../transcript-usage.mjs';
+ import { buildCodexRolloutTrimSource } from '../codex-rollout-memory.mjs';
+@@ -400,46 +401,130 @@ function countCapturedCodexSessions(db, projectPath) {
+ }
+
+ function parseCodexTrustedHookState(configText) {
+-  const trustedKeys = new Set();
++  const trustedHashes = new Map();
+   let currentKey = null;
+-  let currentTrusted = false;
++  let currentTrustedHash = null;
+
+   function flush() {
+-    if (currentKey && currentTrusted) trustedKeys.add(currentKey);
++    if (currentKey && currentTrustedHash) trustedHashes.set(currentKey, currentTrustedHash);
    }
 
    for (const line of configText.split(/\r?\n/)) {
@@ -298,15 +324,335 @@ index 55a716a575a24ed489dd4ac11148685795b8b93d..f6c71d0cfd97f06c9f58bcebd908d790
      if (section) {
        flush();
 -      currentKey = section[1];
-+      currentKey = section[1] ?? section[2];
-       currentTrusted = false;
+-      currentTrusted = false;
++      if (section[1] != null) {
++        try {
++          currentKey = JSON.parse(`"${section[1]}"`);
++        } catch {
++          currentKey = section[1];
++        }
++      } else {
++        currentKey = section[2];
++      }
++      currentTrustedHash = null;
        continue;
      }
+     if (!currentKey) continue;
+     if (/^\s*\[/.test(line)) {
+       flush();
+       currentKey = null;
+-      currentTrusted = false;
++      currentTrustedHash = null;
+       continue;
+     }
+-    if (/^\s*trusted_hash\s*=\s*"sha256:[^"]+"\s*$/.test(line)) {
+-      currentTrusted = true;
++    const trustedHash = line.match(/^\s*trusted_hash\s*=\s*(?:"([^"]+)"|'([^']+)')\s*$/);
++    if (trustedHash) {
++      currentTrustedHash = trustedHash[1] ?? trustedHash[2];
+     }
+   }
+   flush();
+-  return trustedKeys;
++  return trustedHashes;
++}
++
++function canonicalJson(value) {
++  if (Array.isArray(value)) return value.map(canonicalJson);
++  if (value && typeof value === 'object') {
++    return Object.fromEntries(
++      Object.keys(value).sort().map(key => [key, canonicalJson(value[key])]),
++    );
++  }
++  return value;
++}
++
++function buildCodexHookTrustHash(eventKey, group, hook, platform = process.platform) {
++  if (hook?.type !== 'command') return null;
++  const command = platform === 'win32' && hook.commandWindows != null
++    ? hook.commandWindows
++    : hook.command;
++  if (typeof command !== 'string' || command.trim() === '') return null;
++
++  const isSessionEnd = eventKey === 'session_end';
++  const isInterrupt = eventKey === 'interrupt';
++  const timeoutDefault = isSessionEnd || isInterrupt ? 1 : 600;
++  let timeout = Number.isInteger(hook.timeout) ? hook.timeout : timeoutDefault;
++  timeout = Math.max(1, timeout);
++  if (isSessionEnd || isInterrupt) timeout = Math.min(3, timeout);
++
++  const normalizedHook = {
++    type: 'command',
++    command,
++    timeout,
++    async: isSessionEnd ? false : hook.async === true,
++  };
++  if (typeof hook.statusMessage === 'string') {
++    normalizedHook.statusMessage = hook.statusMessage;
++  }
++  const supportsAdditionalContext = new Set([
++    'pre_tool_use',
++    'post_tool_use',
++    'session_start',
++    'user_prompt_submit',
++    'subagent_start',
++  ]).has(eventKey);
++  if (supportsAdditionalContext && Number.isInteger(hook.additionalContextLimit)
++    && hook.additionalContextLimit !== 2500) {
++    normalizedHook.additionalContextLimit = hook.additionalContextLimit;
++  }
++
++  const matcherEvents = new Set([
++    'pre_tool_use',
++    'permission_request',
++    'post_tool_use',
++    'session_start',
++    'session_end',
++    'subagent_start',
++    'subagent_stop',
++    'pre_compact',
++    'post_compact',
++  ]);
++  const identity = { event_name: eventKey };
++  if (matcherEvents.has(eventKey) && typeof group?.matcher === 'string') {
++    identity.matcher = group.matcher;
++  }
++  identity.hooks = [normalizedHook];
++  const serialized = JSON.stringify(canonicalJson(identity));
++  return `sha256:${createHash('sha256').update(serialized).digest('hex')}`;
+ }
+
+-function listHooksWithTrust(parsed, eventName, eventKey, hooksPath, trustedStateKeys) {
++function listHooksWithTrust(parsed, eventName, eventKey, hooksPath, trustedStateHashes) {
+   const groups = parsed.hooks?.[eventName] ?? [];
+   return groups.flatMap((group, groupIndex) =>
+     (group.hooks ?? []).map((hook, hookIndex) => {
+       const trustKey = `${hooksPath}:${eventKey}:${groupIndex}:${hookIndex}`;
++      const currentHash = buildCodexHookTrustHash(eventKey, group, hook);
++      const trustedHash = trustedStateHashes.get(trustKey) ?? null;
++      const trustStatus = trustedHash == null
++        ? 'untrusted'
++        : trustedHash === currentHash
++          ? 'trusted'
++          : 'modified';
+       return {
+         ...hook,
+         throughlineDoctorTrustKey: trustKey,
+-        throughlineDoctorTrusted: trustedStateKeys.has(trustKey),
++        throughlineDoctorCurrentHash: currentHash,
++        throughlineDoctorTrustedHash: trustedHash,
++        throughlineDoctorTrustStatus: trustStatus,
++        throughlineDoctorTrusted: trustStatus === 'trusted',
+       };
+     }),
+   );
+@@ -454,17 +539,21 @@ function summarizeHookTrust(hooks, { hooksFeatureEnabled, codexHooksFeatureEnabl
+     };
+   }
+   const trustedCount = hooks.filter(h => h.throughlineDoctorTrusted).length;
++  const modifiedCount = hooks.filter(h => h.throughlineDoctorTrustStatus === 'modified').length;
+   if (trustedCount === hooks.length) {
+     return {
+       status: 'trusted',
+       trustedCount,
++      modifiedCount,
+       totalCount: hooks.length,
+     };
+   }
+   if (hooksFeatureEnabled) {
++    const detail = modifiedCount > 0 ? ` (${modifiedCount} modified)` : '';
+     return {
+-      status: `${trustedCount}/${hooks.length} trusted - accept hooks in Codex menu`,
++      status: `${trustedCount}/${hooks.length} trusted${detail} - review hooks in Codex menu`,
+       trustedCount,
++      modifiedCount,
+       totalCount: hooks.length,
+     };
+   }
+@@ -505,6 +594,9 @@ function printCodexHookDetails(hook) {
+     console.log(`    legacy timeoutSec:   ${hook.timeoutSec} (ignored by Codex; reinstall required)`);
+   }
+   console.log(`    trusted:             ${hook.throughlineDoctorTrusted ? 'yes' : 'no'}`);
++  if (!hook.throughlineDoctorTrusted && hook.throughlineDoctorTrustStatus) {
++    console.log(`    trust status:        ${hook.throughlineDoctorTrustStatus}`);
++  }
+ }
+
+ function readCodexHookDiagnosis(codexHome) {
+@@ -526,7 +618,7 @@ function readCodexHookDiagnosis(codexHome) {
+     featureEnabled: false,
+     codexHooksFeatureEnabled: false,
+     hooksFeatureEnabled: false,
+-    trustedStateKeys: new Set(),
++    trustedStateHashes: new Map(),
+     managedHookTrust: {
+       status: 'no managed hooks',
+       trustedCount: 0,
+@@ -547,7 +639,7 @@ function readCodexHookDiagnosis(codexHome) {
+       out.codexHooksFeatureEnabled = /^\s*codex_hooks\s*=\s*true\s*$/m.test(config);
+       out.hooksFeatureEnabled = /^\s*hooks\s*=\s*true\s*$/m.test(config);
+       out.featureEnabled = out.codexHooksFeatureEnabled || out.hooksFeatureEnabled;
+-      out.trustedStateKeys = parseCodexTrustedHookState(config);
++      out.trustedStateHashes = parseCodexTrustedHookState(config);
+     } catch {
+       out.featureEnabled = false;
+     }
+@@ -567,16 +659,16 @@ function readCodexHookDiagnosis(codexHome) {
+     'UserPromptSubmit',
+     'user_prompt_submit',
+     hooksPath,
+-    out.trustedStateKeys,
++    out.trustedStateHashes,
+   );
+   const postToolUseHooks = listHooksWithTrust(
+     parsed,
+     'PostToolUse',
+     'post_tool_use',
+     hooksPath,
+-    out.trustedStateKeys,
++    out.trustedStateHashes,
+   );
+-  const stopHooks = listHooksWithTrust(parsed, 'Stop', 'stop', hooksPath, out.trustedStateKeys);
++  const stopHooks = listHooksWithTrust(parsed, 'Stop', 'stop', hooksPath, out.trustedStateHashes);
+   out.managedPromptHooks = promptHooks.filter(h => isThroughlineCodexHookCommand(h.command));
+   out.legacyManagedPromptHooks = out.managedPromptHooks.filter(
+     h => !isEquivalentCodexHookCommand(h.command, expectedPromptCommand),
+@@ -1039,6 +1131,7 @@ export const _internal = {
+   readCodexHookDiagnosis,
+   describeCodexHookRegistration,
+   printCodexHookDetails,
++  buildCodexHookTrustHash,
+   readVsCodeMonitorTaskDiagnosis,
+   isPidAlive,
+   findLatestJsonlInSameDir,
 diff --git a/src/cli/doctor.test.mjs b/src/cli/doctor.test.mjs
-index a2b3330d812f35b204e4e9b2fea815624e518682..2b2b78aae971db4065cd37ccee96c938bf817607 100644
+index a2b3330..4618655 100644
 --- a/src/cli/doctor.test.mjs
 +++ b/src/cli/doctor.test.mjs
-@@ -451,6 +451,30 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
+@@ -21,8 +21,26 @@ const {
+   readCodexHostPrimitiveDiagnosis,
+   describeCodexHookRegistration,
+   printCodexHookDetails,
++  buildCodexHookTrustHash,
+ } = _internal;
+
++test('Codex hook trust hash changes when the managed release command changes', () => {
++  const hook = {
++    type: 'command',
++    command: 'node C:\\managed\\0.10.3-codex.4\\throughline.mjs codex-hook stop',
++    timeout: 300,
++    async: false,
++  };
++  const currentHash = buildCodexHookTrustHash('stop', {}, hook);
++  const previousHash = buildCodexHookTrustHash('stop', {}, {
++    ...hook,
++    command: 'node C:\\managed\\0.10.3-codex.3\\throughline.mjs codex-hook stop',
++  });
++
++  assert.match(currentHash, /^sha256:[0-9a-f]{64}$/);
++  assert.notEqual(currentHash, previousHash);
++});
++
+ test('Codex hook diagnosis requires reinstall for legacy timeoutSec key', () => {
+   const legacy = { type: 'command', command: 'canonical', timeoutSec: 300, async: false };
+   assert.equal(
+@@ -368,47 +386,32 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
+   const codexHome = mkdtempSync(join(tmpdir(), 'tl-doctor-codex-home-'));
+   try {
+     mkdirSync(join(codexHome), { recursive: true });
++    const promptHook = {
++      type: 'command',
++      command: '/usr/bin/node /pkg/bin/throughline.mjs codex-hook user-prompt-submit',
++      timeout: 30,
++      async: false,
++    };
++    const postToolUseHook = {
++      type: 'command',
++      command: '/usr/bin/node /pkg/bin/throughline.mjs codex-hook post-tool-use',
++      timeout: 30,
++      async: false,
++    };
++    const stopHook = {
++      type: 'command',
++      command: 'throughline codex-hook stop',
++      timeout: 300,
++      async: true,
++    };
+     writeFileSync(
+       join(codexHome, 'hooks.json'),
+       JSON.stringify(
+         {
+           hooks: {
+-            UserPromptSubmit: [
+-              {
+-                hooks: [
+-                  {
+-                    type: 'command',
+-                    command: '/usr/bin/node /pkg/bin/throughline.mjs codex-hook user-prompt-submit',
+-                    timeout: 30,
+-                    async: false,
+-                  },
+-                ],
+-              },
+-            ],
+-            PostToolUse: [
+-              {
+-                hooks: [
+-                  {
+-                    type: 'command',
+-                    command: '/usr/bin/node /pkg/bin/throughline.mjs codex-hook post-tool-use',
+-                    timeout: 30,
+-                    async: false,
+-                  },
+-                ],
+-              },
+-            ],
+-            Stop: [
+-              {
+-                hooks: [
+-                  {
+-                    type: 'command',
+-                    command: 'throughline codex-hook stop',
+-                    timeout: 300,
+-                    async: true,
+-                  },
+-                ],
+-              },
+-            ],
++            UserPromptSubmit: [{ hooks: [promptHook] }],
++            PostToolUse: [{ hooks: [postToolUseHook] }],
++            Stop: [{ hooks: [stopHook] }],
+           },
+         },
+         null,
+@@ -416,6 +419,9 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
+       ) + '\n',
+     );
+     const hooksPath = join(codexHome, 'hooks.json');
++    const promptHash = buildCodexHookTrustHash('user_prompt_submit', {}, promptHook);
++    const postToolUseHash = buildCodexHookTrustHash('post_tool_use', {}, postToolUseHook);
++    const stopHash = buildCodexHookTrustHash('stop', {}, stopHook);
+     writeFileSync(
+       join(codexHome, 'config.toml'),
+       [
+@@ -424,13 +430,13 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
+         'hooks = true',
+         '',
+         `[hooks.state."${hooksPath}:user_prompt_submit:0:0"]`,
+-        'trusted_hash = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
++        `trusted_hash = "${promptHash}"`,
+         '',
+         `[hooks.state."${hooksPath}:post_tool_use:0:0"]`,
+-        'trusted_hash = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"',
++        `trusted_hash = "${postToolUseHash}"`,
+         '',
+         `[hooks.state."${hooksPath}:stop:0:0"]`,
+-        'trusted_hash = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"',
++        `trusted_hash = "${stopHash}"`,
+         '',
+       ].join('\n'),
+     );
+@@ -451,6 +457,55 @@ test('readCodexHookDiagnosis detects Codex prompt and Stop hooks', () => {
      assert.equal(diagnosis.managedStopHooks.length, 1);
      assert.equal(diagnosis.managedStopHooks[0].throughlineDoctorTrusted, true);
      assert.equal(diagnosis.legacyManagedStopHooks.length, 1);
@@ -319,13 +665,13 @@ index a2b3330d812f35b204e4e9b2fea815624e518682..2b2b78aae971db4065cd37ccee96c938
 +        'hooks = true',
 +        '',
 +        `[hooks.state.'${hooksPath}:user_prompt_submit:0:0']`,
-+        'trusted_hash = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
++        `trusted_hash = "${promptHash}"`,
 +        '',
 +        `[hooks.state.'${hooksPath}:post_tool_use:0:0']`,
-+        'trusted_hash = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"',
++        `trusted_hash = "${postToolUseHash}"`,
 +        '',
 +        `[hooks.state.'${hooksPath}:stop:0:0']`,
-+        'trusted_hash = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"',
++        `trusted_hash = "${stopHash}"`,
 +        '',
 +      ].join('\n'),
 +    );
@@ -334,11 +680,127 @@ index a2b3330d812f35b204e4e9b2fea815624e518682..2b2b78aae971db4065cd37ccee96c938
 +    assert.equal(literalStringDiagnosis.managedHookTrust.status, 'trusted');
 +    assert.equal(literalStringDiagnosis.managedHookTrust.trustedCount, 3);
 +    assert.equal(literalStringDiagnosis.managedHookTrust.totalCount, 3);
++
++    writeFileSync(
++      join(codexHome, 'config.toml'),
++      [
++        '[features]',
++        'hooks = true',
++        '',
++        `[hooks.state."${hooksPath}:user_prompt_submit:0:0"]`,
++        'trusted_hash = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
++        '',
++        `[hooks.state."${hooksPath}:post_tool_use:0:0"]`,
++        'trusted_hash = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"',
++        '',
++        `[hooks.state."${hooksPath}:stop:0:0"]`,
++        'trusted_hash = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"',
++        '',
++      ].join('\n'),
++    );
++
++    const modifiedDiagnosis = readCodexHookDiagnosis(codexHome);
++    assert.match(modifiedDiagnosis.managedHookTrust.status, /3 modified/);
++    assert.equal(modifiedDiagnosis.managedHookTrust.trustedCount, 0);
++    assert.equal(modifiedDiagnosis.managedPromptHooks[0].throughlineDoctorTrustStatus, 'modified');
++    assert.equal(modifiedDiagnosis.managedPostToolUseHooks[0].throughlineDoctorTrustStatus, 'modified');
++    assert.equal(modifiedDiagnosis.managedStopHooks[0].throughlineDoctorTrustStatus, 'modified');
    } finally {
      rmSync(codexHome, { recursive: true, force: true });
    }
+diff --git a/src/cli/factory-diagnostics.mjs b/src/cli/factory-diagnostics.mjs
+index 618d0ba..0cb7810 100644
+--- a/src/cli/factory-diagnostics.mjs
++++ b/src/cli/factory-diagnostics.mjs
+@@ -127,7 +127,8 @@ function eventStatus({ hooks, legacyHooks, featureEnabled, expectedCommand, time
+   if (hooks.length === 0) return featureEnabled ? 'not_ready' : 'not_applicable';
+   if (!featureEnabled || legacyHooks.length > 0 || hooks.length !== 1) return 'not_ready';
+   const hook = hooks[0];
+-  return hook.type === 'command' && isEquivalentCodexHookCommand(hook.command, expectedCommand) &&
++  return hook.throughlineDoctorTrusted === true && hook.type === 'command' &&
++    isEquivalentCodexHookCommand(hook.command, expectedCommand) &&
+     hook.timeout === timeout && hook.async === false ? 'ready' : 'not_ready';
+ }
+
+diff --git a/src/cli/factory-diagnostics.test.mjs b/src/cli/factory-diagnostics.test.mjs
+index 2f349f1..83d5f3d 100644
+--- a/src/cli/factory-diagnostics.test.mjs
++++ b/src/cli/factory-diagnostics.test.mjs
+@@ -188,11 +188,11 @@ test('factory-diagnostics hook inspection summarizes every canonical ready event
+       expectedPromptCommand: 'prompt',
+       expectedPostToolUseCommand: 'post',
+       expectedStopCommand: 'stop',
+-      managedPromptHooks: [{ type: 'command', command: 'prompt', timeout: 30, async: false }],
++      managedPromptHooks: [{ type: 'command', command: 'prompt', timeout: 30, async: false, throughlineDoctorTrusted: true }],
+       legacyManagedPromptHooks: [],
+-      managedPostToolUseHooks: [{ type: 'command', command: 'post', timeout: 30, async: false }],
++      managedPostToolUseHooks: [{ type: 'command', command: 'post', timeout: 30, async: false, throughlineDoctorTrusted: true }],
+       legacyManagedPostToolUseHooks: [],
+-      managedStopHooks: [{ type: 'command', command: 'stop', timeout: 300, async: false }],
++      managedStopHooks: [{ type: 'command', command: 'stop', timeout: 300, async: false, throughlineDoctorTrusted: true }],
+       legacyManagedStopHooks: [],
+     }),
+   });
+@@ -202,6 +202,42 @@ test('factory-diagnostics hook inspection summarizes every canonical ready event
+   assert.equal(result.reason, 'hooks_inspected');
+ });
+
++test('factory-diagnostics hook inspection rejects modified trust hashes', () => {
++  const hook = (command, timeout) => ({
++    type: 'command',
++    command,
++    timeout,
++    async: false,
++    throughlineDoctorTrusted: false,
++    throughlineDoctorTrustStatus: 'modified',
++  });
++  const result = inspectFactoryHooks({
++    readHooks: () => ({
++      configExists: true,
++      configReadable: true,
++      hooksExists: true,
++      hooksReadable: true,
++      featureEnabled: true,
++      expectedPromptCommand: 'prompt',
++      expectedPostToolUseCommand: 'post',
++      expectedStopCommand: 'stop',
++      managedPromptHooks: [hook('prompt', 30)],
++      legacyManagedPromptHooks: [],
++      managedPostToolUseHooks: [hook('post', 30)],
++      legacyManagedPostToolUseHooks: [],
++      managedStopHooks: [hook('stop', 300)],
++      legacyManagedStopHooks: [],
++    }),
++  });
++
++  assert.deepEqual(result.events, {
++    userPromptSubmit: 'not_ready',
++    postToolUse: 'not_ready',
++    stop: 'not_ready',
++  });
++  assert.equal(result.status, 'not_ready');
++});
++
+ test('factory-diagnostics hook inspection: 最小 PATH 由来の node 別表記を not_ready にしない', () => {
+   // launchd の factory reporter は PATH に /opt/homebrew/bin を持たないため、期待値の
+   // node が PATH symlink ではなく実体表記になる。同一 node を指す限り ready を維持する。
+@@ -228,11 +264,11 @@ test('factory-diagnostics hook inspection: 最小 PATH 由来の node 別表記
+         expectedPromptCommand: expected('user-prompt-submit'),
+         expectedPostToolUseCommand: expected('post-tool-use'),
+         expectedStopCommand: expected('stop'),
+-        managedPromptHooks: [{ type: 'command', command: registered('user-prompt-submit'), timeout: 30, async: false }],
++        managedPromptHooks: [{ type: 'command', command: registered('user-prompt-submit'), timeout: 30, async: false, throughlineDoctorTrusted: true }],
+         legacyManagedPromptHooks: [],
+-        managedPostToolUseHooks: [{ type: 'command', command: registered('post-tool-use'), timeout: 30, async: false }],
++        managedPostToolUseHooks: [{ type: 'command', command: registered('post-tool-use'), timeout: 30, async: false, throughlineDoctorTrusted: true }],
+         legacyManagedPostToolUseHooks: [],
+-        managedStopHooks: [{ type: 'command', command: registered('stop'), timeout: 300, async: false }],
++        managedStopHooks: [{ type: 'command', command: registered('stop'), timeout: 300, async: false, throughlineDoctorTrusted: true }],
+         legacyManagedStopHooks: [],
+       }),
+     });
 diff --git a/src/codex-capture.test.mjs b/src/codex-capture.test.mjs
-index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331200c650e 100644
+index a145c89..266a2c2 100644
 --- a/src/codex-capture.test.mjs
 +++ b/src/codex-capture.test.mjs
 @@ -248,6 +248,105 @@ test('captureCodexRolloutToDb: rebuilds namespaced Codex session from active rol
@@ -449,7 +911,7 @@ index a145c890b1e049b97ad0f90a030de55d38976993..266a2c2bde741a62ce63dfd3d192a331
    const home = mkdtempSync(join(tmpdir(), 'tl-codex-home-'));
 diff --git a/src/codex-cli-resolver.mjs b/src/codex-cli-resolver.mjs
 new file mode 100644
-index 0000000000000000000000000000000000000000..4f6d5e012c5822960d3ee54bde51430980a27438
+index 0000000..4f6d5e0
 --- /dev/null
 +++ b/src/codex-cli-resolver.mjs
 @@ -0,0 +1,83 @@
@@ -537,7 +999,7 @@ index 0000000000000000000000000000000000000000..4f6d5e012c5822960d3ee54bde514309
 +  return { command: 'codex', commandArgs: args, source: 'path' };
 +}
 diff --git a/src/codex-rollout-memory.mjs b/src/codex-rollout-memory.mjs
-index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05f1c63c3c 100644
+index 57c6f10..7b1d83e 100644
 --- a/src/codex-rollout-memory.mjs
 +++ b/src/codex-rollout-memory.mjs
 @@ -106,19 +106,39 @@ export function parseCodexRolloutFile(
@@ -658,7 +1120,7 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
 
  function normalizeMessageText(value) {
 diff --git a/src/handoff-record.mjs b/src/handoff-record.mjs
-index 863cba93fba09c9288890a4167126925f8070437..13c464fae22cb0c8295b60376903b2b070b5b2f6 100644
+index 863cba9..13c464f 100644
 --- a/src/handoff-record.mjs
 +++ b/src/handoff-record.mjs
 @@ -12,12 +12,8 @@ export const HANDOFF_RECORD_VERSION = 1;
@@ -677,7 +1139,7 @@ index 863cba93fba09c9288890a4167126925f8070437..13c464fae22cb0c8295b60376903b2b0
  /**
   * Unix ms を HH:MM:SS 形式に変換する。
 diff --git a/src/handoff-record.test.mjs b/src/handoff-record.test.mjs
-index 08850a2682ffee8aea60545c8a5a7f7b8a318497..3c33efa5d3a14f0b5a87d3df49a09580d3e45b94 100644
+index 08850a2..3c33efa 100644
 --- a/src/handoff-record.test.mjs
 +++ b/src/handoff-record.test.mjs
 @@ -2,6 +2,7 @@ import { test } from 'node:test';
@@ -727,5 +1189,3 @@ index 08850a2682ffee8aea60545c8a5a7f7b8a318497..3c33efa5d3a14f0b5a87d3df49a09580
  test('buildHandoffRecord: excludes current origin rows', () => {
    const db = makeDb();
    insertSession(db);
---
-2.50.1 (Apple Git-155)

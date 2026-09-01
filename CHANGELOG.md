@@ -2,6 +2,17 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.12 - 2026-09-01
+
+### Fixed
+
+- Compare Codex Hook approval hashes with the current normalized Hook
+  definitions instead of treating any stored hash as trusted.
+- Report release-path Hook changes as requiring review in the Codex Hooks menu,
+  and keep Throughline factory diagnostics degraded until review is complete.
+- Give `contextrail doctor` a direct Hook-review action for this state instead
+  of the generic automatic-capture troubleshooting message.
+
 ## 0.3.0-rc.11 - 2026-09-01
 
 ### Fixed

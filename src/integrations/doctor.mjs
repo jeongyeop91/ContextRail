@@ -1,4 +1,5 @@
 export function buildDoctorReport({ setupReport, hookEvent = null, debugEvidence = null }) {
+  const changedCodexHooks = setupReport?.throughline?.reasons?.includes('hooks_not_ready') === true;
   const components = {
     project: setupReport?.project?.state ?? 'not_ready',
     throughline: ['hooks_ready', 'capture_verified'].includes(setupReport?.throughline?.state)
@@ -18,8 +19,13 @@ export function buildDoctorReport({ setupReport, hookEvent = null, debugEvidence
     cause = 'The project contract is not ready';
     nextAction = 'Run contextrail setup';
   } else if (components.throughline !== 'ready') {
-    cause = 'Throughline is not ready';
-    nextAction = 'Run contextrail setup';
+    if (changedCodexHooks) {
+      cause = 'Changed Codex Hooks require review';
+      nextAction = 'Review the changed Hooks in the Codex Hooks menu, then send one normal prompt';
+    } else {
+      cause = 'Throughline is not ready';
+      nextAction = 'Run contextrail setup';
+    }
   } else if (components.codexHooks !== 'registered') {
     cause = 'Codex Hooks are not registered';
     nextAction = 'Run contextrail setup';

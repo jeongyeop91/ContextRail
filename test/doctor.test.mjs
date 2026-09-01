@@ -17,7 +17,7 @@ function setupReport(overrides = {}) {
   return {
     status: 'installed_live_verification_required',
     project: { state: 'ready' },
-    throughline: { state: 'hooks_ready', version: '0.10.3-codex.4' },
+    throughline: { state: 'hooks_ready', version: '0.10.3-codex.5' },
     contextHooks: { state: 'registered' },
     live: { throughline: 'unverified', context: 'unverified' },
     ...overrides,
@@ -47,7 +47,7 @@ test('doctor reports ready only with project, hooks, dispatch, and capture evide
   const report = buildDoctorReport({
     setupReport: setupReport({
       status: 'installed',
-      throughline: { state: 'capture_verified', version: '0.10.3-codex.4' },
+      throughline: { state: 'capture_verified', version: '0.10.3-codex.5' },
       live: { throughline: 'verified', context: 'verified' },
     }),
     hookEvent: {
@@ -62,6 +62,22 @@ test('doctor reports ready only with project, hooks, dispatch, and capture evide
   });
   assert.equal(report.status, 'ready');
   assert.equal(report.nextAction, 'contextrail handoff');
+});
+
+test('doctor tells the user to review changed Codex Hooks when trust hashes are stale', () => {
+  const report = buildDoctorReport({
+    setupReport: setupReport({
+      throughline: {
+        state: 'degraded',
+        version: '0.10.3-codex.5',
+        reasons: ['hooks_not_ready'],
+      },
+    }),
+  });
+
+  assert.equal(report.status, 'needs_attention');
+  assert.match(report.cause, /changed Codex Hooks require review/i);
+  assert.match(report.nextAction, /Codex Hooks menu/i);
 });
 
 test('top-level doctor selects concise, json, and debug output modes', async () => {

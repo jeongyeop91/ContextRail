@@ -77,12 +77,18 @@ Active item: `CR-008`
 - Managed Throughline `0.10.3-codex.4` was reproducibly prepared from compatibility commit `fb930dd13dd9bd48759217a955298b010867d948` and patch SHA-256 `7fa56a91c0180f03e391b7ebe51ec4bc977a09dae30d6bf9e3d956783b6197f3`; the normalized artifact SHA-256 is `96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1`.
 - Release-candidate metadata is prepared for `0.3.0-rc.11`. Repository tests pass 169 cases, and the locally assembled ContextRail tarballs are byte-identical at SHA-256 `1539d1c529a6703b2c2bd00a81580c6204cb2b1a606b34a1efc2a96f6d37ba6d`.
 - Release commit and annotated tag: `462570a` / `v0.3.0-rc.11`. Main and tag verification, GitHub prerelease assembly (`33462713627`), and workflow-dispatched OIDC npm publication (`33462802612`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `1539d1c529a6703b2c2bd00a81580c6204cb2b1a606b34a1efc2a96f6d37ba6d`; the released Throughline artifact is SHA-256 `96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1`.
+- Native Windows rc.11/managed Throughline `0.10.3-codex.4` installed successfully, but a new rollout was not captured. The ContextRail Stop marker advanced while the Throughline DB remained on the older session.
+- Root-cause comparison with the current Codex Hook implementation found that Throughline doctor treated the presence of any stored `trusted_hash` as trusted. Codex compares that stored value with a SHA-256 of the current normalized Hook definition, so the managed release path change correctly made the three Throughline Hooks `modified` and Codex skipped them pending review.
+- The `0.10.3-codex.5` compatibility patch implements the same normalized Hook identity and canonical JSON SHA-256 contract, distinguishes `trusted`, `modified`, and `untrusted`, and prevents factory diagnostics from reporting modified Hooks as ready. Focused red/green regressions and all 785 Throughline tests pass.
+- Managed Throughline `0.10.3-codex.5` was reproducibly prepared from compatibility commit `4f450cc3a96fabc1b2606222b100f81aff3eb523` and patch SHA-256 `fc4ba18fa20249491e843a657dd6126acb7678deae7ac58fdc234ca346422d6a`; the normalized artifact SHA-256 is `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`.
+- Release-candidate metadata is prepared for `0.3.0-rc.12`. Repository-wide verification passes 171 tests, self-check with 8 Active Authority files, neutral template smoke, and `git diff --check`. Two independent release assemblies and the CLI release builder produced byte-identical ContextRail tarballs at SHA-256 `91fb18442df43d7cb6bae43ec91ca5690313079acb03026a92ecf6ee4c88fb3e`.
 
 ## Next steps
 
-1. Update the native Windows installation in place to `0.3.0-rc.11` and managed Throughline `0.10.3-codex.4`.
-2. Create a meaningful multi-turn source task and rerun one-command handoff.
-3. Confirm the new task retains that source L2 without the removed Throughline development constraints, then leave stable `latest` gated until the semantic result is recorded.
+1. Publish `0.3.0-rc.12` and managed Throughline `0.10.3-codex.5` under the existing prerelease channels.
+2. Update the native Windows installation, run setup once, and review the three changed Throughline handlers in the Codex Hooks menu.
+3. Send a normal prompt and confirm `contextrail doctor` observes automatic capture for the newest rollout.
+4. Create a meaningful multi-turn source task and rerun one-command handoff, then leave stable `latest` gated until the semantic result is recorded.
 
 ## Blockers
 

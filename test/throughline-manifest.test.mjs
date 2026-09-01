@@ -15,7 +15,7 @@ test('loads immutable Throughline provenance with matching patch and license', a
   assert.match(result.manifest.baseCommit, /^[a-f\d]{40}$/);
   assert.match(result.manifest.compatibilityCommit, /^[a-f\d]{40}$/);
   assert.equal(result.manifest.repository, 'https://github.com/kitepon/Throughline.git');
-  assert.equal(result.manifest.patch.sha256, '7fa56a91c0180f03e391b7ebe51ec4bc977a09dae30d6bf9e3d956783b6197f3');
+  assert.equal(result.manifest.patch.sha256, 'fc4ba18fa20249491e843a657dd6126acb7678deae7ac58fdc234ca346422d6a');
   assert.match(await readFile(resolve(ROOT, result.manifest.license.path), 'utf8'), /^MIT License/);
   assert.ok(result.manifest.tests.every((argv) => Array.isArray(argv)));
   assert.match(result.manifest.removalCondition, /upstream/i);
