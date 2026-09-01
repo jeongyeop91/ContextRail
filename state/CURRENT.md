@@ -82,13 +82,13 @@ Active item: `CR-008`
 - The `0.10.3-codex.5` compatibility patch implements the same normalized Hook identity and canonical JSON SHA-256 contract, distinguishes `trusted`, `modified`, and `untrusted`, and prevents factory diagnostics from reporting modified Hooks as ready. Focused red/green regressions and all 785 Throughline tests pass.
 - Managed Throughline `0.10.3-codex.5` was reproducibly prepared from compatibility commit `4f450cc3a96fabc1b2606222b100f81aff3eb523` and patch SHA-256 `fc4ba18fa20249491e843a657dd6126acb7678deae7ac58fdc234ca346422d6a`; the normalized artifact SHA-256 is `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`.
 - Release-candidate metadata is prepared for `0.3.0-rc.12`. Repository-wide verification passes 171 tests, self-check with 8 Active Authority files, neutral template smoke, and `git diff --check`. Two independent release assemblies and the CLI release builder produced byte-identical ContextRail tarballs at SHA-256 `91fb18442df43d7cb6bae43ec91ca5690313079acb03026a92ecf6ee4c88fb3e`.
+- Release commit and annotated tag: `e6c1a50` / `v0.3.0-rc.12`. Main/tag verification (`33473147954`), GitHub prerelease assembly (`33473148056`), and workflow-dispatched OIDC npm publication (`33473234012`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `91fb18442df43d7cb6bae43ec91ca5690313079acb03026a92ecf6ee4c88fb3e`; the released Throughline artifact is SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`. npm `latest` remains unchanged pending Windows live validation.
 
 ## Next steps
 
-1. Publish `0.3.0-rc.12` and managed Throughline `0.10.3-codex.5` under the existing prerelease channels.
-2. Update the native Windows installation, run setup once, and review the three changed Throughline handlers in the Codex Hooks menu.
-3. Send a normal prompt and confirm `contextrail doctor` observes automatic capture for the newest rollout.
-4. Create a meaningful multi-turn source task and rerun one-command handoff, then leave stable `latest` gated until the semantic result is recorded.
+1. Update the native Windows installation to `0.3.0-rc.12`, run setup once, and review the three changed Throughline handlers in the Codex Hooks menu.
+2. Send a normal prompt and confirm `contextrail doctor` observes automatic capture for the newest rollout.
+3. Create a meaningful multi-turn source task and rerun one-command handoff, then leave stable `latest` gated until the semantic result is recorded.
 
 ## Blockers
 
