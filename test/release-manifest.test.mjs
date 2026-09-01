@@ -8,19 +8,19 @@ const checksumsBytes = Buffer.from('synthetic checksums\n');
 
 const valid = {
   schema: 1,
-  releaseVersion: '0.3.0-rc.10',
-  sourceTag: 'v0.3.0-rc.10',
+  releaseVersion: '0.3.0-rc.11',
+  sourceTag: 'v0.3.0-rc.11',
   setupManifestSha256: '6b823fa123b900a4139de2101277275af8329f3a3d34c00ef3bf4fc6bf60287e',
   checksumsSha256: '4a8cc1cb5450c51060d5e5868bd2573ab8714ce9c08d224ef2e378f47693b414',
   contextrail: {
     sha256: 'b'.repeat(64),
-    versionedAsset: 'contextrail-0.3.0-rc.10.tgz',
+    versionedAsset: 'contextrail-0.3.0-rc.11.tgz',
     stableAsset: 'contextrail.tgz',
-    npmPackage: 'contextrail@0.3.0-rc.10',
+    npmPackage: 'contextrail@0.3.0-rc.11',
   },
   throughline: {
-    name: 'throughline-0.10.3-codex.3.tgz',
-    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.10/throughline-0.10.3-codex.3.tgz',
+    name: 'throughline-0.10.3-codex.4.tgz',
+    url: 'https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.11/throughline-0.10.3-codex.4.tgz',
     sha256: 'a'.repeat(64),
   },
 };

@@ -1,10 +1,10 @@
-From aea08a5537de358ff273f3d7eb98ac133cc990dd Mon Sep 17 00:00:00 2001
+From fb930dd13dd9bd48759217a955298b010867d948 Mon Sep 17 00:00:00 2001
 From: Jeongyeop <jylee91@gmail.com>
 Date: Fri, 28 Aug 2026 18:05:54 +0900
-Subject: [PATCH] fix(codex): resolve Desktop app-server executable
+Subject: [PATCH] fix(codex): support Desktop and neutral handoff
 
 ---
- CHANGELOG.md                         | 14 ++++
+ CHANGELOG.md                         | 17 +++++
  CLAUDE.md                            | 10 ++-
  README.ja.md                         | 12 +++-
  README.md                            | 10 +++
@@ -18,19 +18,24 @@ Subject: [PATCH] fix(codex): resolve Desktop app-server executable
  src/codex-capture.test.mjs           | 99 ++++++++++++++++++++++++++++
  src/codex-cli-resolver.mjs           | 83 +++++++++++++++++++++++
  src/codex-rollout-memory.mjs         | 58 ++++++++++++----
- 14 files changed, 359 insertions(+), 22 deletions(-)
+ src/handoff-record.mjs               |  8 +--
+ src/handoff-record.test.mjs          | 26 +++++++-
+ 16 files changed, 388 insertions(+), 30 deletions(-)
  create mode 100644 src/codex-cli-resolver.mjs
 
 diff --git a/CHANGELOG.md b/CHANGELOG.md
-index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..e96d0f652d1411ad227b5cabe09e90dca0e063b0 100644
+index 008e37a0c800a2fa1cbdd3bbe477dd6095a437b0..435b11fedc5c73380d793d2d130bf25c889c2025 100644
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
-@@ -10,6 +10,20 @@ shipped to npm but were not individually tagged on GitHub.
+@@ -10,6 +10,23 @@ shipped to npm but were not individually tagged on GitHub.
 
  ## [Unreleased]
 
 +### Fixed
 +
++- Default fresh-thread handoff records are now project-neutral: they use a
++  generic continuation intent and do not inject Throughline development
++  constraints into unrelated repositories.
 +- Codex app-server commands now discover the executable bundled or cached by
 +  Codex Desktop on Windows and macOS, with `CODEX_CLI_PATH` taking precedence,
 +  instead of requiring a separately installed global `codex` command.
@@ -179,14 +184,14 @@ index 1132b8b3486ad2464be07cef644b33644517590f..9c448e20d3a8f754838e67b25b55062e
 
  ## Phase 2: Codex CLI L2 -> L1 Backend
 diff --git a/package.json b/package.json
-index 3c66b8a7ff0d6898e98902d5342427a6d3820864..e58249690a52fcc1431c06934f090bc4fe996bb9 100644
+index 3c66b8a7ff0d6898e98902d5342427a6d3820864..af9d10fcfdea5d0b7ae2efc8c12f8f59bada4f13 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,6 +1,6 @@
  {
    "name": "throughline",
 -    "version": "0.10.3",
-+    "version": "0.10.3-codex.3",
++    "version": "0.10.3-codex.4",
      "type": "module",
      "description": "Persistent memory hooks for Claude Code, Codex, Grok, and Cursor (/clear-safe context compression)",
      "keywords": [
@@ -652,5 +657,75 @@ index 57c6f102547203a2a8a0a8f004a36714f37d2dd2..7b1d83ed972e1417feda59ba79f9fc05
  }
 
  function normalizeMessageText(value) {
+diff --git a/src/handoff-record.mjs b/src/handoff-record.mjs
+index 863cba93fba09c9288890a4167126925f8070437..13c464fae22cb0c8295b60376903b2b070b5b2f6 100644
+--- a/src/handoff-record.mjs
++++ b/src/handoff-record.mjs
+@@ -12,12 +12,8 @@ export const HANDOFF_RECORD_VERSION = 1;
+ export const N_RECENT_L2 = 20;
+ export { CODEX_SESSION_PREFIX };
+
+-const DEFAULT_INTENT = 'continue implementation';
+-const DEFAULT_CONSTRAINTS = [
+-  'preserve existing Claude Code hook, slash command, transcript, baton, and resume behavior',
+-  'add Codex support as adapter/projection; do not rename Claude-facing DB fields or commands',
+-  'do not treat unverified rollback/inject host behavior as a confirmed implementation contract',
+-];
++const DEFAULT_INTENT = 'continue the current task';
++const DEFAULT_CONSTRAINTS = [];
+
+ /**
+  * Unix ms を HH:MM:SS 形式に変換する。
+diff --git a/src/handoff-record.test.mjs b/src/handoff-record.test.mjs
+index 08850a2682ffee8aea60545c8a5a7f7b8a318497..3c33efa5d3a14f0b5a87d3df49a09580d3e45b94 100644
+--- a/src/handoff-record.test.mjs
++++ b/src/handoff-record.test.mjs
+@@ -2,6 +2,7 @@ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+ import { DatabaseSync } from 'node:sqlite';
+ import { buildHandoffRecord } from './handoff-record.mjs';
++import { renderCodexNewThreadHandoff } from './codex-handoff.mjs';
+
+ function makeDb() {
+   const db = new DatabaseSync(':memory:');
+@@ -152,8 +153,8 @@ test('buildHandoffRecord: returns stable projection with memo, L1, L2, thinking,
+   assert.equal(record.source.adapter, 'claude');
+   assert.equal(record.source.inheritance, true);
+   assert.deepEqual(record.source.originSessionIds, ['old']);
+-  assert.equal(record.intent, 'continue implementation');
+-  assert.ok(record.constraints.some((c) => c.includes('preserve existing Claude Code')));
++  assert.equal(record.intent, 'continue the current task');
++  assert.deepEqual(record.constraints, []);
+   assert.equal(record.memory.inflightMemo, 'Next: continue');
+   assert.equal(record.memory.latestThinking[0].text, 'latest thought');
+   assert.equal(record.memory.latestThinking[0].sourceId, 'asst:thinking:0');
+@@ -165,6 +166,27 @@ test('buildHandoffRecord: returns stable projection with memo, L1, L2, thinking,
+   assert.equal(record.stats.preservedContextRows, 3);
+ });
+
++test('buildHandoffRecord: keeps default fresh-thread handoff project-neutral', () => {
++  const db = makeDb();
++  insertSession(db, 'external-project');
++  insertBody(db, {
++    session: 'external-project',
++    origin: 'external-project',
++    turn: 1,
++    role: 'assistant',
++    text: 'Continue the customer release validation.',
++    createdAt: 1000,
++  });
++
++  const record = buildHandoffRecord(db, { sessionId: 'external-project' });
++  const rendered = renderCodexNewThreadHandoff(record);
++
++  assert.match(rendered, /Continue the customer release validation\./);
++  assert.doesNotMatch(rendered, /Claude Code/);
++  assert.doesNotMatch(rendered, /adapter\/projection/);
++  assert.doesNotMatch(rendered, /rollback\/inject/);
++});
++
+ test('buildHandoffRecord: excludes current origin rows', () => {
+   const db = makeDb();
+   insertSession(db);
 --
 2.50.1 (Apple Git-155)

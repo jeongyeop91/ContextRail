@@ -17,7 +17,7 @@ function setupReport(overrides = {}) {
   return {
     status: 'installed_live_verification_required',
     project: { state: 'ready' },
-    throughline: { state: 'hooks_ready', version: '0.10.3-codex.3' },
+    throughline: { state: 'hooks_ready', version: '0.10.3-codex.4' },
     contextHooks: { state: 'registered' },
     live: { throughline: 'unverified', context: 'unverified' },
     ...overrides,
@@ -47,7 +47,7 @@ test('doctor reports ready only with project, hooks, dispatch, and capture evide
   const report = buildDoctorReport({
     setupReport: setupReport({
       status: 'installed',
-      throughline: { state: 'capture_verified', version: '0.10.3-codex.3' },
+      throughline: { state: 'capture_verified', version: '0.10.3-codex.4' },
       live: { throughline: 'verified', context: 'verified' },
     }),
     hookEvent: {

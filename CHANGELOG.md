@@ -2,6 +2,15 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.11 - 2026-09-01
+
+### Fixed
+
+- Make default fresh-task handoff records project-neutral instead of injecting
+  Throughline development constraints into unrelated repositories.
+- Preserve the source session's recent L2 memory while using a generic
+  `continue the current task` intent and no fabricated default constraints.
+
 ## 0.3.0-rc.10 - 2026-08-31
 
 ### Added

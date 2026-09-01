@@ -45,7 +45,7 @@ async function fixture({ existing = false } = {}) {
         return { code: 0, stdout: '', stderr: '' };
       }
       const command = executable === nodePath ? args[1] : args[0];
-      if (command === '--version') return { code: 0, stdout: '0.10.3-codex.3\n', stderr: '' };
+      if (command === '--version') return { code: 0, stdout: '0.10.3-codex.4\n', stderr: '' };
       if (command === 'install') {
         const hooksPath = join(home, '.codex/hooks.json');
         const hooks = JSON.parse(await readFile(hooksPath, 'utf8'));

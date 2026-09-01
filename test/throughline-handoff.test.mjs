@@ -10,7 +10,7 @@ import { runManagedHandoff } from '../src/integrations/throughline-handoff.mjs';
 async function managedFixture() {
   const root = await mkdtemp(join(tmpdir(), 'contextrail-handoff-'));
   const managedRoot = join(root, 'managed');
-  const releaseId = '0.10.3-codex.3-test';
+  const releaseId = '0.10.3-codex.4-test';
   const packageRoot = join(managedRoot, 'releases', releaseId, 'node_modules', 'throughline');
   const binPath = join(packageRoot, 'bin', 'throughline.mjs');
   const nodePath = join(root, 'node.exe');

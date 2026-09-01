@@ -12,7 +12,7 @@ const setupResult = {
   planId: 'a'.repeat(64),
   report: {
     project: { state: 'ready', issues: [] },
-    throughline: { state: 'hooks_ready', version: '0.10.3-codex.3' },
+    throughline: { state: 'hooks_ready', version: '0.10.3-codex.4' },
     contextHooks: { state: 'registered' },
     live: { throughline: 'unverified', context: 'unverified' },
   },
@@ -21,7 +21,7 @@ const setupResult = {
 test('setup human output is concise and omits internal plan evidence', () => {
   const output = renderSetupHuman(setupResult);
   assert.match(output, /^ContextRail setup complete/m);
-  assert.match(output, /Throughline: ready \(0\.10\.3-codex\.3\)/);
+  assert.match(output, /Throughline: ready \(0\.10\.3-codex\.4\)/);
   assert.match(output, /Automatic capture: needs verification/);
   assert.match(output, /Next: contextrail doctor/);
   assert.doesNotMatch(output, /aaaa|planId|artifact|https:\/\//);

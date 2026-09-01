@@ -1,19 +1,19 @@
 {
   "schema": 1,
-  "releaseVersion": "0.3.0-rc.10",
+  "releaseVersion": "0.3.0-rc.11",
   "nodeVersion": ">=22.13",
   "platforms": ["darwin", "linux", "win32"],
   "throughline": {
-    "packageVersion": "0.10.3-codex.3",
+    "packageVersion": "0.10.3-codex.4",
     "repository": "https://github.com/kitepon/Throughline.git",
     "baseCommit": "4bf84f548eeb7173a3b46be33b9b0c54723ab21f",
-    "compatibilityCommit": "aea08a5537de358ff273f3d7eb98ac133cc990dd",
-    "patchSha256": "56dbaee1baa82d398f6a9dd6515eaa735abd5b2042bba4c7f54d6ef373d651fa",
+    "compatibilityCommit": "fb930dd13dd9bd48759217a955298b010867d948",
+    "patchSha256": "7fa56a91c0180f03e391b7ebe51ec4bc977a09dae30d6bf9e3d956783b6197f3",
     "removalCondition": "Remove the compatibility patch only after an immutable upstream release contains equivalent current Codex rollout support and passes the same capture verification.",
     "artifact": {
-      "name": "throughline-0.10.3-codex.3.tgz",
-      "url": "https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.10/throughline-0.10.3-codex.3.tgz",
-      "sha256": "5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2"
+      "name": "throughline-0.10.3-codex.4.tgz",
+      "url": "https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.11/throughline-0.10.3-codex.4.tgz",
+      "sha256": "96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1"
     }
   }
 }

@@ -71,12 +71,17 @@ Active item: `CR-008`
 - Focused tests distinguish Hook registration, ContextRail Stop dispatch, and Throughline capture as separate evidence. Automatic Windows Stop capture has not yet been revalidated against a published candidate, so no capture success is claimed.
 - Release-candidate metadata is prepared for `0.3.0-rc.10`. Repository-wide verification passes 169 tests, self-check with 8 Active Authority files, and the neutral template smoke. The locally assembled ContextRail tarballs are byte-identical at SHA-256 `aae98a9001b9b300d545c43553dd6ff2bebffa2f22a021b5331983837622a876`; the reproducible Throughline artifact remains SHA-256 `5810abb239321bfd28aebafb59c90bad9a0bd26f9613fc589b91474357087bc2`.
 - Release commit and annotated tag: `e343c21` / `v0.3.0-rc.10`. Main and tag verification, GitHub prerelease assembly, and workflow-dispatched OIDC npm publication succeeded. npm `next` and both GitHub ContextRail tarballs are byte-identical at SHA-256 `aae98a9001b9b300d545c43553dd6ff2bebffa2f22a021b5331983837622a876`.
+- Native Windows rc.10 evidence proves trusted Hooks, observed ContextRail Stop dispatch, and automatic Throughline capture: rollout and latest DB session `01a056e5-d364-7963-abb4-4c67a515dce9` matched. One-command handoff created a different task, injected developer memory, and opened Codex Desktop.
+- Semantic review of that new task found no cross-project DB row leak. The source session contained only the bounded README test turn, while Throughline's handoff record added three product-development constraints from hard-coded defaults. The latest-session selection therefore had little real work to resume and the generic external project received unrelated Throughline instructions.
+- The compatibility fix changes the default intent to `continue the current task`, removes fabricated default constraints, and adds a non-Throughline fresh-task regression proving recent L2 is retained without `Claude Code`, `adapter/projection`, or `rollback/inject` contamination. Upstream focused tests and all 783 Throughline tests pass.
+- Managed Throughline `0.10.3-codex.4` was reproducibly prepared from compatibility commit `fb930dd13dd9bd48759217a955298b010867d948` and patch SHA-256 `7fa56a91c0180f03e391b7ebe51ec4bc977a09dae30d6bf9e3d956783b6197f3`; the normalized artifact SHA-256 is `96c8d8f5395d319ce3569cad7c228f18782cc8d9331a2860043f4da31d057ea1`.
+- Release-candidate metadata is prepared for `0.3.0-rc.11`. Repository tests pass 169 cases, and the locally assembled ContextRail tarballs are byte-identical at SHA-256 `1539d1c529a6703b2c2bd00a81580c6204cb2b1a606b34a1efc2a96f6d37ba6d`.
 
 ## Next steps
 
-1. Re-run native Windows in-place setup and concise `doctor` with `0.3.0-rc.10`.
-2. Exercise automatic Stop capture and one-command handoff as separate live acceptance boundaries.
-3. Record the Windows evidence and leave CR-004 outside the active scope.
+1. Publish `0.3.0-rc.11` with managed Throughline `0.10.3-codex.4` under npm `next` and a matching GitHub prerelease.
+2. Update the native Windows installation in place, create a meaningful multi-turn source task, and rerun one-command handoff.
+3. Confirm the new task retains that source L2 without the removed Throughline development constraints, then leave stable `latest` gated until the semantic result is recorded.
 
 ## Blockers
 
