@@ -34,7 +34,7 @@ Rollback refuses to run if live configuration differs from the selected release 
 
 Setup records component completion after each owned boundary. A failure distinguishes completed, failed, and pending components. Repeated apply verifies a selected managed release and exact ContextRail receipts before resuming; it never replaces an unmanaged Throughline installation.
 
-The top-level `handoff` adapter invokes the selected managed Throughline `codex-handoff-start` command with explicit argv, execution enabled, and a selected host. Throughline owns source selection, memory rendering, task creation, injection, and host opening. ContextRail maps structured output into concise human or stable JSON results and never reads the Throughline database to construct a fallback.
+The top-level `handoff` adapter invokes the selected managed Throughline `codex-handoff-start` command with explicit argv, execution enabled, and a selected host. Codex Desktop is the default host, while an explicit `--open-host` value overrides it. Throughline owns source selection, memory rendering, task creation, injection, and host opening. ContextRail maps structured output into concise human or stable JSON results and never reads the Throughline database to construct a fallback.
 
 ## Readiness
 

@@ -17,10 +17,12 @@ The current release candidate supports macOS, Linux, and native Windows. Install
 npm install --global contextrail@next
 contextrail setup
 contextrail doctor
-contextrail handoff --open-host desktop
+contextrail handoff
 ```
 
-`contextrail setup` defaults to the current directory and the full profile. It discovers the project without writing, prints a short human-readable plan, and asks `Apply? [y/N]` only in an interactive terminal. The full profile initializes or adopts ContextRail, installs the pinned Codex-compatible Throughline, appends ContextRail Codex Hooks, enables the selected project, and verifies the result. Use `contextrail doctor` for the concise readiness result, then `contextrail handoff --open-host desktop` to continue the latest captured work in a new Codex Desktop task.
+`contextrail setup` defaults to the current directory and the full profile. It discovers the project without writing, prints a short human-readable plan, and asks `Apply? [y/N]` only in an interactive terminal. The full profile initializes or adopts ContextRail, installs the pinned Codex-compatible Throughline, appends ContextRail Codex Hooks, enables the selected project, and verifies the result. Use `contextrail doctor` for the concise readiness result, then `contextrail handoff` to continue the latest captured work in a new Codex Desktop task.
+
+Follow [Apply ContextRail to a new project](#apply-contextrail-to-a-new-project) for an empty directory or [Apply ContextRail to an existing project](#apply-contextrail-to-an-existing-project) when the repository already has its own instructions, documentation, and project state.
 
 Windows live validation is still pending. Use `@next` until the [native Windows pilot](docs/reference/WINDOWS_PILOT.md) passes; afterward the stable command becomes `npm install --global contextrail`. The npm tag is `latest`, not `last`.
 
@@ -58,19 +60,19 @@ contextrail doctor --debug
 
 ### Continue in a new Codex task
 
-After at least one trusted Codex turn has been captured, start a fresh task and inject the latest available Throughline handoff memory with one command:
+After at least one trusted Codex turn has been captured, start a fresh Codex Desktop task and inject the latest available Throughline handoff memory with one command:
 
 ```text
-contextrail handoff --open-host desktop
+contextrail handoff
 ```
 
 Use an explicit source only when you need a specific captured task:
 
 ```text
-contextrail handoff --session codex:<source-task-id> --open-host desktop
+contextrail handoff --session codex:<source-task-id>
 ```
 
-The command uses the managed Throughline release selected by ContextRail, creates a different Codex task, injects the handoff memory, and opens it in the requested host. It does not mutate or resurrect the current task. If desktop opening fails, the concise result prints the manual resume command.
+Codex Desktop is the default host. Use `--open-host vscode`, `--open-host cli`, or `--open-host auto` only when you want another host-selection behavior; `--open-host desktop` remains an explicit equivalent. The command uses the managed Throughline release selected by ContextRail, creates a different Codex task, injects the handoff memory, and opens it in the selected host. It does not mutate or resurrect the current task. If opening fails after task creation, the concise result keeps the new task ID and prints the manual resume command. Do not rerun `handoff` in that case, because every successful invocation creates a different task.
 
 ### Diagnose automatic capture
 
@@ -83,11 +85,11 @@ The Stop marker contains only timestamp, hashed session identifier, source, proj
 The npm tarball and versioned GitHub asset are byte-identical. Install the immutable release-candidate asset if npm is unavailable:
 
 ```text
-npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.12/contextrail-0.3.0-rc.12.tgz
+npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.13/contextrail-0.3.0-rc.13.tgz
 contextrail setup
 ```
 
-Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.12`.
+Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.13`.
 
 ## What ContextRail provides
 
@@ -133,25 +135,54 @@ npm uninstall --global contextrail
 
 Removing the npm package does not remove managed Throughline or Hook receipts. Use the lower-level receipt-guarded uninstall and rollback commands when you deliberately want to remove those components. ContextRail never edits shell startup files.
 
-## Create a new project
+## Apply ContextRail to a new project
 
-Open a terminal in an empty directory, optionally containing `.git`, and run `contextrail setup`. Use `contextrail setup --dry-run --json` followed by `contextrail setup --apply --json` from Codex or automation.
+Use this how-to for an empty directory, optionally containing only `.git`. The commands are the same in PowerShell, macOS, and Linux terminals.
 
-`init` accepts an empty target, except that an existing `.git` directory is allowed. The generated neutral project contains hierarchical instructions, a routed authority document, and native file memory.
-
-Next, ask an agent to start with the generated `AGENTS.md`, `docs/README.md`, and `state/CURRENT.md`.
-
-## Adopt an existing repository
-
-Use `existing-repository` when a mature project already has instructions, documentation, status, plans, and a backlog. ContextRail maps those files instead of creating competing authority or state.
-
-Running `contextrail setup` in a non-empty unconfigured repository returns `needs_input` and candidate paths. It never guesses which files are authority, current state, plans, or backlog. You can ask Codex to prepare the reviewed mapping with this prompt:
+1. Open a terminal in the new project directory.
+2. Install the current release candidate and run the interactive full setup:
 
 ```text
-Inspect this repository read-only. Read AGENTS.md and the documentation router first. Identify the existing instruction file, document router, authority roots and exclusions, current-state file, plan directory, backlog file, and argv-based validation hints. Create a temporary existing-repository adoption JSON outside the repository. Run `contextrail setup --project existing --adoption-config <temporary-file> --dry-run --json`. Show me the complete plan and stop before `--apply`.
+npm install --global contextrail@next
+contextrail setup
 ```
 
-Create a repository-specific JSON mapping:
+3. Review the displayed plan and answer `y` only when the target and components are correct. In Codex or another non-interactive environment, use the explicit boundary instead:
+
+```text
+contextrail setup --dry-run --json
+contextrail setup --apply --json
+```
+
+4. In Codex Desktop, review the newly registered Hook commands, trust them, and restart Codex Desktop. Send one normal project prompt so live capture has content, then check readiness and continue in a new task:
+
+```text
+contextrail doctor
+contextrail handoff
+```
+
+The generated neutral project contains `AGENTS.md`, a routed authority document, and native file memory under `state/`. Start future work by reading `AGENTS.md`, `docs/README.md`, and `state/CURRENT.md`.
+
+## Apply ContextRail to an existing project
+
+Use this how-to when a mature repository already has its own instructions, documentation, status, plans, and backlog. ContextRail maps those files instead of creating competing authority or state.
+
+1. Back up the repository, open it in Codex Desktop, and open a terminal in its root directory. Install or update ContextRail:
+
+```text
+npm install --global contextrail@next
+contextrail --version
+```
+
+2. Ask Codex to inspect the existing repository and prepare the required mapping. Paste this prompt into a Codex task opened for that repository:
+
+```text
+Inspect this repository read-only. Read AGENTS.md and the documentation router first when they exist. Identify the existing instruction file, document router, authority roots and exclusions, current-state file, plan directory, backlog file, and argv-based validation hints. Create a temporary existing-repository adoption JSON outside the repository. Run `contextrail setup --project existing --adoption-config <temporary-file> --dry-run --json`. Show me the adoption JSON and complete setup plan, explain any uncertain mapping, and stop before `--apply`. Do not modify the repository.
+```
+
+Running `contextrail setup` without that config in a non-empty unconfigured repository intentionally returns `needs_input` and candidate paths. ContextRail does not guess which existing files are authoritative.
+
+3. Review the temporary config. A repository-specific mapping has this form:
 
 ```json
 {
@@ -174,31 +205,31 @@ Create a repository-specific JSON mapping:
 }
 ```
 
-Then review and apply:
+4. After every mapped path and validation command is correct, use the exact temporary path reported by Codex and run the full setup dry run and apply. Keep each command on one line so it works in PowerShell, macOS, and Linux after replacing the example path:
 
-```bash
-contextrail adopt \
-  --target /path/to/project \
-  --profile existing-repository \
-  --adoption-config /path/to/adoption-config.json \
-  --dry-run --json
-
-contextrail adopt \
-  --target /path/to/project \
-  --profile existing-repository \
-  --adoption-config /path/to/adoption-config.json \
-  --apply --json
+```text
+contextrail setup --project existing --adoption-config "/absolute/path/adoption-config.json" --dry-run --json
+contextrail setup --project existing --adoption-config "/absolute/path/adoption-config.json" --apply --json
 ```
 
 All mapped paths must be repository-relative. Authority roots are recursive; exclusions can name a file or directory subtree. Validation hints must be argv arrays and are returned as data, never executed automatically.
 
-Existing-repository apply creates only:
+The adoption part of setup creates only:
 
 - `.context-rail/config.json`
 - `.context-rail/version.json`
 - `.context-rail/.gitignore`, containing only `runtime/`
 
-It does not modify existing `AGENTS.md`, the document router, authority, current state, plans, backlog, or root `.gitignore`.
+It does not modify existing `AGENTS.md`, the document router, authority, current state, plans, backlog, or root `.gitignore`. The full setup additionally installs the managed Throughline release, registers the ContextRail and Throughline Codex Hooks through their guarded boundaries, and enables automation only for this project.
+
+5. Review and trust new or changed Hook commands in Codex Desktop, restart the app, and send one normal prompt in the repository. Then verify capture and perform a one-command handoff:
+
+```text
+contextrail doctor
+contextrail handoff
+```
+
+For later ContextRail updates, stay in the same repository and rerun `npm install --global contextrail@next` followed by `contextrail setup`. Keep the existing `.context-rail` mapping; do not create a new adoption config unless the repository's authority or state paths have changed.
 
 ## Native state and references mode
 
@@ -398,7 +429,7 @@ ContextRail is available under the [MIT License](LICENSE).
 
 ## Known limitations
 
-- `0.3.0-rc.12` is the npm `next` release candidate; `latest` remains gated on the Windows live pilot.
+- `0.3.0-rc.13` is the npm `next` release candidate; `latest` remains gated on the final Windows flagless-handoff check.
 - Node.js 22.13 or newer is required.
 - Validation hints are returned but never executed automatically.
 - Throughline is optional in reduced profiles and automatically installed or verified by the full setup profile.

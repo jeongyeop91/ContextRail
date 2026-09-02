@@ -51,7 +51,7 @@ test('unknown commands return CLI usage exit code', async () => {
 test('version and help are successful read-only top-level options', async () => {
   const version = capture();
   assert.equal(await run(['--version'], version.io), 0);
-  assert.equal(version.output().stdout, '0.3.0-rc.12\n');
+  assert.equal(version.output().stdout, '0.3.0-rc.13\n');
   assert.equal(version.output().stderr, '');
 
   const help = capture();
@@ -230,6 +230,7 @@ test('handoff has concise, json, and debug output without exposing raw upstream 
   assert.equal(await run(['handoff', '--session', 'codex:source-thread', '--json'], json.io, {
     runManagedHandoff: async (options) => {
       assert.equal(options.sessionId, 'codex:source-thread');
+      assert.equal(options.openHost, 'desktop');
       return operation;
     },
   }), 0);

@@ -2,6 +2,15 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0-rc.13 - 2026-09-03
+
+### Changed
+
+- Make Codex Desktop the default host for option-free `contextrail handoff`,
+  while preserving explicit VS Code, CLI, and automatic host selection.
+- Split the README onboarding into complete new-project and existing-project
+  how-to guides, including reviewed existing-repository adoption and full setup.
+
 ## 0.3.0-rc.12 - 2026-09-01
 
 ### Fixed

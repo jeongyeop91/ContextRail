@@ -22,7 +22,7 @@ async function managedFixture() {
   return { managedRoot, nodePath, binPath };
 }
 
-test('managed handoff invokes Throughline once with execution and explicit host', async () => {
+test('managed handoff defaults to Codex Desktop while invoking Throughline once', async () => {
   const scope = await managedFixture();
   const calls = [];
   const processAdapter = {
@@ -51,7 +51,6 @@ test('managed handoff invokes Throughline once with execution and explicit host'
     managedRoot: scope.managedRoot,
     nodePath: scope.nodePath,
     sessionId: 'codex:source-thread',
-    openHost: 'desktop',
     processAdapter,
     env: {},
     fs: nodeFilesystem,

@@ -1,8 +1,8 @@
 # Native Windows pilot
 
-Windows live validation: pending
+Windows live validation: rc.13 final retest pending
 
-Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.12` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
+Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.13` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
 
 ## Preconditions
 
@@ -20,7 +20,7 @@ contextrail --version
 contextrail setup --dry-run --json
 ```
 
-Confirm the version is `0.3.0-rc.12`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+Confirm the version is `0.3.0-rc.13`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
 
 When continuing a pilot in an already configured repository, update the global CLI in place and rerun setup from that same repository. Do not remove the existing ContextRail metadata, managed Throughline release, or adoption mapping:
 
@@ -66,7 +66,7 @@ Confirm that existing user Hooks remain present, ContextRail handlers contain `c
    investigation.
 7. Run `contextrail throughline verify --doctor` and confirm the Throughline Hook trust summary is `trusted`, all three managed entries say `trusted: yes`, and capture contains non-empty body and detail evidence; Hook declarations alone do not pass capture.
 8. Start a fresh Codex task and exercise Throughline restore.
-9. Prepare a fresh-task handoff and exercise Throughline handoff.
+9. Run `contextrail handoff` without `--open-host`. Confirm that it creates a different task, injects Throughline memory, and opens Codex Desktop. If task creation succeeds but opening fails, open the reported task instead of rerunning the command.
 10. Confirm injected ContextRail guidance is excluded from captured memory according to the compatibility contract.
 
 Record capture, restore, and handoff as separate pass or fail results. Do not record conversation text.
@@ -91,3 +91,10 @@ Record only:
 - any stable issue codes.
 
 The stable npm `latest` tag remains blocked until all live items pass and the evidence is added to repository history.
+
+The rc.12 native Windows existing-project pilot passed installation, guarded
+adoption, Hook trust, automatic capture, fresh-task creation, memory injection,
+and semantic restoration. It selected `manual` only because the flagless
+handoff still delegated host selection to `auto`. Rc.13 changes only that
+ContextRail default to Codex Desktop; the flagless open result is the remaining
+live check.

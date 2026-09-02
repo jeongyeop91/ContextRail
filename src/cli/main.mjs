@@ -427,7 +427,7 @@ export async function run(args = process.argv.slice(2), io = process, dependenci
   if (command === 'handoff') {
     const supported = ['--session', '--open-host', '--json', '--debug'];
     const sessionId = optionValue(args, '--session');
-    const openHost = optionValue(args, '--open-host') ?? 'auto';
+    const openHost = optionValue(args, '--open-host') ?? 'desktop';
     if (unknownOptions(args, 0, supported)
       || (args.includes('--session') && !sessionId)
       || (args.includes('--open-host') && !optionValue(args, '--open-host'))

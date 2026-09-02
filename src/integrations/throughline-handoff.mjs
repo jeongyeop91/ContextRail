@@ -40,7 +40,7 @@ export async function runManagedHandoff({
   managedRoot,
   nodePath,
   sessionId = null,
-  openHost = 'auto',
+  openHost = 'desktop',
   processAdapter,
   env = process.env,
   fs = nodeFilesystem,

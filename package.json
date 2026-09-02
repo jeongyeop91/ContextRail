@@ -1,6 +1,6 @@
 {
   "name": "contextrail",
-  "version": "0.3.0-rc.12",
+  "version": "0.3.0-rc.13",
   "description": "Repository-local context routing and continuity for coding agents",
   "license": "MIT",
   "repository": {

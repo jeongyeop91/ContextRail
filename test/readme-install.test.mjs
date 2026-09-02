@@ -7,7 +7,7 @@ test('README leads with the npm release-candidate setup and human verification f
   const install = 'npm install --global contextrail@next';
   const setup = 'contextrail setup';
   const doctor = 'contextrail doctor';
-  const handoff = 'contextrail handoff --open-host desktop';
+  const handoff = 'contextrail handoff';
   assert.ok(readme.indexOf(install) > 0);
   assert.ok(readme.indexOf(setup) > readme.indexOf(install));
   assert.ok(readme.indexOf(doctor) > readme.indexOf(setup));
@@ -45,9 +45,38 @@ test('README documents every setup profile and explicit machine apply boundary',
   assert.match(readme, /docs\/reference\/WINDOWS_PILOT\.md/);
 });
 
-test('Windows pilot keeps structural, capture, restore, and handoff evidence distinct', async () => {
+test('README separates complete new-project and existing-project setup paths', async () => {
+  const readme = await readFile('README.md', 'utf8');
+  const newHeading = '## Apply ContextRail to a new project';
+  const existingHeading = '## Apply ContextRail to an existing project';
+  const newStart = readme.indexOf(newHeading);
+  const existingStart = readme.indexOf(existingHeading);
+  assert.ok(newStart > 0, newHeading);
+  assert.ok(existingStart > newStart, existingHeading);
+
+  const newGuide = readme.slice(newStart, existingStart);
+  for (const command of [
+    'npm install --global contextrail@next',
+    'contextrail setup',
+    'contextrail doctor',
+    'contextrail handoff',
+  ]) assert.ok(newGuide.includes(command), command);
+
+  const existingGuide = readme.slice(existingStart, readme.indexOf('## Native state and references mode'));
+  for (const command of [
+    'contextrail setup --project existing --adoption-config',
+    '--dry-run --json',
+    '--apply --json',
+    'contextrail doctor',
+    'contextrail handoff',
+  ]) assert.ok(existingGuide.includes(command), command);
+  assert.match(existingGuide, /temporary/i);
+  assert.match(existingGuide, /does not modify/i);
+});
+
+test('Windows pilot keeps structural, capture, restore, and final handoff evidence distinct', async () => {
   const pilot = await readFile('docs/reference/WINDOWS_PILOT.md', 'utf8');
-  for (const phrase of ['PowerShell', 'capture', 'restore', 'handoff', 'installed_live_verification_required', 'Windows live validation: pending']) {
+  for (const phrase of ['PowerShell', 'capture', 'restore', 'handoff', 'installed_live_verification_required', 'Windows live validation: rc.13 final retest pending']) {
     assert.ok(pilot.includes(phrase), phrase);
   }
 });
