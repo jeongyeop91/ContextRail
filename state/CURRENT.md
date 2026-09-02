@@ -1,6 +1,6 @@
 # Current state
 
-Active item: `CR-008`
+Active item: none
 
 ## Observed
 
@@ -89,12 +89,13 @@ Active item: `CR-008`
 - Release commit and annotated tag: `86419f3` / `v0.3.0-rc.13`. Main verification (`33694555734`), tag verification (`33694570233`), GitHub prerelease assembly (`33694570427`), and workflow-dispatched OIDC npm publication (`33694687602`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `995b5d6a7154a5133bdcf6f19c104bdcecbc30c134aaa53ff5631237b587088c`; npm `latest` remains `0.3.0-rc.2` pending the final Windows flagless-handoff check.
 - The native Windows rc.13 retest ran option-free `contextrail handoff` in the already adopted repository and Codex Desktop opened the newly created, memory-injected task. This completes the existing-project live acceptance gate recorded in `docs/history/2026-09-03-native-windows-existing-project-acceptance.md`.
 - Stable `0.3.0` metadata, install examples, release tests, and the Windows acceptance record are prepared locally. Repository-wide verification passes 172 tests, self-check with 8 Active Authority files, neutral template smoke, package and publish dry runs, and `git diff --check`. Two independent release assemblies are byte-identical at SHA-256 `8a8d36f16fefdc0912ebfe0639748f8b583cb982ec88f4df51ec82ceaa8675cc`; the reproducible Throughline artifact remains SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`. Stable CI, GitHub Release, and npm `latest` verification remain pending.
+- Stable release commit and annotated tag: `70b1001` / `v0.3.0`. Main verification (`33696618050`), tag verification (`33696619743`), GitHub release assembly (`33696619719`), and workflow-dispatched OIDC npm publication (`33696747054`) succeeded.
+- GitHub and npm serve byte-identical `contextrail-0.3.0.tgz` assets at SHA-256 `8a8d36f16fefdc0912ebfe0639748f8b583cb982ec88f4df51ec82ceaa8675cc`; the released Throughline asset is SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`. npm `latest` resolves to `0.3.0`, while `next` remains the immutable `0.3.0-rc.13` candidate.
 
 ## Next steps
 
-1. Run repository-wide and reproducible stable artifact verification.
-2. Publish the matching `v0.3.0` GitHub release and npm package under `latest`.
-3. Verify cross-channel artifact identity, then close CR-008.
+1. Use stable `0.3.0` as the cross-platform installation baseline.
+2. Select a new backlog item explicitly before beginning additional implementation.
 
 ## Blockers
 

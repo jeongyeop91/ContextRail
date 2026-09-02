@@ -100,7 +100,7 @@
     {
       "id": "CR-008",
       "title": "Deliver cross-platform end-to-end installation",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["CR-005", "CR-007"],
       "acceptance": [
         "A clean macOS, Windows, or Linux computer can follow the README to install the ContextRail CLI and choose a full or explicitly reduced setup profile",
@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish stable 0.3.0 under npm latest with the matching GitHub release, verify artifact identity, then close CR-008"],
+      "nextSteps": ["Use immutable v0.3.0 as the cross-platform installation baseline"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

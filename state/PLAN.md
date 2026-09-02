@@ -2,7 +2,7 @@
 
 **Goal:** Implement the accepted ADR-0003, ADR-0004, and ADR-0005 installation and distribution contracts.
 
-**Status:** Windows live evidence passed; stable `0.3.0` publication under `latest` is in progress.
+**Status:** Complete. Native Windows acceptance passed, and stable `0.3.0` is published under npm `latest` with a matching GitHub release.
 
 Detailed task plan: `docs/superpowers/plans/2026-08-27-cross-platform-full-install.md`
 
@@ -26,4 +26,4 @@ Current follow-up plan: `docs/superpowers/plans/2026-08-31-human-cli-and-hook-di
 - [x] Correct stale Codex Hook approval diagnosis and prepare the `0.3.0-rc.12` release candidate.
 - [x] Publish `0.3.0-rc.12` under npm `next` with the matching GitHub prerelease.
 - [x] Rerun the Windows semantic handoff pilot and confirm option-free Codex Desktop opening.
-- [ ] Publish stable `0.3.0` under npm `latest` with the matching GitHub release.
+- [x] Publish stable `0.3.0` under npm `latest` with the matching GitHub release.
