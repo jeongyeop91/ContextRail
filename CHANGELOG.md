@@ -2,6 +2,18 @@
 
 All notable changes to ContextRail are documented here.
 
+## 0.3.0 - 2026-09-03
+
+### Added
+
+- Publish the first stable cross-platform full setup for new and existing
+  projects with managed Throughline and guarded Codex Hooks.
+
+### Validated
+
+- Complete the native Windows existing-project pilot for installation, Hook
+  trust, automatic capture, semantic handoff, and option-free Desktop opening.
+
 ## 0.3.0-rc.13 - 2026-09-03
 
 ### Changed

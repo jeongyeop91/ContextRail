@@ -109,7 +109,7 @@
         "GitHub Releases publish immutable ContextRail and Throughline artifacts plus a pinned manifest and SHA-256 evidence",
         "The byte-identical ContextRail release-candidate tarball is published publicly under next, with later releases using OIDC Trusted Publishing and no long-lived npm token",
         "Packed-artifact setup and Hook coexistence tests pass on Ubuntu, macOS, and Windows CI",
-        "Windows live Codex validation remains explicitly pending until the user executes the supplied pilot checklist"
+        "Native Windows live validation passes existing-repository adoption, trusted Hook capture, semantic handoff restoration, and option-free Codex Desktop opening"
       ],
       "authority": [
         "docs/authority/ARCHITECTURE.md",
@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Install 0.3.0-rc.13, verify option-free handoff opens Codex Desktop on native Windows, then record the completed live pilot before promoting latest"],
+      "nextSteps": ["Publish stable 0.3.0 under npm latest with the matching GitHub release, verify artifact identity, then close CR-008"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

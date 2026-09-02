@@ -1,8 +1,8 @@
 # Native Windows pilot
 
-Windows live validation: rc.13 final retest pending
+Windows live validation: passed
 
-Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.13` and the matching GitHub prerelease are public. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
+Use this how-to on a native Windows PC with `contextrail@0.3.0` or newer. Run every command in PowerShell, not WSL. WSL is a separate Linux environment and must not configure a mounted Windows-native Codex home.
 
 ## Preconditions
 
@@ -15,17 +15,17 @@ Use this how-to on a native Windows PC after `contextrail@0.3.0-rc.13` and the m
 ## Install and inspect
 
 ```powershell
-npm install --global contextrail@next
+npm install --global contextrail
 contextrail --version
 contextrail setup --dry-run --json
 ```
 
-Confirm the version is `0.3.0-rc.13`. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
+Confirm the version is `0.3.0` or newer. Review the target, native LocalAppData managed root, Throughline artifact URL and SHA-256, project classification, Hook paths, and ordered components. The dry run must not download or change the repository or user Codex files.
 
 When continuing a pilot in an already configured repository, update the global CLI in place and rerun setup from that same repository. Do not remove the existing ContextRail metadata, managed Throughline release, or adoption mapping:
 
 ```powershell
-npm install --global contextrail@next
+npm install --global contextrail
 contextrail --version
 Set-Location C:\Projects\RathonSales
 contextrail setup --dry-run --json
@@ -90,11 +90,11 @@ Record only:
 - Throughline handoff: pass or fail; and
 - any stable issue codes.
 
-The stable npm `latest` tag remains blocked until all live items pass and the evidence is added to repository history.
+The stable npm `latest` gate was satisfied by the recorded native Windows acceptance evidence.
 
 The rc.12 native Windows existing-project pilot passed installation, guarded
 adoption, Hook trust, automatic capture, fresh-task creation, memory injection,
 and semantic restoration. It selected `manual` only because the flagless
 handoff still delegated host selection to `auto`. Rc.13 changes only that
-ContextRail default to Codex Desktop; the flagless open result is the remaining
-live check.
+ContextRail default to Codex Desktop. The rc.13 retest then opened the new Codex
+Desktop task without `--open-host`, completing the live check.

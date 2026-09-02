@@ -87,12 +87,14 @@ Active item: `CR-008`
 - The rc.13 change makes Codex Desktop the ContextRail handoff default while keeping explicit `vscode`, `cli`, and `auto` overrides. The README now separates complete new-project and existing-project full-setup how-to paths; the existing path uses a reviewed temporary adoption mapping and does not stop at the core-only `adopt` command.
 - Release-candidate metadata is prepared for `0.3.0-rc.13`. Repository-wide verification passes 172 tests, self-check with 8 Active Authority files, neutral template smoke, package and publish dry runs, and `git diff --check`. Two independent release assemblies produced byte-identical ContextRail tarballs at SHA-256 `995b5d6a7154a5133bdcf6f19c104bdcecbc30c134aaa53ff5631237b587088c`; the unchanged reproducible Throughline artifact remains SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`.
 - Release commit and annotated tag: `86419f3` / `v0.3.0-rc.13`. Main verification (`33694555734`), tag verification (`33694570233`), GitHub prerelease assembly (`33694570427`), and workflow-dispatched OIDC npm publication (`33694687602`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `995b5d6a7154a5133bdcf6f19c104bdcecbc30c134aaa53ff5631237b587088c`; npm `latest` remains `0.3.0-rc.2` pending the final Windows flagless-handoff check.
+- The native Windows rc.13 retest ran option-free `contextrail handoff` in the already adopted repository and Codex Desktop opened the newly created, memory-injected task. This completes the existing-project live acceptance gate recorded in `docs/history/2026-09-03-native-windows-existing-project-acceptance.md`.
+- Stable `0.3.0` metadata, install examples, release tests, and the Windows acceptance record are prepared locally. Repository-wide verification passes 172 tests, self-check with 8 Active Authority files, neutral template smoke, package and publish dry runs, and `git diff --check`. Two independent release assemblies are byte-identical at SHA-256 `8a8d36f16fefdc0912ebfe0639748f8b583cb982ec88f4df51ec82ceaa8675cc`; the reproducible Throughline artifact remains SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`. Stable CI, GitHub Release, and npm `latest` verification remain pending.
 
 ## Next steps
 
-1. Update the native Windows installation to `0.3.0-rc.13` and rerun setup in the already adopted repository.
-2. Run option-free `contextrail handoff`; confirm the already-proven creation and injection flow now opens Codex Desktop automatically.
-3. Record the completed Windows live pilot, then promote a stable `0.3.0` to npm `latest` through the existing release gate.
+1. Run repository-wide and reproducible stable artifact verification.
+2. Publish the matching `v0.3.0` GitHub release and npm package under `latest`.
+3. Verify cross-channel artifact identity, then close CR-008.
 
 ## Blockers
 

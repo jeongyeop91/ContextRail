@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('README leads with the npm release-candidate setup and human verification flow', async () => {
+test('README leads with the stable npm setup and human verification flow', async () => {
   const readme = await readFile('README.md', 'utf8');
-  const install = 'npm install --global contextrail@next';
+  const install = 'npm install --global contextrail';
   const setup = 'contextrail setup';
   const doctor = 'contextrail doctor';
   const handoff = 'contextrail handoff';
@@ -16,6 +16,7 @@ test('README leads with the npm release-candidate setup and human verification f
   assert.equal(readme.includes('ContextRail is not published to the npm registry'), false);
   assert.equal(readme.includes('$PWD'), false);
   assert.equal(readme.includes('@last'), false);
+  assert.equal(readme.includes('contextrail@next'), false);
 });
 
 test('README separates concise human output, machine JSON, and debug evidence', async () => {
@@ -56,7 +57,7 @@ test('README separates complete new-project and existing-project setup paths', a
 
   const newGuide = readme.slice(newStart, existingStart);
   for (const command of [
-    'npm install --global contextrail@next',
+    'npm install --global contextrail',
     'contextrail setup',
     'contextrail doctor',
     'contextrail handoff',
@@ -74,9 +75,9 @@ test('README separates complete new-project and existing-project setup paths', a
   assert.match(existingGuide, /does not modify/i);
 });
 
-test('Windows pilot keeps structural, capture, restore, and final handoff evidence distinct', async () => {
+test('Windows pilot records passed structural, capture, restore, and handoff evidence', async () => {
   const pilot = await readFile('docs/reference/WINDOWS_PILOT.md', 'utf8');
-  for (const phrase of ['PowerShell', 'capture', 'restore', 'handoff', 'installed_live_verification_required', 'Windows live validation: rc.13 final retest pending']) {
+  for (const phrase of ['PowerShell', 'capture', 'restore', 'handoff', 'installed_live_verification_required', 'Windows live validation: passed']) {
     assert.ok(pilot.includes(phrase), phrase);
   }
 });

@@ -11,10 +11,10 @@ ContextRail is product-neutral, has no production npm dependencies, and works of
 
 ## Install and set up
 
-The current release candidate supports macOS, Linux, and native Windows. Install it from the npm public registry, open a terminal in the project directory, and run setup:
+The stable release supports macOS, Linux, and native Windows. Install it from the npm public registry, open a terminal in the project directory, and run setup:
 
 ```text
-npm install --global contextrail@next
+npm install --global contextrail
 contextrail setup
 contextrail doctor
 contextrail handoff
@@ -24,7 +24,7 @@ contextrail handoff
 
 Follow [Apply ContextRail to a new project](#apply-contextrail-to-a-new-project) for an empty directory or [Apply ContextRail to an existing project](#apply-contextrail-to-an-existing-project) when the repository already has its own instructions, documentation, and project state.
 
-Windows live validation is still pending. Use `@next` until the [native Windows pilot](docs/reference/WINDOWS_PILOT.md) passes; afterward the stable command becomes `npm install --global contextrail`. The npm tag is `latest`, not `last`.
+The [native Windows pilot](docs/reference/WINDOWS_PILOT.md) passed the existing-project setup, trusted Hook capture, semantic handoff, and option-free Codex Desktop opening flow. The default npm tag is `latest`, not `last`.
 
 ### Choose a setup profile
 
@@ -82,14 +82,14 @@ The Stop marker contains only timestamp, hashed session identifier, source, proj
 
 ### Audited GitHub fallback
 
-The npm tarball and versioned GitHub asset are byte-identical. Install the immutable release-candidate asset if npm is unavailable:
+The npm tarball and versioned GitHub asset are byte-identical. Install the immutable stable asset if npm is unavailable:
 
 ```text
-npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0-rc.13/contextrail-0.3.0-rc.13.tgz
+npm install --global https://github.com/jeongyeop91/ContextRail/releases/download/v0.3.0/contextrail-0.3.0.tgz
 contextrail setup
 ```
 
-Verify the CLI with `contextrail --version`; the expected candidate version is `0.3.0-rc.13`.
+Verify the CLI with `contextrail --version`; the expected version is `0.3.0`.
 
 ## What ContextRail provides
 
@@ -127,7 +127,7 @@ npm test
 
 ### Update or remove
 
-Update the candidate with `npm install --global contextrail@next`. Remove only the ContextRail CLI with:
+Update ContextRail with `npm install --global contextrail`. Remove only the ContextRail CLI with:
 
 ```bash
 npm uninstall --global contextrail
@@ -140,10 +140,10 @@ Removing the npm package does not remove managed Throughline or Hook receipts. U
 Use this how-to for an empty directory, optionally containing only `.git`. The commands are the same in PowerShell, macOS, and Linux terminals.
 
 1. Open a terminal in the new project directory.
-2. Install the current release candidate and run the interactive full setup:
+2. Install the stable release and run the interactive full setup:
 
 ```text
-npm install --global contextrail@next
+npm install --global contextrail
 contextrail setup
 ```
 
@@ -170,7 +170,7 @@ Use this how-to when a mature repository already has its own instructions, docum
 1. Back up the repository, open it in Codex Desktop, and open a terminal in its root directory. Install or update ContextRail:
 
 ```text
-npm install --global contextrail@next
+npm install --global contextrail
 contextrail --version
 ```
 
@@ -229,7 +229,7 @@ contextrail doctor
 contextrail handoff
 ```
 
-For later ContextRail updates, stay in the same repository and rerun `npm install --global contextrail@next` followed by `contextrail setup`. Keep the existing `.context-rail` mapping; do not create a new adoption config unless the repository's authority or state paths have changed.
+For later ContextRail updates, stay in the same repository and rerun `npm install --global contextrail` followed by `contextrail setup`. Keep the existing `.context-rail` mapping; do not create a new adoption config unless the repository's authority or state paths have changed.
 
 ## Native state and references mode
 
@@ -429,7 +429,7 @@ ContextRail is available under the [MIT License](LICENSE).
 
 ## Known limitations
 
-- `0.3.0-rc.13` is the npm `next` release candidate; `latest` remains gated on the final Windows flagless-handoff check.
+- Native Windows, macOS, and Linux are supported; WSL remains a separate Linux environment and must not configure a mounted Windows-native Codex home.
 - Node.js 22.13 or newer is required.
 - Validation hints are returned but never executed automatically.
 - Throughline is optional in reduced profiles and automatically installed or verified by the full setup profile.
