@@ -118,7 +118,7 @@
         "docs/authority/VALIDATION.md"
       ],
       "sourceHints": ["src/cli/", "src/core/", "src/integrations/", "test/", ".github/workflows/", "README.md"],
-      "nextSteps": ["Publish and install 0.3.0-rc.13, verify option-free handoff opens Codex Desktop on native Windows, then record the completed live pilot before promoting latest"],
+      "nextSteps": ["Install 0.3.0-rc.13, verify option-free handoff opens Codex Desktop on native Windows, then record the completed live pilot before promoting latest"],
       "validation": [["npm", "run", "verify"]]
     }
   ]

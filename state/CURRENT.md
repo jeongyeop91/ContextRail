@@ -86,11 +86,12 @@ Active item: `CR-008`
 - The rc.12 native Windows existing-repository pilot then passed guarded adoption, managed installation, trusted Hooks, automatic capture, fresh-task creation, developer-memory injection, and semantic restoration of the exact project marker and next task without unrelated memory. The option-free handoff created and injected the task but resolved its host as manual because ContextRail passed Throughline's `auto` host default.
 - The rc.13 change makes Codex Desktop the ContextRail handoff default while keeping explicit `vscode`, `cli`, and `auto` overrides. The README now separates complete new-project and existing-project full-setup how-to paths; the existing path uses a reviewed temporary adoption mapping and does not stop at the core-only `adopt` command.
 - Release-candidate metadata is prepared for `0.3.0-rc.13`. Repository-wide verification passes 172 tests, self-check with 8 Active Authority files, neutral template smoke, package and publish dry runs, and `git diff --check`. Two independent release assemblies produced byte-identical ContextRail tarballs at SHA-256 `995b5d6a7154a5133bdcf6f19c104bdcecbc30c134aaa53ff5631237b587088c`; the unchanged reproducible Throughline artifact remains SHA-256 `35f0bda2f9db4e3177fd7c205b923bf1442cfdbfa2d1bcc801d19ac4143760f0`.
+- Release commit and annotated tag: `86419f3` / `v0.3.0-rc.13`. Main verification (`33694555734`), tag verification (`33694570233`), GitHub prerelease assembly (`33694570427`), and workflow-dispatched OIDC npm publication (`33694687602`) succeeded. npm `next` and the GitHub versioned ContextRail asset are byte-identical at SHA-256 `995b5d6a7154a5133bdcf6f19c104bdcecbc30c134aaa53ff5631237b587088c`; npm `latest` remains `0.3.0-rc.2` pending the final Windows flagless-handoff check.
 
 ## Next steps
 
-1. Publish `0.3.0-rc.13` to the GitHub prerelease and npm `next` channels.
-2. Update the native Windows installation and run option-free `contextrail handoff`; confirm the already-proven creation and injection flow now opens Codex Desktop automatically.
+1. Update the native Windows installation to `0.3.0-rc.13` and rerun setup in the already adopted repository.
+2. Run option-free `contextrail handoff`; confirm the already-proven creation and injection flow now opens Codex Desktop automatically.
 3. Record the completed Windows live pilot, then promote a stable `0.3.0` to npm `latest` through the existing release gate.
 
 ## Blockers
